@@ -1,0 +1,68 @@
+-----------------------------------------------------------
+Sketch DSL
+-----------------------------------------------------------
+
+--- goal ---
+a domain specific language for art which can be compiled to
+gcode for the uunatek to draw. ideally this allows language
+models to efficiently describe images instead of just directly
+generating gcode. this hopefully will help the llms to build
+abstractions about the art, which after compilation can be 
+expanded into complex gcode, similar to how high level cs
+languages can express complex ideas with minimal code.
+
+the language must be similar enough to english to take advantage
+of llms understanding of that syntax. this means we need to
+build in primitives and functions that can be expressed like
+english.
+
+for example we could describe a curve, compiled to bezier curve,
+as "curve from (x1, y1) to (x2, y2) through (x3, y3) and (x4, y4)"
+this would parsed and path optimized to produce many gcode commands
+
+--- language ideas ---
+we need to have an easy way to describe:
+	- symmetries
+	- rotations
+	- relative positioning
+	- repetitions
+	- scaling
+	- bounding --> compile time bounds to verify
+	- groups of paths --> we want to be able to write groups
+	  repeatedly, or apply transformations to them etc.
+
+expressions, when fully evaluated, should result in appending
+primitives to the final canvas, these primitives can then be
+translated into GCode. ideally we have enough abstractions
+available in the grammar to allow for complex paintings, but we 
+want it pretty minimal for language models.
+
+--- examples of expressions ---
+
+"relative to center of D curve from A to B through C"
+	- this shows the "center of <expr>" expression which itself
+	  is evaluated to a <coord>.
+    - "relative to" then shifts the expression after it to be
+       shifted in scope. "relative to <coord> <expr>"
+"point A inside B"
+	- this would create a compilation error if B exceeds Bs
+	bounding box. Otherwise, would be evaluated to A.
+	QUESTION: all <expr> can have a bounding box? -- yes
+	able to create a bounding box?
+
+"repeat A along C 10 times"
+    - A is an <expr> and C is an <line | vector>
+
+"scale A by 2.5 along C"
+	- A is an <expr> C is a <vector>
+
+
+--- language specification ---
+
+
+
+
+
+** abstract syntax tree **
+
+
