@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="100%" height="100%" fill="white"/>
+  <path d="M 400.00 428.00 L 780.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 780.00 428.00 L 590.00 124.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 780.00 428.00 L 590.00 124.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 286.00 504.00 Q 400.00 580.00 514.00 504.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 400.00 428.00 L 780.00 48.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 400.00 428.00 L 20.00 48.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 761.00 428.00 L 761.00 428.00 L 742.00 409.00 L 723.00 428.00 L 742.00 447.00 L 761.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 723.00 428.00 L 723.00 428.00 L 704.00 409.00 L 685.00 428.00 L 704.00 447.00 L 723.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 685.00 428.00 L 685.00 428.00 L 666.00 409.00 L 647.00 428.00 L 666.00 447.00 L 685.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 647.00 428.00 L 647.00 428.00 L 628.00 409.00 L 609.00 428.00 L 628.00 447.00 L 647.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 609.00 428.00 L 609.00 428.00 L 590.00 409.00 L 571.00 428.00 L 590.00 447.00 L 609.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 571.00 428.00 L 571.00 428.00 L 552.00 409.00 L 533.00 428.00 L 552.00 447.00 L 571.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 533.00 428.00 L 533.00 428.00 L 514.00 409.00 L 495.00 428.00 L 514.00 447.00 L 533.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 495.00 428.00 L 495.00 428.00 L 476.00 409.00 L 457.00 428.00 L 476.00 447.00 L 495.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 457.00 428.00 L 457.00 428.00 L 438.00 409.00 L 419.00 428.00 L 438.00 447.00 L 457.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 419.00 428.00 L 419.00 428.00 L 400.00 409.00 L 381.00 428.00 L 400.00 447.00 L 419.00 428.00" fill="none" stroke="black" stroke-width="1"/>
+</svg>

@@ -1,5 +1,5 @@
 (* Sketch DSL - Main Entry Point *)
-(* Demonstrates the lexer, parser, and compiler *)
+(* Full compiler pipeline: lexer -> parser -> compiler -> gcode *)
 
 open Sketch_dsl
 
@@ -11,8 +11,11 @@ Usage: sketch_dsl [options] [file]
 Options:
   --lex         Tokenize input and print tokens
   --parse       Parse input and print AST
-  --compile     Compile input and print IR (default)
-  --stats       Show compilation statistics
+  --compile     Compile input and print IR
+  --gcode       Generate generic G-code
+  --uunatek     Generate G-code for Uunatek plotter (default)
+  --svg         Generate SVG preview
+  --stats       Show compilation and optimization statistics
   --help        Show this help message
 
 If no file is provided, reads from stdin.
@@ -94,6 +97,85 @@ let run_compiler ?(show_stats=false) input =
     Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
     exit 1
 
+let run_gcode ?(show_stats=false) input =
+  try
+    let ast = Parser.parse input in
+    let ir = Compiler.compile ast in
+    if show_stats then begin
+      let gcode, stats = Gcode.generate_with_stats ir in
+      print_endline gcode;
+      print_endline "";
+      print_endline "=== Optimization Statistics ===";
+      print_endline stats
+    end else begin
+      let gcode = Gcode.generate ir in
+      print_endline gcode
+    end
+  with 
+  | Lexer.LexerError err ->
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
+      err.position.line
+      err.position.column
+      err.message;
+    exit 1
+  | Parser.ParseError err ->
+    Printf.eprintf "%s\n" (Parser.format_error err);
+    exit 1
+  | Compiler.CompileError err ->
+    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+    exit 1
+
+let run_svg input =
+  try
+    let ast = Parser.parse input in
+    let ir = Compiler.compile ast in
+    let svg = Gcode.generate_svg ir in
+    print_endline svg
+  with 
+  | Lexer.LexerError err ->
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
+      err.position.line
+      err.position.column
+      err.message;
+    exit 1
+  | Parser.ParseError err ->
+    Printf.eprintf "%s\n" (Parser.format_error err);
+    exit 1
+  | Compiler.CompileError err ->
+    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+    exit 1
+
+let run_uunatek ?(show_stats=false) input =
+  try
+    let ast = Parser.parse input in
+    let ir = Compiler.compile ast in
+    if show_stats then begin
+      let gcode, stats = Gcode.generate_uunatek_with_stats ir in
+      print_endline gcode;
+      print_endline "";
+      print_endline "=== Uunatek Statistics ===";
+      print_endline stats
+    end else begin
+      let gcode = Gcode.generate_uunatek ir in
+      print_endline gcode
+    end
+  with 
+  | Lexer.LexerError err ->
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
+      err.position.line
+      err.position.column
+      err.message;
+    exit 1
+  | Parser.ParseError err ->
+    Printf.eprintf "%s\n" (Parser.format_error err);
+    exit 1
+  | Compiler.CompileError err ->
+    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+    exit 1
+  | Failure msg ->
+    Printf.eprintf "Error: %s\n" msg;
+    exit 1
+
 let () =
   let args = Array.to_list Sys.argv |> List.tl in
   
@@ -123,26 +205,50 @@ let () =
   
   | ["--compile"; filename] ->
     let input = read_file filename in
-    run_compiler input
+    run_compiler ~show_stats:true input
+  
+  | ["--gcode"] ->
+    let input = read_stdin () in
+    run_gcode input
+  
+  | ["--gcode"; filename] ->
+    let input = read_file filename in
+    run_gcode input
+  
+  | ["--svg"] ->
+    let input = read_stdin () in
+    run_svg input
+  
+  | ["--svg"; filename] ->
+    let input = read_file filename in
+    run_svg input
+  
+  | ["--uunatek"] ->
+    let input = read_stdin () in
+    run_uunatek input
+  
+  | ["--uunatek"; filename] ->
+    let input = read_file filename in
+    run_uunatek input
   
   | ["--stats"] ->
     let input = read_stdin () in
-    run_compiler ~show_stats:true input
+    run_uunatek ~show_stats:true input
   
   | ["--stats"; filename] ->
     let input = read_file filename in
-    run_compiler ~show_stats:true input
+    run_uunatek ~show_stats:true input
   
   | [filename] ->
-    (* Default: compile *)
+    (* Default: generate Uunatek G-code with stats *)
     let input = read_file filename in
-    run_compiler ~show_stats:true input
+    run_uunatek ~show_stats:true input
   
   | [] ->
     (* Interactive mode - read from stdin *)
     print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
     let input = read_stdin () in
-    run_compiler ~show_stats:true input
+    run_uunatek ~show_stats:true input
   
   | _ ->
     prerr_endline usage;
