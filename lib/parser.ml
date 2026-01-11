@@ -228,31 +228,22 @@ and parse_vec_atom p : vec_expr =
 
 (** Parse an axis specification *)
 and parse_axis p : axis =
-  match peek p with
-  | X_AXIS -> 
-    advance p;
-    (* Check for optional 'at' clause *)
-    if check p AT then begin
+  let base_axis = match peek p with
+    | X_AXIS -> advance p; AxisX
+    | Y_AXIS -> advance p; AxisY
+    | AXIS ->
       advance p;
-      let pos = parse_num_expr p in
-      XAxisAt pos
-    end else
-      XAxis
-  | Y_AXIS -> 
+      let dir = parse_vec_expr p in
+      AxisDir dir
+    | _ -> expected_error (current p) "axis (x_axis, y_axis, or axis <direction>)"
+  in
+  (* Check for optional 'at' clause *)
+  if check p AT then begin
     advance p;
-    (* Check for optional 'at' clause *)
-    if check p AT then begin
-      advance p;
-      let pos = parse_num_expr p in
-      YAxisAt pos
-    end else
-      YAxis
-  | _ -> 
-    (* Custom axis: from p1 to p2 *)
-    let p1 = parse_vec_expr p in
-    expect p TO "to";
-    let p2 = parse_vec_expr p in
-    CustomAxis (p1, p2)
+    let pos = parse_vec_expr p in
+    AxisAt (base_axis, pos)
+  end else
+    base_axis
 
 (** Parse a primitive or variable (atomic sketch expression) *)
 and parse_sketch_atom p : sketch_expr =
@@ -319,10 +310,12 @@ and parse_sketch_atom p : sketch_expr =
     let a1 = parse_num_expr p in
     Primitive (Arc (center, radius, a0, a1))
   
-  (* Bracketed list of sketches: [sk1, sk2, ...] *)
+  (* Bracketed list of sketches: [sk1, sk2, ...] or new line*)
   | LBRACKET ->
+    skip_newlines p;
     advance p;
     let sketches = parse_sketch_list p in
+    skip_newlines p;
     expect p RBRACKET "]";
     Compose sketches
   
@@ -364,6 +357,7 @@ and parse_vec_list p : vec_expr list =
 
 (** Parse a comma-separated list of sketch expressions *)
 and parse_sketch_list p : sketch_expr list =
+  skip_newlines p;
   if check p RBRACKET then
     []  (* Empty list *)
   else begin
