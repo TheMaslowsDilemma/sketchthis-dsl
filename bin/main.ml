@@ -1,5 +1,5 @@
 (* Sketch DSL - Main Entry Point *)
-(* Demonstrates the lexer and parser *)
+(* Demonstrates the lexer, parser, and compiler *)
 
 open Sketch_dsl
 
@@ -11,10 +11,11 @@ Usage: sketch_dsl [options] [file]
 Options:
   --lex         Tokenize input and print tokens
   --parse       Parse input and print AST
+  --compile     Compile input and print IR (default)
+  --stats       Show compilation statistics
   --help        Show this help message
 
 If no file is provided, reads from stdin.
-Default mode is --parse.
 |}
 
 let read_file filename =
@@ -68,6 +69,31 @@ let run_parser input =
     Printf.eprintf "%s\n" (Parser.format_error err);
     exit 1
 
+let run_compiler ?(show_stats=false) input =
+  try
+    let ast = Parser.parse input in
+    let ir = Compiler.compile ast in
+    print_endline "=== Intermediate Representation ===";
+    print_endline (Compiler.ir_to_string ir);
+    if show_stats then begin
+      print_endline "";
+      print_endline "=== Statistics ===";
+      print_endline (Compiler.ir_stats ir)
+    end
+  with 
+  | Lexer.LexerError err ->
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
+      err.position.line
+      err.position.column
+      err.message;
+    exit 1
+  | Parser.ParseError err ->
+    Printf.eprintf "%s\n" (Parser.format_error err);
+    exit 1
+  | Compiler.CompileError err ->
+    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+    exit 1
+
 let () =
   let args = Array.to_list Sys.argv |> List.tl in
   
@@ -91,16 +117,32 @@ let () =
     let input = read_file filename in
     run_parser input
   
-  | [filename] ->
-    (* Default: parse *)
+  | ["--compile"] ->
+    let input = read_stdin () in
+    run_compiler input
+  
+  | ["--compile"; filename] ->
     let input = read_file filename in
-    run_parser input
+    run_compiler input
+  
+  | ["--stats"] ->
+    let input = read_stdin () in
+    run_compiler ~show_stats:true input
+  
+  | ["--stats"; filename] ->
+    let input = read_file filename in
+    run_compiler ~show_stats:true input
+  
+  | [filename] ->
+    (* Default: compile *)
+    let input = read_file filename in
+    run_compiler ~show_stats:true input
   
   | [] ->
     (* Interactive mode - read from stdin *)
     print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
     let input = read_stdin () in
-    run_parser input
+    run_compiler ~show_stats:true input
   
   | _ ->
     prerr_endline usage;

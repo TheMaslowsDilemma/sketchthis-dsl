@@ -88,7 +88,35 @@ although maybe thats not the right way to think of it.
 "scale A by 2.5 along C"
 	- A is an <expr> C is a <vector>
 
+--- Notes on UUNATEK ---
+our current machine is the A3 pen plotter. they ship it with what is
+likely an arduino or esp32 running Grbl. you can connect it to your
+computer without needing any of their software (its a bit sketchy (; )
 
+on Mac for example you can just connect the usb and check your /dev/ ports
+this particular machine shows up as `/dev/cu.usbserial-10` and it operates
+at 115200 baud rate.
+
+Grbl Config ($$)
+[VER:3.0 UUNA TEK Plotter.<redacted serial number>]
+$22=0
+$21=0
+$20=1
+$102=85.000
+$101=80.000
+$100=80.000
+$112=5000.000
+$111=11000.000
+$110=11000.000
+$122=500.000
+$121=500.000
+$120=500.000
+$132=12.000
+$131=297.000
+$130=420.000
+$10=1
+$30=0
+ok
 
 --- Language Specification ---
 

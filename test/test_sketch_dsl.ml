@@ -15,12 +15,6 @@ let test name f =
   with e ->
     Printf.printf "✗ %s: %s\n" name (Printexc.to_string e)
 
-let assert_eq expected actual =
-  if expected <> actual then
-    failwith (Printf.sprintf "Expected %s but got %s" 
-                (Lexer.token_to_string expected) 
-                (Lexer.token_to_string actual))
-
 let assert_tokens expected input =
   let actual = Lexer.tokenize_simple input in
   (* Filter out newlines and EOF for simpler comparison *)
@@ -36,7 +30,7 @@ let assert_tokens expected input =
     failwith "Token mismatch"
   end
 
-(* === Lexer Tests === *)
+(* ===== Lexer Tests ===== *)
 
 let test_numbers () =
   test "lex integer" (fun () ->
@@ -158,6 +152,251 @@ draw face
     (* Should contain NEWLINE tokens *)
     assert (List.mem Lexer.NEWLINE tokens))
 
+(* ===== Parser Tests ===== *)
+
+let assert_parses input =
+  match Parser.parse_safe input with
+  | Ok _ -> ()
+  | Error e -> failwith (Parser.format_error e)
+
+let assert_parse_fails input =
+  match Parser.parse_safe input with
+  | Ok _ -> failwith "Expected parse to fail"
+  | Error _ -> ()
+
+let assert_ast_matches input expected =
+  match Parser.parse_safe input with
+  | Ok ast ->
+    let actual = Ast.program_to_string ast in
+    if actual <> expected then
+      failwith (Printf.sprintf "AST mismatch:\nExpected: %s\nActual: %s" expected actual)
+  | Error e -> failwith (Parser.format_error e)
+
+let test_parse_primitives () =
+  test "parse dot" (fun () ->
+    assert_parses "let p : sketch = dot (1, 2)");
+  
+  test "parse line" (fun () ->
+    assert_parses "let l : sketch = line from (0, 0) to (10, 10)");
+  
+  test "parse curve with one control point" (fun () ->
+    assert_parses "let c : sketch = curve from (0, 0) to (10, 10) through (5, 8)");
+  
+  test "parse curve with multiple control points" (fun () ->
+    assert_parses "let c : sketch = curve from (0, 0) to (10, 10) through (2, 5) and (8, 5)")
+
+let test_parse_transformations () =
+  test "parse scale" (fun () ->
+    assert_parses "let s : sketch = scale myshape by 2.5");
+  
+  test "parse scale along" (fun () ->
+    assert_parses "let s : sketch = scale myshape by 2.5 along (1, 0)");
+  
+  test "parse rotate" (fun () ->
+    assert_parses "let r : sketch = rotate myshape by 45");
+  
+  test "parse translate" (fun () ->
+    assert_parses "let t : sketch = translate myshape by (10, 20)");
+  
+  test "parse repeat" (fun () ->
+    assert_parses "let r : sketch = repeat myshape along (1, 0) 5 times");
+  
+  test "parse symmetric x_axis" (fun () ->
+    assert_parses "let s : sketch = symmetric myshape along x_axis");
+  
+  test "parse symmetric y_axis" (fun () ->
+    assert_parses "let s : sketch = symmetric along y_axis myshape")
+
+let test_parse_let_bindings () =
+  test "parse let number" (fun () ->
+    assert_parses "let x : number = 42");
+  
+  test "parse let vec2" (fun () ->
+    assert_parses "let p : vec2 = (10, 20)");
+  
+  test "parse let sketch" (fun () ->
+    assert_parses "let s : sketch = line from (0, 0) to (1, 1)")
+
+let test_parse_draw () =
+  test "parse draw variable" (fun () ->
+    assert_parses "draw mysketch");
+  
+  test "parse draw primitive" (fun () ->
+    assert_parses "draw line from (0, 0) to (10, 10)");
+  
+  test "parse draw transformed" (fun () ->
+    assert_parses "draw scale mysketch by 2")
+
+let test_parse_complex () =
+  test "parse relative to" (fun () ->
+    assert_parses "let s : sketch = relative to (5, 5) line from (0, 0) to (1, 1)");
+  
+  test "parse center of" (fun () ->
+    assert_parses "let s : sketch = relative to center of base line from (0, 0) to (1, 1)");
+  
+  test "parse inside" (fun () ->
+    assert_parses "let s : sketch = mysketch inside bounds");
+  
+  test "parse multiline program" (fun () ->
+    assert_parses {|
+let base : sketch = line from (0, 0) to (10, 0)
+let side : sketch = line from (10, 0) to (5, 8)
+draw base
+draw side
+|})
+
+let test_parse_ast_output () =
+  test "ast output for line" (fun () ->
+    assert_ast_matches 
+      "let l : sketch = line from (0, 0) to (10, 5)"
+      "let l : sketch = line from (0, 0) to (10, 5)");
+  
+  test "ast output for scale" (fun () ->
+    assert_ast_matches
+      "let s : sketch = scale myshape by 2"
+      "let s : sketch = scale myshape by 2");
+  
+  test "ast output for repeat" (fun () ->
+    assert_ast_matches
+      "let r : sketch = repeat dot (0, 0) along (1, 0) 5 times"
+      "let r : sketch = repeat dot at (0, 0) along (1, 0) 5 times")
+
+let test_parse_errors () =
+  test "error on missing type" (fun () ->
+    assert_parse_fails "let x = 42");
+  
+  test "error on missing equals" (fun () ->
+    assert_parse_fails "let x : number 42");
+  
+  test "error on incomplete line" (fun () ->
+    assert_parse_fails "let l : sketch = line from (0, 0)")
+
+(* ===== Compiler Tests ===== *)
+
+let assert_compiles input =
+  match Parser.parse_safe input with
+  | Error e -> failwith (Parser.format_error e)
+  | Ok ast ->
+    match Compiler.compile_safe ast with
+    | Ok _ -> ()
+    | Error e -> failwith (Compiler.format_error e)
+
+let assert_compile_fails input =
+  match Parser.parse_safe input with
+  | Error _ -> ()  (* Parse failure is also acceptable *)
+  | Ok ast ->
+    match Compiler.compile_safe ast with
+    | Ok _ -> failwith "Expected compilation to fail"
+    | Error _ -> ()
+
+let get_ir input =
+  let ast = Parser.parse input in
+  Compiler.compile ast
+
+let test_compile_primitives () =
+  test "compile line" (fun () ->
+    assert_compiles "draw line from (0, 0) to (10, 10)";
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    assert (List.length ir = 1));
+  
+  test "compile dot" (fun () ->
+    assert_compiles "draw dot (5, 5)");
+  
+  test "compile curve" (fun () ->
+    assert_compiles "draw curve from (0, 0) to (10, 10) through (5, 8)");
+  
+  test "compile hdash" (fun () ->
+    assert_compiles "draw hdash (0, 0)");
+  
+  test "compile vdash" (fun () ->
+    assert_compiles "draw vdash (0, 0)")
+
+let test_compile_transformations () =
+  test "compile scale" (fun () ->
+    assert_compiles {|
+      let base : sketch = line from (0, 0) to (10, 0)
+      draw scale base by 2
+    |});
+  
+  test "compile rotate" (fun () ->
+    assert_compiles {|
+      let base : sketch = line from (0, 0) to (10, 0)
+      draw rotate base by 45
+    |});
+  
+  test "compile translate" (fun () ->
+    assert_compiles {|
+      let base : sketch = line from (0, 0) to (10, 0)
+      draw translate base by (5, 5)
+    |});
+  
+  test "compile repeat" (fun () ->
+    assert_compiles {|
+      let dot1 : sketch = dot (0, 0)
+      draw repeat dot1 along (10, 0) 5 times
+    |};
+    let ir = get_ir {|
+      let dot1 : sketch = dot (0, 0)
+      draw repeat dot1 along (10, 0) 5 times
+    |} in
+    (* 5 repetitions of a dot (which is a small shape) *)
+    assert (List.length ir = 5));
+  
+  test "compile symmetric" (fun () ->
+    assert_compiles {|
+      let half : sketch = line from (0, 0) to (5, 5)
+      draw symmetric half along y_axis
+    |};
+    let ir = get_ir {|
+      let half : sketch = line from (0, 0) to (5, 5)
+      draw symmetric half along y_axis
+    |} in
+    (* Original + reflected = 2 paths *)
+    assert (List.length ir = 2))
+
+let test_compile_variables () =
+  test "compile with number variable" (fun () ->
+    assert_compiles {|
+      let size : number = 10
+      draw line from (0, 0) to (size, size)
+    |});
+  
+  test "compile with vec2 variable" (fun () ->
+    assert_compiles {|
+      let start : vec2 = (0, 0)
+      let finish : vec2 = (10, 10)
+      draw line from start to finish
+    |});
+  
+  test "compile with sketch variable" (fun () ->
+    assert_compiles {|
+      let base : sketch = line from (0, 0) to (10, 0)
+      let scaled : sketch = scale base by 2
+      draw scaled
+    |});
+  
+  test "compile center of" (fun () ->
+    assert_compiles {|
+      let box : sketch = line from (0, 0) to (10, 10)
+      draw relative to center of box dot (0, 0)
+    |})
+
+let test_compile_errors () =
+  test "error on undefined variable" (fun () ->
+    assert_compile_fails "draw undefined_var");
+  
+  test "error on type mismatch - num as vec" (fun () ->
+    assert_compile_fails {|
+      let x : number = 5
+      draw line from x to (10, 10)
+    |});
+  
+  test "error on type mismatch - vec as sketch" (fun () ->
+    assert_compile_fails {|
+      let p : vec2 = (5, 5)
+      draw p
+    |})
+
 let () =
   print_endline "=== Sketch DSL Lexer Tests ===\n";
   
@@ -169,6 +408,23 @@ let () =
   test_draw_command ();
   test_comments ();
   test_multiline ();
+  
+  print_endline "\n=== Sketch DSL Parser Tests ===\n";
+  
+  test_parse_primitives ();
+  test_parse_transformations ();
+  test_parse_let_bindings ();
+  test_parse_draw ();
+  test_parse_complex ();
+  test_parse_ast_output ();
+  test_parse_errors ();
+  
+  print_endline "\n=== Sketch DSL Compiler Tests ===\n";
+  
+  test_compile_primitives ();
+  test_compile_transformations ();
+  test_compile_variables ();
+  test_compile_errors ();
   
   Printf.printf "\n=== Results: %d/%d tests passed ===\n" !tests_passed !tests_run;
   if !tests_passed < !tests_run then exit 1
