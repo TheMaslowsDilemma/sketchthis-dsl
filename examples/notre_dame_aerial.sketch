@@ -1,0 +1,532 @@
+-- Notre Dame Cathedral - Aerial Perspective View
+-- Detailed architectural rendering showing the cruciform plan,
+-- twin western towers, central spire, flying buttresses, and roof structure
+
+-- ============================================
+-- MAIN NAVE (Central body running East-West)
+-- ============================================
+
+-- Nave outline - the long rectangular body
+-- nave starts at (60, 110), length=280, width=80
+
+let nave_north : sketch = line from (60, 110) to (340, 110)
+let nave_south : sketch = line from (60, 190) to (340, 190)
+let nave_east : sketch = line from (340, 110) to (340, 190)
+
+-- Nave roof ridge line (center peak at y=150)
+let nave_ridge : sketch = line from (100, 150) to (330, 150)
+
+-- Nave roof slope lines (showing pitched roof from above)
+let roof_line_n1 : sketch = line from (110, 118) to (110, 150)
+let roof_line_n2 : sketch = line from (160, 118) to (160, 150)
+let roof_line_n3 : sketch = line from (210, 118) to (210, 150)
+let roof_line_n4 : sketch = line from (260, 118) to (260, 150)
+let roof_line_n5 : sketch = line from (310, 118) to (310, 150)
+
+let roof_line_s1 : sketch = line from (110, 182) to (110, 150)
+let roof_line_s2 : sketch = line from (160, 182) to (160, 150)
+let roof_line_s3 : sketch = line from (210, 182) to (210, 150)
+let roof_line_s4 : sketch = line from (260, 182) to (260, 150)
+let roof_line_s5 : sketch = line from (310, 182) to (310, 150)
+
+-- ============================================
+-- WESTERN FACADE WITH TWIN TOWERS
+-- ============================================
+
+-- North Tower at (60, 92) - 40 wide, 35 deep
+let north_tower_w : sketch = line from (60, 92) to (60, 132)
+let north_tower_n : sketch = line from (60, 92) to (100, 92)
+let north_tower_s : sketch = line from (60, 132) to (100, 132)
+let north_tower_e : sketch = line from (100, 92) to (100, 132)
+
+-- North tower roof detail (inner rectangle)
+let nt_inner1 : sketch = line from (65, 97) to (95, 97)
+let nt_inner2 : sketch = line from (65, 127) to (95, 127)
+let nt_inner3 : sketch = line from (65, 97) to (65, 127)
+let nt_inner4 : sketch = line from (95, 97) to (95, 127)
+
+-- North tower corner pinnacles
+let nt_pin1 : sketch = dot (63, 95)
+let nt_pin2 : sketch = dot (97, 95)
+let nt_pin3 : sketch = dot (63, 129)
+let nt_pin4 : sketch = dot (97, 129)
+
+-- South Tower at (60, 168) - 40 wide, 35 deep
+let south_tower_w : sketch = line from (60, 168) to (60, 208)
+let south_tower_n : sketch = line from (60, 168) to (100, 168)
+let south_tower_s : sketch = line from (60, 208) to (100, 208)
+let south_tower_e : sketch = line from (100, 168) to (100, 208)
+
+-- South tower roof detail
+let st_inner1 : sketch = line from (65, 173) to (95, 173)
+let st_inner2 : sketch = line from (65, 203) to (95, 203)
+let st_inner3 : sketch = line from (65, 173) to (65, 203)
+let st_inner4 : sketch = line from (95, 173) to (95, 203)
+
+-- South tower corner pinnacles
+let st_pin1 : sketch = dot (63, 171)
+let st_pin2 : sketch = dot (97, 171)
+let st_pin3 : sketch = dot (63, 205)
+let st_pin4 : sketch = dot (97, 205)
+
+-- Western facade between towers
+let facade_top : sketch = line from (100, 132) to (100, 168)
+
+-- ============================================
+-- TRANSEPT (North-South crossing)
+-- ============================================
+
+-- Transept at x=240, width=45, extends 50 beyond nave
+
+-- North Transept
+let trans_n_w : sketch = line from (240, 110) to (240, 60)
+let trans_n_e : sketch = line from (285, 110) to (285, 60)
+let trans_n_n : sketch = line from (240, 60) to (285, 60)
+
+-- North transept roof ridge
+let trans_n_ridge : sketch = line from (262, 105) to (262, 65)
+
+-- North transept rose window
+let trans_n_rose : sketch = arc center (262, 75) (8, 8) from 0 to 360
+let trans_n_rose_inner : sketch = arc center (262, 75) (4, 4) from 0 to 360
+
+-- South Transept
+let trans_s_w : sketch = line from (240, 190) to (240, 240)
+let trans_s_e : sketch = line from (285, 190) to (285, 240)
+let trans_s_s : sketch = line from (240, 240) to (285, 240)
+
+-- South transept roof ridge
+let trans_s_ridge : sketch = line from (262, 195) to (262, 235)
+
+-- South transept rose window
+let trans_s_rose : sketch = arc center (262, 225) (8, 8) from 0 to 360
+let trans_s_rose_inner : sketch = arc center (262, 225) (4, 4) from 0 to 360
+
+-- ============================================
+-- CENTRAL SPIRE (at crossing)
+-- ============================================
+
+-- Spire center at (262, 150), radius 12
+
+-- Spire base (octagonal from above)
+let spire_base1 : sketch = line from (250, 144) to (256, 138)
+let spire_base2 : sketch = line from (256, 138) to (268, 138)
+let spire_base3 : sketch = line from (268, 138) to (274, 144)
+let spire_base4 : sketch = line from (274, 144) to (274, 156)
+let spire_base5 : sketch = line from (274, 156) to (268, 162)
+let spire_base6 : sketch = line from (268, 162) to (256, 162)
+let spire_base7 : sketch = line from (256, 162) to (250, 156)
+let spire_base8 : sketch = line from (250, 156) to (250, 144)
+
+-- Spire tip (converging lines to center point)
+let spire_tip : sketch = dot (262, 150)
+let spire_line1 : sketch = line from (262, 150) to (250, 144)
+let spire_line2 : sketch = line from (262, 150) to (262, 138)
+let spire_line3 : sketch = line from (262, 150) to (274, 144)
+let spire_line4 : sketch = line from (262, 150) to (274, 156)
+let spire_line5 : sketch = line from (262, 150) to (262, 162)
+let spire_line6 : sketch = line from (262, 150) to (250, 156)
+
+-- Decorative statues around spire base (the apostles)
+let apostle1 : sketch = dot (245, 150)
+let apostle2 : sketch = dot (279, 150)
+let apostle3 : sketch = dot (262, 133)
+let apostle4 : sketch = dot (262, 167)
+
+-- ============================================
+-- CHOIR AND APSE (Eastern end)
+-- ============================================
+
+-- Apse centered at (340, 150)
+
+-- Apse (semicircular eastern end)
+let apse_curve : sketch = arc center (340, 150) (40, 50) from -90 to 90
+
+-- Apse roof ribs (radiating from center)
+let apse_rib1 : sketch = line from (340, 150) to (375, 120)
+let apse_rib2 : sketch = line from (340, 150) to (380, 135)
+let apse_rib3 : sketch = line from (340, 150) to (380, 150)
+let apse_rib4 : sketch = line from (340, 150) to (380, 165)
+let apse_rib5 : sketch = line from (340, 150) to (375, 180)
+
+-- Apse chapels (small radiating chapels around the apse)
+let chapel1 : sketch = arc center (370, 115) (10, 10) from -45 to 135
+let chapel2 : sketch = arc center (378, 132) (8, 8) from -30 to 150
+let chapel3 : sketch = arc center (382, 150) (8, 8) from -90 to 90
+let chapel4 : sketch = arc center (378, 168) (8, 8) from -150 to 30
+let chapel5 : sketch = arc center (370, 185) (10, 10) from -135 to 45
+
+-- ============================================
+-- FLYING BUTTRESSES (North side)
+-- ============================================
+
+-- North side buttresses
+let fb_n1_inner : sketch = line from (120, 110) to (120, 85)
+let fb_n1_outer : sketch = line from (115, 85) to (125, 85)
+let fb_n1_pier : sketch = line from (120, 85) to (120, 75)
+let fb_n1_cap : sketch = dot (120, 75)
+
+let fb_n2_inner : sketch = line from (155, 110) to (155, 85)
+let fb_n2_outer : sketch = line from (150, 85) to (160, 85)
+let fb_n2_pier : sketch = line from (155, 85) to (155, 75)
+let fb_n2_cap : sketch = dot (155, 75)
+
+let fb_n3_inner : sketch = line from (190, 110) to (190, 85)
+let fb_n3_outer : sketch = line from (185, 85) to (195, 85)
+let fb_n3_pier : sketch = line from (190, 85) to (190, 75)
+let fb_n3_cap : sketch = dot (190, 75)
+
+let fb_n4_inner : sketch = line from (225, 110) to (225, 85)
+let fb_n4_outer : sketch = line from (220, 85) to (230, 85)
+let fb_n4_pier : sketch = line from (225, 85) to (225, 75)
+let fb_n4_cap : sketch = dot (225, 75)
+
+-- Buttresses east of transept (north)
+let fb_n5_inner : sketch = line from (300, 110) to (300, 85)
+let fb_n5_outer : sketch = line from (295, 85) to (305, 85)
+let fb_n5_pier : sketch = line from (300, 85) to (300, 75)
+let fb_n5_cap : sketch = dot (300, 75)
+
+let fb_n6_inner : sketch = line from (330, 110) to (330, 90)
+let fb_n6_outer : sketch = line from (325, 90) to (335, 90)
+let fb_n6_cap : sketch = dot (330, 82)
+
+-- ============================================
+-- FLYING BUTTRESSES (South side)
+-- ============================================
+
+let fb_s1_inner : sketch = line from (120, 190) to (120, 215)
+let fb_s1_outer : sketch = line from (115, 215) to (125, 215)
+let fb_s1_pier : sketch = line from (120, 215) to (120, 225)
+let fb_s1_cap : sketch = dot (120, 225)
+
+let fb_s2_inner : sketch = line from (155, 190) to (155, 215)
+let fb_s2_outer : sketch = line from (150, 215) to (160, 215)
+let fb_s2_pier : sketch = line from (155, 215) to (155, 225)
+let fb_s2_cap : sketch = dot (155, 225)
+
+let fb_s3_inner : sketch = line from (190, 190) to (190, 215)
+let fb_s3_outer : sketch = line from (185, 215) to (195, 215)
+let fb_s3_pier : sketch = line from (190, 215) to (190, 225)
+let fb_s3_cap : sketch = dot (190, 225)
+
+let fb_s4_inner : sketch = line from (225, 190) to (225, 215)
+let fb_s4_outer : sketch = line from (220, 215) to (230, 215)
+let fb_s4_pier : sketch = line from (225, 215) to (225, 225)
+let fb_s4_cap : sketch = dot (225, 225)
+
+let fb_s5_inner : sketch = line from (300, 190) to (300, 215)
+let fb_s5_outer : sketch = line from (295, 215) to (305, 215)
+let fb_s5_pier : sketch = line from (300, 215) to (300, 225)
+let fb_s5_cap : sketch = dot (300, 225)
+
+let fb_s6_inner : sketch = line from (330, 190) to (330, 210)
+let fb_s6_outer : sketch = line from (325, 210) to (335, 210)
+let fb_s6_cap : sketch = dot (330, 218)
+
+-- ============================================
+-- APSE BUTTRESSES (radiating around east end)
+-- ============================================
+
+let apse_fb1 : sketch = line from (365, 110) to (375, 95)
+let apse_fb1_cap : sketch = dot (375, 95)
+
+let apse_fb2 : sketch = line from (375, 125) to (390, 115)
+let apse_fb2_cap : sketch = dot (390, 115)
+
+let apse_fb3 : sketch = line from (380, 150) to (395, 150)
+let apse_fb3_cap : sketch = dot (395, 150)
+
+let apse_fb4 : sketch = line from (375, 175) to (390, 185)
+let apse_fb4_cap : sketch = dot (390, 185)
+
+let apse_fb5 : sketch = line from (365, 190) to (375, 205)
+let apse_fb5_cap : sketch = dot (375, 205)
+
+-- ============================================
+-- SIDE AISLES (lower roofs flanking the nave)
+-- ============================================
+
+-- North aisle
+let aisle_n_outer : sketch = line from (100, 95) to (310, 95)
+let aisle_n_connect1 : sketch = line from (100, 110) to (100, 95)
+let aisle_n_connect2 : sketch = line from (310, 110) to (310, 95)
+
+-- South aisle
+let aisle_s_outer : sketch = line from (100, 205) to (310, 205)
+let aisle_s_connect1 : sketch = line from (100, 190) to (100, 205)
+let aisle_s_connect2 : sketch = line from (310, 190) to (310, 205)
+
+-- ============================================
+-- WESTERN ROSE WINDOW (visible from above as circle)
+-- ============================================
+
+-- Rose window at (120, 150)
+let west_rose_outer : sketch = arc center (120, 150) (15, 15) from 0 to 360
+let west_rose_mid : sketch = arc center (120, 150) (10, 10) from 0 to 360
+let west_rose_inner : sketch = arc center (120, 150) (5, 5) from 0 to 360
+
+-- Rose window spokes
+let rose_spoke1 : sketch = line from (120, 145) to (120, 135)
+let rose_spoke2 : sketch = line from (125, 150) to (135, 150)
+let rose_spoke3 : sketch = line from (120, 155) to (120, 165)
+let rose_spoke4 : sketch = line from (115, 150) to (105, 150)
+let rose_spoke5 : sketch = line from (124, 146) to (131, 139)
+let rose_spoke6 : sketch = line from (124, 154) to (131, 161)
+let rose_spoke7 : sketch = line from (116, 154) to (109, 161)
+let rose_spoke8 : sketch = line from (116, 146) to (109, 139)
+
+-- ============================================
+-- ROOF DECORATIVE DETAILS
+-- ============================================
+
+-- Cresting along nave ridge (decorative ironwork)
+let crest1 : sketch = vdash (130, 150)
+let crest2 : sketch = vdash (150, 150)
+let crest3 : sketch = vdash (170, 150)
+let crest4 : sketch = vdash (190, 150)
+let crest5 : sketch = vdash (210, 150)
+let crest6 : sketch = vdash (230, 150)
+
+-- Chimney-like structures (ventilation)
+let vent1 : sketch = dot (140, 130)
+let vent2 : sketch = dot (200, 130)
+let vent3 : sketch = dot (140, 170)
+let vent4 : sketch = dot (200, 170)
+
+-- ============================================
+-- ADDITIONAL ARCHITECTURAL DETAILS
+-- ============================================
+
+-- Gallery level on towers (arched openings represented)
+let nt_gallery1 : sketch = line from (70, 110) to (70, 114)
+let nt_gallery2 : sketch = line from (80, 110) to (80, 114)
+let nt_gallery3 : sketch = line from (90, 110) to (90, 114)
+
+let st_gallery1 : sketch = line from (70, 186) to (70, 190)
+let st_gallery2 : sketch = line from (80, 186) to (80, 190)
+let st_gallery3 : sketch = line from (90, 186) to (90, 190)
+
+-- Transept roof cross-ribs
+let trans_n_rib1 : sketch = line from (245, 80) to (280, 80)
+let trans_s_rib1 : sketch = line from (245, 220) to (280, 220)
+
+-- Crossing square definition
+let crossing_nw : sketch = line from (240, 110) to (240, 130)
+let crossing_ne : sketch = line from (285, 110) to (285, 130)
+let crossing_sw : sketch = line from (240, 170) to (240, 190)
+let crossing_se : sketch = line from (285, 170) to (285, 190)
+
+-- ============================================
+-- DRAW ALL ELEMENTS
+-- ============================================
+
+-- Main nave
+draw nave_north
+draw nave_south
+draw nave_east
+draw nave_ridge
+
+-- Nave roof details
+draw roof_line_n1
+draw roof_line_n2
+draw roof_line_n3
+draw roof_line_n4
+draw roof_line_n5
+draw roof_line_s1
+draw roof_line_s2
+draw roof_line_s3
+draw roof_line_s4
+draw roof_line_s5
+
+-- North tower
+draw north_tower_w
+draw north_tower_n
+draw north_tower_s
+draw north_tower_e
+draw nt_inner1
+draw nt_inner2
+draw nt_inner3
+draw nt_inner4
+draw nt_pin1
+draw nt_pin2
+draw nt_pin3
+draw nt_pin4
+
+-- South tower
+draw south_tower_w
+draw south_tower_n
+draw south_tower_s
+draw south_tower_e
+draw st_inner1
+draw st_inner2
+draw st_inner3
+draw st_inner4
+draw st_pin1
+draw st_pin2
+draw st_pin3
+draw st_pin4
+
+-- Facade
+draw facade_top
+
+-- North transept
+draw trans_n_w
+draw trans_n_e
+draw trans_n_n
+draw trans_n_ridge
+draw trans_n_rose
+draw trans_n_rose_inner
+
+-- South transept
+draw trans_s_w
+draw trans_s_e
+draw trans_s_s
+draw trans_s_ridge
+draw trans_s_rose
+draw trans_s_rose_inner
+
+-- Central spire
+draw spire_base1
+draw spire_base2
+draw spire_base3
+draw spire_base4
+draw spire_base5
+draw spire_base6
+draw spire_base7
+draw spire_base8
+draw spire_tip
+draw spire_line1
+draw spire_line2
+draw spire_line3
+draw spire_line4
+draw spire_line5
+draw spire_line6
+draw apostle1
+draw apostle2
+draw apostle3
+draw apostle4
+
+-- Apse
+draw apse_curve
+draw apse_rib1
+draw apse_rib2
+draw apse_rib3
+draw apse_rib4
+draw apse_rib5
+
+-- Apse chapels
+draw chapel1
+draw chapel2
+draw chapel3
+draw chapel4
+draw chapel5
+
+-- North flying buttresses
+draw fb_n1_inner
+draw fb_n1_outer
+draw fb_n1_pier
+draw fb_n1_cap
+draw fb_n2_inner
+draw fb_n2_outer
+draw fb_n2_pier
+draw fb_n2_cap
+draw fb_n3_inner
+draw fb_n3_outer
+draw fb_n3_pier
+draw fb_n3_cap
+draw fb_n4_inner
+draw fb_n4_outer
+draw fb_n4_pier
+draw fb_n4_cap
+draw fb_n5_inner
+draw fb_n5_outer
+draw fb_n5_pier
+draw fb_n5_cap
+draw fb_n6_inner
+draw fb_n6_outer
+draw fb_n6_cap
+
+-- South flying buttresses
+draw fb_s1_inner
+draw fb_s1_outer
+draw fb_s1_pier
+draw fb_s1_cap
+draw fb_s2_inner
+draw fb_s2_outer
+draw fb_s2_pier
+draw fb_s2_cap
+draw fb_s3_inner
+draw fb_s3_outer
+draw fb_s3_pier
+draw fb_s3_cap
+draw fb_s4_inner
+draw fb_s4_outer
+draw fb_s4_pier
+draw fb_s4_cap
+draw fb_s5_inner
+draw fb_s5_outer
+draw fb_s5_pier
+draw fb_s5_cap
+draw fb_s6_inner
+draw fb_s6_outer
+draw fb_s6_cap
+
+-- Apse buttresses
+draw apse_fb1
+draw apse_fb1_cap
+draw apse_fb2
+draw apse_fb2_cap
+draw apse_fb3
+draw apse_fb3_cap
+draw apse_fb4
+draw apse_fb4_cap
+draw apse_fb5
+draw apse_fb5_cap
+
+-- Side aisles
+draw aisle_n_outer
+draw aisle_n_connect1
+draw aisle_n_connect2
+draw aisle_s_outer
+draw aisle_s_connect1
+draw aisle_s_connect2
+
+-- Western rose window
+draw west_rose_outer
+draw west_rose_mid
+draw west_rose_inner
+draw rose_spoke1
+draw rose_spoke2
+draw rose_spoke3
+draw rose_spoke4
+draw rose_spoke5
+draw rose_spoke6
+draw rose_spoke7
+draw rose_spoke8
+
+-- Roof details
+draw crest1
+draw crest2
+draw crest3
+draw crest4
+draw crest5
+draw crest6
+draw vent1
+draw vent2
+draw vent3
+draw vent4
+
+-- Additional details
+draw nt_gallery1
+draw nt_gallery2
+draw nt_gallery3
+draw st_gallery1
+draw st_gallery2
+draw st_gallery3
+draw trans_n_rib1
+draw trans_s_rib1
+draw crossing_nw
+draw crossing_ne
+draw crossing_sw
+draw crossing_se

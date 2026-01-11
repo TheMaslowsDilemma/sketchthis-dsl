@@ -1,33 +1,18 @@
-# Example: Simple shapes in Sketch DSL
-# This demonstrates the Sketch DSL syntax
+-- Head outline
+let head : sketch = arc center (0, 0) (50, 60) from 0 to 360
 
-# Define some base points
-let origin : vec2 = (0, 0)
-let p1 : vec2 = (10, 0)
-let p2 : vec2 = (5, 8)
+-- Eyes (symmetric)
+let left_eye : sketch = dot (-20, 15)
+let eyes : sketch = symmetric left_eye along y_axis
 
-# Draw a simple triangle outline
-let side1 : sketch = line from (0, 0) to (10, 0)
-let side2 : sketch = line from (10, 0) to (5, 8)
-let side3 : sketch = line from p1 to p2
+-- Nose
+let nose : sketch = line from (0, 10) to (0, -5)
 
-# A curve example - smile shape
-let smile : sketch = curve from (-3, -2) to (3, -2) through (0, -4)
+-- Smile
+let smile : sketch = curve from (-25, -20) to (25, -20) through (0, -35)
 
-# Create a symmetric pattern
-let half_pattern : sketch = line from (0, 0) to (5, 5)
-let full_pattern : sketch = symmetric half_pattern along y_axis
-
-# Repeat a dot pattern
-let dot_row : sketch = repeat dot (0, 0) along (1, 0) 10 times
-
-# Scale a pattern
-let big_pattern : sketch = scale full_pattern by 2
-
-# Draw everything
-draw side1
-draw side2
-draw side3
+-- Compose and draw
+draw head
+draw eyes
+draw nose
 draw smile
-draw big_pattern
-draw dot_row
