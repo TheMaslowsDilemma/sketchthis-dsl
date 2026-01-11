@@ -41,9 +41,9 @@ want it pretty minimal for language models.
 
 "relative to center of D curve from A to B through C"
 	- this shows the "center of <expr>" expression which itself
-	  is evaluated to a <coord>.
+	  is evaluated to a <vec2>.
     - "relative to" then shifts the expression after it to be
-       shifted in scope. "relative to <coord> <expr>"
+       shifted in scope. "relative to <vec2> <expr>"
 "point A inside B"
 	- this would create a compilation error if B exceeds Bs
 	bounding box. Otherwise, would be evaluated to A.
