@@ -28,6 +28,50 @@ There are only three types:
 | `vec2` | A 2D point as (x, y) | `(0, 0)`, `(100.5, 200)` |
 | `sketch` | A drawable shape | `line from (0,0) to (10,10)` |
 
+### Arithmetic Operations
+
+**Numbers** support standard arithmetic:
+```
+let a : number = 10 + 5      -- addition
+let b : number = 10 - 3      -- subtraction  
+let c : number = 4 * 2.5     -- multiplication
+let d : number = 10 / 4      -- division
+let e : number = -5          -- negation
+let f : number = (2 + 3) * 4 -- grouping with parentheses
+```
+
+**Vectors** can be constructed with numeric expressions:
+```
+let w : number = 100
+let h : number = 50
+
+-- Vectors with literal values
+let p1 : vec2 = (10, 20)
+
+-- Vectors with variables
+let p2 : vec2 = (w, h)
+
+-- Vectors with expressions
+let p3 : vec2 = (w / 2, h + 10)
+let corner : vec2 = (w * 2, h * 2)
+```
+
+**Vectors** support arithmetic operations:
+```
+let v1 : vec2 = (10, 20)
+let v2 : vec2 = (5, 5)
+
+let sum : vec2 = v1 + v2           -- (15, 25) - vector addition
+let diff : vec2 = v1 - v2          -- (5, 15)  - vector subtraction
+let scaled : vec2 = v1 * 2         -- (20, 40) - scalar multiplication
+let combined : vec2 = (v1 + v2) * 3 -- (45, 75) - combined operations
+```
+
+Vector arithmetic is useful for:
+- Computing offsets: `let offset : vec2 = direction * distance`
+- Finding midpoints: `let mid : vec2 = (p1 + p2) * 0.5`
+- Building grids: `let pos : vec2 = origin + (step * i)`
+
 ---
 
 ## Primitives
@@ -144,10 +188,27 @@ Mirror a sketch across an axis.
 ```
 symmetric <sketch> along x_axis
 symmetric <sketch> along y_axis
+symmetric <sketch> along x_axis at <y_position>
+symmetric <sketch> along y_axis at <x_position>
 symmetric along y_axis <sketch>
 ```
 - Creates both the original AND the reflection
+- `x_axis` reflects across a horizontal line (flips vertically)
+- `y_axis` reflects across a vertical line (flips horizontally)
+- Use `at` to specify the axis position (defaults to 0)
 - Perfect for faces, butterflies, symmetric patterns
+
+Examples:
+```
+-- Mirror across y-axis at x=0
+let butterfly : sketch = symmetric half_wing along y_axis
+
+-- Mirror across x-axis at y=100 (e.g., for a reflection in water)
+let reflection : sketch = symmetric boat along x_axis at 100
+
+-- Mirror across y-axis at x=50 (center of a 100-wide canvas)
+let centered : sketch = symmetric left_half along y_axis at 50
+```
 
 ---
 
@@ -211,8 +272,13 @@ type        → "number" | "vec2" | "sketch"
 
 expression  → num_expr | vec_expr | sketch_expr
 
-num_expr    → NUMBER | IDENT | "(" num_expr ")"
-vec_expr    → "(" NUMBER "," NUMBER ")" | IDENT | "center" "of" sketch_atom
+num_expr    → num_term (("+"|"-") num_term)*
+num_term    → num_factor (("*"|"/") num_factor)*
+num_factor  → NUMBER | IDENT | "-" num_factor | "(" num_expr ")"
+
+vec_expr    → vec_term (("+"|"-") vec_term)*
+vec_term    → vec_factor ("*" num_factor)*
+vec_factor  → "(" NUMBER "," NUMBER ")" | IDENT | "center" "of" sketch_atom
 
 sketch_expr → primitive | transformation | sketch_atom
 sketch_atom → IDENT | "[" sketch_list "]" | "(" sketch_expr ")"
@@ -468,6 +534,9 @@ You can also generate:
 
 ```
 TYPES:          number, vec2, sketch
+
+ARITHMETIC:     Numbers: + - * / (parentheses for grouping)
+                Vectors: v1 + v2, v1 - v2, v * scalar
 
 PRIMITIVES:     dot (x, y)
                 hdash (x, y)
