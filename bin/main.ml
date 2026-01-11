@@ -1,5 +1,5 @@
 (* Sketch DSL - Main Entry Point *)
-(* Currently demonstrates the lexer *)
+(* Demonstrates the lexer and parser *)
 
 open Sketch_dsl
 
@@ -10,9 +10,11 @@ Usage: sketch_dsl [options] [file]
 
 Options:
   --lex         Tokenize input and print tokens
+  --parse       Parse input and print AST
   --help        Show this help message
 
 If no file is provided, reads from stdin.
+Default mode is --parse.
 |}
 
 let read_file filename =
@@ -48,6 +50,24 @@ let run_lexer input =
       err.message;
     exit 1
 
+let run_parser input =
+  try
+    let ast = Parser.parse input in
+    print_endline "=== AST ===";
+    print_endline (Ast.program_to_string ast);
+    print_endline "";
+    print_endline (Printf.sprintf "=== Parsed %d statement(s) ===" (List.length ast))
+  with 
+  | Lexer.LexerError err ->
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
+      err.position.line
+      err.position.column
+      err.message;
+    exit 1
+  | Parser.ParseError err ->
+    Printf.eprintf "%s\n" (Parser.format_error err);
+    exit 1
+
 let () =
   let args = Array.to_list Sys.argv |> List.tl in
   
@@ -56,7 +76,6 @@ let () =
     print_endline usage
   
   | ["--lex"] ->
-    (* Read from stdin *)
     let input = read_stdin () in
     run_lexer input
   
@@ -64,16 +83,24 @@ let () =
     let input = read_file filename in
     run_lexer input
   
-  | [filename] ->
-    (* Default: just lex for now *)
+  | ["--parse"] ->
+    let input = read_stdin () in
+    run_parser input
+  
+  | ["--parse"; filename] ->
     let input = read_file filename in
-    run_lexer input
+    run_parser input
+  
+  | [filename] ->
+    (* Default: parse *)
+    let input = read_file filename in
+    run_parser input
   
   | [] ->
     (* Interactive mode - read from stdin *)
     print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
     let input = read_stdin () in
-    run_lexer input
+    run_parser input
   
   | _ ->
     prerr_endline usage;
