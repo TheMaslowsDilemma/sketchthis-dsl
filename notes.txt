@@ -8,34 +8,66 @@ gcode for the uunatek to draw. ideally this allows language
 models to efficiently describe images instead of just directly
 generating gcode. this hopefully will help the llms to build
 abstractions about the art, which after compilation can be 
-expanded into complex gcode, similar to how high level cs
-languages can express complex ideas with minimal code.
+expanded into immense gcode, similar to how high level cs
+languages can express complex ideas with minimal code and be
+expanded into asm or bytecode.
 
-the language must be similar enough to english to take advantage
-of llms understanding of that syntax. this means we need to
-build in primitives and functions that can be expressed like
-english.
+the language must be similar enough to english and popular 
+programming languages to take advantage of what they were 
+trained on.
 
 for example we could describe a curve, compiled to bezier curve,
-as "curve from (x1, y1) to (x2, y2) through (x3, y3) and (x4, y4)"
-this would parsed and path optimized to produce many gcode commands
+as "some_curve : sketch = curve from p0 to p1 through p3 and p4"
+sketches can be sent to the "draw" command which adds the lines
+to canvas "draw some_curve". when a program is finished running
+the canvas is then path optimized and translated into g-code.
 
---- language ideas ---
-we need to have an easy way to describe:
-	- symmetries
-	- rotations
-	- relative positioning
-	- repetitions
+--- Language Ideas --
+we need to have an easy way to describe primitives, transformations
+and identifiers.
+
+**types**
+	- number : float
+	- vec2 : (x, y) : float * float
+	- sketch : primitive | transformed sketch | list of sketch 
+
+
+**primitives**
+	- dot : vec2 ---> compiled this to a small circle
+	- hdash : vec2 --> compiled this to very short horizontal line
+	- vdash : vec2 --> compiled this to very short verticle line
+
+	- line : (p0, p1) : vec2 * vec2
+	- curve : (p0, through, p1) : vec2 * list vec2 * vec2
+		--> this is like a quadratic bezier curve
+	- arc : (center, radius, a0, a1) : vec2 * vec2 * float * float
+		--> this can be an oval, circle, somewhere in between depending on radius
+		    and angle0 / angle1
+
+**functions**
 	- scaling
+	- rotations
+	- re-positioning: relative to statement "S relative to p0" with p0 a point
+	- repetitions: 
+	- symmetries
 	- bounding --> compile time bounds to verify
-	- groups of paths --> we want to be able to write groups
-	  repeatedly, or apply transformations to them etc.
 
-expressions, when fully evaluated, should result in appending
-primitives to the final canvas, these primitives can then be
-translated into GCode. ideally we have enough abstractions
-available in the grammar to allow for complex paintings, but we 
-want it pretty minimal for language models.
+functions take **types** as inputs. they can be partially applied like how
+Ocaml allows for partial application of functions and can be given names.
+
+if we can build modularization into the language that would be
+very helpful too. for example if the language allows an identifier
+to capture an expression, say were building a image of a person and
+we say
+
+"face : sketch = symmetric along y_axis half_face"
+then "face" becomes an identifier that can later be rotated, translated,
+scaled, or applied in many places, because it is evaluated as a sketch.
+
+this would allow claude to divide and conquer the painting. it would
+need to account for how the parts at lower levels interact when brought
+together, for example, if a "face" was combined with "sunglasses"
+although maybe thats not the right way to think of it.
 
 --- examples of expressions ---
 
@@ -57,10 +89,13 @@ want it pretty minimal for language models.
 	- A is an <expr> C is a <vector>
 
 
---- language specification ---
+
+--- Language Specification ---
 
 
+--- Lexer ---
+id like to start with the lexer and be able to show the output
+from an input program.
 
 
---- Abstract Syntax Tree ---
 

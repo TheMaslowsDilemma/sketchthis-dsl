@@ -1,0 +1,32 @@
+# Example: Simple face drawing
+# This demonstrates the Sketch DSL syntax
+
+# Define some base points
+let origin : vec2 = (0, 0)
+let p1 : vec2 = (10, 0)
+let p2 : vec2 = (5, 8)
+
+# Draw a simple triangle outline
+let triangle : sketch = line from origin to p1
+let side2 : sketch = line from p1 to p2
+let side3 : sketch = line from p2 to origin
+
+# A curve example
+let smile : sketch = curve from (-3, -2) to (3, -2) through (0, -4)
+
+# Create a symmetric pattern
+let half_pattern : sketch = line from (0, 0) to (5, 5)
+let full_pattern : sketch = symmetric along y_axis half_pattern
+
+# Repeat a dot pattern
+let dot_row : sketch = repeat dot at (0, 0) along (1, 0) 10 times
+
+# Scale and position
+let big_pattern : sketch = scale full_pattern by 2.0
+
+# Draw everything
+draw triangle
+draw side2
+draw side3
+draw smile
+draw big_pattern
