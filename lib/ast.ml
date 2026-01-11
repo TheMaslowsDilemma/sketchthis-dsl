@@ -23,8 +23,12 @@ type num_expr =
 (** Vector expression - evaluates to a vec2 *)
 type vec_expr =
   | VecLit of float * float           (* Literal: (1.0, 2.0) *)
+  | VecConstruct of num_expr * num_expr (* Constructed: (expr, expr) *)
   | VecVar of string                  (* Variable reference *)
   | VecCenter of sketch_expr          (* "center of <sketch>" *)
+  | VecAdd of vec_expr * vec_expr     (* v1 + v2 *)
+  | VecSub of vec_expr * vec_expr     (* v1 - v2 *)
+  | VecScale of vec_expr * num_expr   (* v * scalar *)
 
 (** Sketch primitives *)
 and primitive =
@@ -37,9 +41,11 @@ and primitive =
 
 (** Axis for symmetry operations *)
 and axis =
-  | XAxis
-  | YAxis
-  | CustomAxis of vec_expr * vec_expr  (* axis defined by two points *)
+  | XAxis                             (* x_axis at y=0 *)
+  | YAxis                             (* y_axis at x=0 *)
+  | XAxisAt of num_expr               (* x_axis at y=value *)
+  | YAxisAt of num_expr               (* y_axis at x=value *)
+  | CustomAxis of vec_expr * vec_expr (* axis defined by two points *)
 
 (** Sketch expression - the main drawing type *)
 and sketch_expr =
@@ -92,12 +98,19 @@ let rec vec_expr_to_string = function
   | VecLit (x, y) -> 
     let fmt f = if Float.is_integer f then Printf.sprintf "%.0f" f else Printf.sprintf "%g" f in
     Printf.sprintf "(%s, %s)" (fmt x) (fmt y)
+  | VecConstruct (x, y) ->
+    Printf.sprintf "(%s, %s)" (num_expr_to_string x) (num_expr_to_string y)
   | VecVar s -> s
   | VecCenter sk -> Printf.sprintf "center of %s" (sketch_expr_to_string sk)
+  | VecAdd (a, b) -> Printf.sprintf "(%s + %s)" (vec_expr_to_string a) (vec_expr_to_string b)
+  | VecSub (a, b) -> Printf.sprintf "(%s - %s)" (vec_expr_to_string a) (vec_expr_to_string b)
+  | VecScale (v, n) -> Printf.sprintf "(%s * %s)" (vec_expr_to_string v) (num_expr_to_string n)
 
 and axis_to_string = function
   | XAxis -> "x_axis"
   | YAxis -> "y_axis"
+  | XAxisAt n -> Printf.sprintf "x_axis at %s" (num_expr_to_string n)
+  | YAxisAt n -> Printf.sprintf "y_axis at %s" (num_expr_to_string n)
   | CustomAxis (p1, p2) -> 
     Printf.sprintf "axis(%s, %s)" (vec_expr_to_string p1) (vec_expr_to_string p2)
 

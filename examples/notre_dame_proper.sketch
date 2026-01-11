@@ -1,0 +1,290 @@
+-- Notre Dame Cathedral - Isometric Aerial View
+-- Using proper sketch language: variables, groups, transformations, symmetry
+
+-- ============================================
+-- VARIABLES - Measurements and positions
+-- ============================================
+
+let tower_width : number = 35
+let tower_depth : number = 20
+let tower_height : number = 60
+
+let nave_length : number = 200
+let nave_width : number = 30
+let nave_height : number = 40
+
+let transept_width : number = 40
+let transept_depth : number = 60
+
+let spire_height : number = 70
+let spire_base_size : number = 10
+
+let iso_angle : number = 30
+
+-- Positions
+let origin_x : number = 150
+let origin_y : number = 150
+
+-- ============================================
+-- SINGLE TOWER - Build once, reuse with symmetry
+-- ============================================
+
+-- Tower base (isometric cube)
+let tower_base_front : sketch = line from (0, 0) to (tower_width, 0)
+let tower_base_right : sketch = line from (tower_width, 0) to (tower_width + tower_depth/2, -tower_depth/2)
+let tower_base_back : sketch = line from (tower_width + tower_depth/2, -tower_depth/2) to (tower_depth/2, -tower_depth/2)
+let tower_base_left : sketch = line from (tower_depth/2, -tower_depth/2) to (0, 0)
+
+-- Tower vertical edges
+let tower_vert_fl : sketch = line from (0, 0) to (0, -tower_height)
+let tower_vert_fr : sketch = line from (tower_width, 0) to (tower_width, -tower_height)
+let tower_vert_br : sketch = line from (tower_width + tower_depth/2, -tower_depth/2) to (tower_width + tower_depth/2, -tower_height - tower_depth/2)
+let tower_vert_bl : sketch = line from (tower_depth/2, -tower_depth/2) to (tower_depth/2, -tower_height - tower_depth/2)
+
+-- Tower top
+let tower_top_front : sketch = line from (0, -tower_height) to (tower_width, -tower_height)
+let tower_top_right : sketch = line from (tower_width, -tower_height) to (tower_width + tower_depth/2, -tower_height - tower_depth/2)
+let tower_top_back : sketch = line from (tower_width + tower_depth/2, -tower_height - tower_depth/2) to (tower_depth/2, -tower_height - tower_depth/2)
+let tower_top_left : sketch = line from (tower_depth/2, -tower_height - tower_depth/2) to (0, -tower_height)
+
+-- Windows - create one, repeat it
+let window_arch : sketch = arc center (0, 0) (4, 6) from 180 to 360
+let window_left_side : sketch = line from (-4, 0) to (-4, -6)
+let window_right_side : sketch = line from (4, 0) to (4, -6)
+
+let single_window : sketch = [window_arch, window_left_side, window_right_side]
+
+let tower_win1 : sketch = translate single_window by (tower_width * 0.3, -tower_height * 0.4)
+let tower_win2 : sketch = translate single_window by (tower_width * 0.7, -tower_height * 0.4)
+let tower_win3 : sketch = translate single_window by (tower_width * 0.3, -tower_height * 0.65)
+let tower_win4 : sketch = translate single_window by (tower_width * 0.7, -tower_height * 0.65)
+
+-- Battlements - create pattern and repeat
+let single_battlement : sketch = line from (0, 0) to (0, -6)
+let batt1 : sketch = translate single_battlement by (5, -tower_height)
+let batt2 : sketch = translate single_battlement by (12, -tower_height)
+let batt3 : sketch = translate single_battlement by (19, -tower_height)
+let batt4 : sketch = translate single_battlement by (26, -tower_height)
+let batt5 : sketch = translate single_battlement by (33, -tower_height)
+
+let battlements : sketch = [batt1, batt2, batt3, batt4, batt5]
+
+-- Combine all tower elements into one group
+let single_tower : sketch = [ tower_base_front, tower_base_right, tower_base_back, tower_base_left, tower_vert_fl, tower_vert_fr, tower_vert_br, tower_vert_bl,
+    tower_top_front, tower_top_right, tower_top_back, tower_top_left,
+    tower_win1, tower_win2, tower_win3, tower_win4,
+    battlements ]
+
+-- Create north and south towers using translation
+let north_tower : sketch = translate single_tower by (40, origin_y - nave_width/2 - tower_depth/2)
+let south_tower : sketch = translate single_tower by (40, origin_y + nave_width/2 + tower_depth/2)
+
+-- ============================================
+-- NAVE - Main body with isometric perspective
+-- ============================================
+
+-- North wall
+let nave_n_bottom : sketch = line from (80, origin_y - nave_width/2) to (80 + nave_length, origin_y - nave_width/2)
+let nave_n_top : sketch = line from (80, origin_y - nave_width/2 - nave_height) to (80 + nave_length, origin_y - nave_width/2 - nave_height)
+let nave_n_left : sketch = line from (80, origin_y - nave_width/2) to (80, origin_y - nave_width/2 - nave_height)
+let nave_n_right : sketch = line from (80 + nave_length, origin_y - nave_width/2) to (80 + nave_length, origin_y - nave_width/2 - nave_height)
+
+-- South wall  
+let nave_s_bottom : sketch = line from (80, origin_y + nave_width/2) to (80 + nave_length, origin_y + nave_width/2)
+let nave_s_top : sketch = line from (80, origin_y + nave_width/2 - nave_height) to (80 + nave_length, origin_y + nave_width/2 - nave_height)
+let nave_s_left : sketch = line from (80, origin_y + nave_width/2) to (80, origin_y + nave_width/2 - nave_height)
+let nave_s_right : sketch = line from (80 + nave_length, origin_y + nave_width/2) to (80 + nave_length, origin_y + nave_width/2 - nave_height)
+
+-- Roof peak
+let roof_height : number = 15
+let roof_ridge : sketch = line from (80, origin_y - roof_height) to (80 + nave_length, origin_y - roof_height)
+let roof_n_slope : sketch = line from (80, origin_y - roof_height) to (80, origin_y - nave_width/2 - nave_height)
+let roof_s_slope : sketch = line from (80, origin_y - roof_height) to (80, origin_y + nave_width/2 - nave_height)
+let roof_back_n : sketch = line from (80 + nave_length, origin_y - roof_height) to (80 + nave_length, origin_y - nave_width/2 - nave_height)
+let roof_back_s : sketch = line from (80 + nave_length, origin_y - roof_height) to (80 + nave_length, origin_y + nave_width/2 - nave_height)
+
+-- Roof panels - create one vertical line and repeat
+let roof_panel : sketch = line from (0, origin_y - nave_width/2 - nave_height) to (0, origin_y + nave_width/2 - nave_height)
+let panel1 : sketch = translate roof_panel by (110, 0)
+let panel2 : sketch = translate roof_panel by (140, 0)
+let panel3 : sketch = translate roof_panel by (170, 0)
+let panel4 : sketch = translate roof_panel by (200, 0)
+let panel5 : sketch = translate roof_panel by (230, 0)
+let panel6 : sketch = translate roof_panel by (260, 0)
+
+let roof_panels : sketch = [panel1, panel2, panel3, panel4, panel5, panel6]
+
+let nave : sketch = [ nave_n_bottom, nave_n_top, nave_n_left, nave_n_right,
+    nave_s_bottom, nave_s_top, nave_s_left, nave_s_right,
+    roof_ridge, roof_n_slope, roof_s_slope, roof_back_n, roof_back_s,
+    roof_panels ]
+
+-- ============================================
+-- TRANSEPT - Build one arm, use symmetry
+-- ============================================
+
+let trans_x : number = 215
+
+-- North transept arm
+let trans_n_west : sketch = line from (trans_x, origin_y - nave_width/2) to (trans_x, origin_y - nave_width/2 - transept_depth)
+let trans_n_east : sketch = line from (trans_x + transept_width, origin_y - nave_width/2) to (trans_x + transept_width, origin_y - nave_width/2 - transept_depth)
+let trans_n_end : sketch = line from (trans_x, origin_y - nave_width/2 - transept_depth) to (trans_x + transept_width, origin_y - nave_width/2 - transept_depth)
+
+-- Transept roof
+let trans_roof_height : number = 25
+let trans_n_peak_x : number = trans_x + transept_width/2
+let trans_n_peak_y : number = origin_y - nave_width/2 - transept_depth/2 - trans_roof_height
+
+let trans_n_roof_w : sketch = line from (trans_x, origin_y - nave_width/2 - nave_height) to (trans_n_peak_x, trans_n_peak_y)
+let trans_n_roof_e : sketch = line from (trans_x + transept_width, origin_y - nave_width/2 - nave_height) to (trans_n_peak_x, trans_n_peak_y)
+let trans_n_ridge : sketch = line from (trans_n_peak_x, trans_n_peak_y) to (trans_n_peak_x, origin_y - nave_width/2 - transept_depth)
+
+-- Rose window
+let rose_n : sketch = arc center (trans_n_peak_x, origin_y - nave_width/2 - transept_depth + 15) (10, 10) from 0 to 360
+let rose_n_inner : sketch = arc center (trans_n_peak_x, origin_y - nave_width/2 - transept_depth + 15) (6, 6) from 0 to 360
+let rose_n_center : sketch = arc center (trans_n_peak_x, origin_y - nave_width/2 - transept_depth + 15) (2, 2) from 0 to 360
+
+let north_transept : sketch = [ trans_n_west, trans_n_east, trans_n_end,
+    trans_n_roof_w, trans_n_roof_e, trans_n_ridge,
+    rose_n, rose_n_inner, rose_n_center ]
+
+-- South transept - mirror of north using symmetric
+let south_transept : sketch = symmetric north_transept along x_axis at origin_y
+
+-- ============================================
+-- CENTRAL SPIRE
+-- ============================================
+
+let spire_x : number = trans_x + transept_width/2
+let spire_y : number = origin_y
+
+-- Octagonal base
+let spire_base : sketch = arc center (spire_x, spire_y - nave_height - 5) (spire_base_size, spire_base_size * 0.6) from 0 to 360
+
+-- Spire edges converging to peak
+let spire_peak_x : number = spire_x
+let spire_peak_y : number = spire_y - nave_height - spire_height
+
+let spire_edge_nw : sketch = line from (spire_x - spire_base_size * 0.7, spire_y - nave_height - 8) to (spire_peak_x, spire_peak_y)
+let spire_edge_n : sketch = line from (spire_x - spire_base_size * 0.4, spire_y - nave_height - 10) to (spire_peak_x, spire_peak_y)
+let spire_edge_ne : sketch = line from (spire_x + spire_base_size * 0.4, spire_y - nave_height - 10) to (spire_peak_x, spire_peak_y)
+let spire_edge_e : sketch = line from (spire_x + spire_base_size * 0.7, spire_y - nave_height - 8) to (spire_peak_x, spire_peak_y)
+let spire_edge_se : sketch = line from (spire_x + spire_base_size * 0.5, spire_y - nave_height - 5) to (spire_peak_x, spire_peak_y)
+let spire_edge_s : sketch = line from (spire_x, spire_y - nave_height - 3) to (spire_peak_x, spire_peak_y)
+
+-- Decorative rings - create one, repeat at different heights
+let spire_ring : sketch = arc center (0, 0) (8, 5) from 0 to 360
+let ring1 : sketch = translate spire_ring by (spire_x, spire_y - nave_height - 20)
+let ring2 : sketch = translate spire_ring by (spire_x, spire_y - nave_height - 35)
+let ring3 : sketch = translate spire_ring by (spire_x, spire_y - nave_height - 50)
+
+-- Cross at top
+let cross_vert : sketch = line from (spire_peak_x, spire_peak_y) to (spire_peak_x, spire_peak_y - 12)
+let cross_horiz : sketch = line from (spire_peak_x - 4, spire_peak_y - 6) to (spire_peak_x + 4, spire_peak_y - 6)
+
+let central_spire : sketch = [ spire_base,
+    spire_edge_nw, spire_edge_n, spire_edge_ne, spire_edge_e, spire_edge_se, spire_edge_s,
+    ring1, ring2, ring3,
+    cross_vert, cross_horiz ]
+
+-- ============================================
+-- APSE - Semicircular eastern end
+-- ============================================
+
+let apse_center_x : number = 80 + nave_length
+let apse_radius : number = 35
+
+-- Multiple arcs for depth
+let apse_outer : sketch = arc center (apse_center_x, origin_y) (apse_radius, apse_radius * 0.6) from -90 to 90
+let apse_mid : sketch = arc center (apse_center_x, origin_y - 10) (apse_radius, apse_radius * 0.6) from -90 to 90
+let apse_inner : sketch = arc center (apse_center_x, origin_y - 20) (apse_radius, apse_radius * 0.6) from -90 to 90
+
+-- Radiating chapels - small bumps
+let chapel_size : number = 8
+let chapel1 : sketch = arc center (apse_center_x + 30, origin_y - 15) (chapel_size, chapel_size * 0.7) from -30 to 120
+let chapel2 : sketch = arc center (apse_center_x + 33, origin_y) (chapel_size, chapel_size * 0.7) from -45 to 105
+let chapel3 : sketch = arc center (apse_center_x + 30, origin_y + 15) (chapel_size, chapel_size * 0.7) from -60 to 90
+
+-- Apse roof (conical/radiating lines)
+let apse_peak_x : number = apse_center_x + 10
+let apse_peak_y : number = origin_y - 35
+
+let apse_roof1 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x, origin_y - 20)
+let apse_roof2 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x + 25, origin_y - 28)
+let apse_roof3 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x + 35, origin_y - 15)
+let apse_roof4 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x + 35, origin_y + 15)
+let apse_roof5 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x + 25, origin_y + 28)
+let apse_roof6 : sketch = line from (apse_peak_x, apse_peak_y) to (apse_center_x, origin_y + 20)
+
+let apse : sketch = [ apse_outer, apse_mid, apse_inner,
+    chapel1, chapel2, chapel3,
+    apse_roof1, apse_roof2, apse_roof3, apse_roof4, apse_roof5, apse_roof6 ]
+
+-- ============================================
+-- FLYING BUTTRESSES - Create one, repeat
+-- ============================================
+
+-- Single buttress unit
+let butt_pier_base : sketch = line from (0, 0) to (6, 0)
+let butt_pier_top : sketch = line from (0, -25) to (6, -25)
+let butt_pier_left : sketch = line from (0, 0) to (0, -25)
+let butt_pier_right : sketch = line from (6, 0) to (6, -25)
+
+-- Flying arch
+let butt_arch : sketch = arc center (12, -15) (10, 6) from 90 to 180
+
+-- Pinnacle
+let butt_pinnacle : sketch = line from (3, -25) to (3, -32)
+let butt_pin_top : sketch = dot (3, -34)
+
+let single_buttress : sketch = [ butt_pier_base, butt_pier_top, butt_pier_left, butt_pier_right,
+    butt_arch, butt_pinnacle, butt_pin_top ]
+
+-- North side buttresses - repeat along the nave
+let butt_n1 : sketch = translate single_buttress by (120, origin_y - nave_width/2 - 10)
+let butt_n2 : sketch = translate single_buttress by (160, origin_y - nave_width/2 - 10)
+let butt_n3 : sketch = translate single_buttress by (200, origin_y - nave_width/2 - 10)
+
+-- South side buttresses - use symmetric
+let butt_s1 : sketch = symmetric butt_n1 along x_axis at origin_y
+let butt_s2 : sketch = symmetric butt_n2 along x_axis at origin_y
+let butt_s3 : sketch = symmetric butt_n3 along x_axis at origin_y
+
+let buttresses : sketch = [butt_n1, butt_n2, butt_n3, butt_s1, butt_s2, butt_s3]
+
+-- ============================================
+-- WESTERN FACADE - Rose window and portals
+-- ============================================
+
+let facade_rose : sketch = arc center (60, origin_y) (15, 15) from 0 to 360
+let facade_rose_inner : sketch = arc center (60, origin_y) (10, 10) from 0 to 360
+let facade_rose_center : sketch = arc center (60, origin_y) (4, 4) from 0 to 360
+
+-- Rose spokes
+let spoke1 : sketch = line from (60, origin_y) to (60, origin_y - 15)
+let spoke2 : sketch = line from (60, origin_y) to (75, origin_y)
+let spoke3 : sketch = line from (60, origin_y) to (60, origin_y + 15)
+let spoke4 : sketch = line from (60, origin_y) to (45, origin_y)
+
+-- Portal arches
+let portal1 : sketch = arc center (48, origin_y - 10) (6, 10) from 180 to 360
+let portal2 : sketch = arc center (60, origin_y) (8, 12) from 180 to 360
+let portal3 : sketch = arc center (72, origin_y + 10) (6, 10) from 180 to 360
+
+let western_facade : sketch = [ facade_rose, facade_rose_inner, facade_rose_center,
+    spoke1, spoke2, spoke3, spoke4,
+    portal1, portal2, portal3 ]
+
+-- ============================================
+-- ASSEMBLE AND DRAW EVERYTHING
+-- ============================================
+
+draw apse
+draw nave
+draw north_transept
+draw south_transept
+draw central_spire
+draw buttresses
+draw north_tower
+draw south_tower
+draw western_facade

@@ -165,10 +165,26 @@ let rec eval_num env (expr : num_expr) : float =
 let rec eval_vec env (expr : vec_expr) : point =
   match expr with
   | VecLit (x, y) -> point x y
+  | VecConstruct (x_expr, y_expr) ->
+    let x = eval_num env x_expr in
+    let y = eval_num env y_expr in
+    point x y
   | VecVar name -> lookup_vec name env
   | VecCenter sk -> 
     let ir = eval_sketch env sk in
     compute_center ir
+  | VecAdd (a, b) ->
+    let pa = eval_vec env a in
+    let pb = eval_vec env b in
+    point_add pa pb
+  | VecSub (a, b) ->
+    let pa = eval_vec env a in
+    let pb = eval_vec env b in
+    point_sub pa pb
+  | VecScale (v, n) ->
+    let pv = eval_vec env v in
+    let s = eval_num env n in
+    point_scale pv s
 
 (** Compute the center (centroid) of an IR *)
 and compute_center (ir : ir) : point =
@@ -343,8 +359,20 @@ and eval_repeat env sk v n =
 and eval_symmetric env sk ax =
   let ir = eval_sketch env sk in
   let reflected = match ax with
-    | XAxis -> transform_ir point_reflect_y ir
-    | YAxis -> transform_ir point_reflect_x ir
+    | XAxis -> 
+      (* Reflect across x-axis (y=0): negate y coordinates *)
+      transform_ir point_reflect_y ir
+    | YAxis -> 
+      (* Reflect across y-axis (x=0): negate x coordinates *)
+      transform_ir point_reflect_x ir
+    | XAxisAt pos_expr ->
+      (* Reflect across horizontal line y=pos *)
+      let pos = eval_num env pos_expr in
+      transform_ir (fun p -> { x = p.x; y = 2.0 *. pos -. p.y }) ir
+    | YAxisAt pos_expr ->
+      (* Reflect across vertical line x=pos *)
+      let pos = eval_num env pos_expr in
+      transform_ir (fun p -> { x = 2.0 *. pos -. p.x; y = p.y }) ir
     | CustomAxis (v1, v2) ->
       let p1 = eval_vec env v1 in
       let p2 = eval_vec env v2 in

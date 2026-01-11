@@ -1,12 +1,5 @@
-(***
-  Resources:
-  1. claude
-  2. https://web.stanford.edu/class/cs143/lectures/lecture03.pdf
-  3. https://web.stanford.edu/class/cs143/lectures/lecture04.pdf
-  4. dragon book from a few years ago
-***)
-
 (* Sketch DSL Lexer *)
+(* Tokenizes the Sketch DSL language for art description *)
 
 (** Token types for the Sketch DSL *)
 type token =
@@ -46,6 +39,7 @@ type token =
   | INSIDE                   (* "inside" *)
   | CENTER                   (* "center" *)
   | OF                       (* "of" *)
+  | AT                       (* "at" *)
   
   (* Keywords - Commands *)
   | DRAW                     (* "draw" *)
@@ -63,6 +57,10 @@ type token =
   | COMMA                    (* "," *)
   | LBRACKET                 (* "[" *)
   | RBRACKET                 (* "]" *)
+  | PLUS                     (* "+" *)
+  | MINUS                    (* "-" *)
+  | STAR                     (* "*" *)
+  | SLASH                    (* "/" *)
   
   (* Special *)
   | NEWLINE                  (* End of statement *)
@@ -97,6 +95,7 @@ let token_to_string = function
   | INSIDE -> "INSIDE"
   | CENTER -> "CENTER"
   | OF -> "OF"
+  | AT -> "AT"
   | DRAW -> "DRAW"
   | LET -> "LET"
   | X_AXIS -> "X_AXIS"
@@ -108,6 +107,10 @@ let token_to_string = function
   | COMMA -> "COMMA"
   | LBRACKET -> "LBRACKET"
   | RBRACKET -> "RBRACKET"
+  | PLUS -> "PLUS"
+  | MINUS -> "MINUS"
+  | STAR -> "STAR"
+  | SLASH -> "SLASH"
   | NEWLINE -> "NEWLINE"
   | EOF -> "EOF"
 
@@ -251,6 +254,7 @@ let keywords = [
   ("inside", INSIDE);
   ("center", CENTER);
   ("of", OF);
+  ("at", AT);
   
   (* Commands *)
   ("draw", DRAW);
@@ -343,10 +347,14 @@ let next_token lexer : located_token =
       | ',' -> advance lexer; COMMA
       | '[' -> advance lexer; LBRACKET
       | ']' -> advance lexer; RBRACKET
+      | '+' -> advance lexer; PLUS
+      | '*' -> advance lexer; STAR
+      | '/' -> advance lexer; SLASH
       
-      (* Numbers (including negative) *)
+      (* Minus can be operator or start of negative number *)
       | '-' when Option.map is_digit (peek_ahead lexer 1) = Some true ->
         read_number lexer
+      | '-' -> advance lexer; MINUS
       | '0'..'9' ->
         read_number lexer
       

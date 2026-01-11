@@ -125,12 +125,14 @@ let run_gcode ?(show_stats=false) input =
     Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
     exit 1
 
-let run_svg input =
+let run_svg input output_filepath =
   try
     let ast = Parser.parse input in
     let ir = Compiler.compile ast in
     let svg = Gcode.generate_svg ir in
-    print_endline svg
+    let oc = open_out output_filepath in
+    Printf.fprintf oc "%s" svg;
+    close_out oc
   with 
   | Lexer.LexerError err ->
     Printf.eprintf "Lexer error at line %d, column %d: %s\n"
@@ -215,14 +217,13 @@ let () =
     let input = read_file filename in
     run_gcode input
   
-  | ["--svg"] ->
+  | ["--svg"; "-o"; output_path] ->
     let input = read_stdin () in
-    run_svg input
+    run_svg input output_path
   
-  | ["--svg"; filename] ->
+  | ["--svg"; "-i"; filename; "-o"; output_path ] ->
     let input = read_file filename in
-    run_svg input
-  
+    run_svg input output_path
   | ["--uunatek"] ->
     let input = read_stdin () in
     run_uunatek input

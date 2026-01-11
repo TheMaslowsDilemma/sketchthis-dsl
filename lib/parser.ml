@@ -113,6 +113,41 @@ let parse_type_annotation p =
 
 (** Parse a numeric expression (simple for now - just literals and variables) *)
 let rec parse_num_expr p : num_expr =
+  parse_num_additive p
+
+and parse_num_additive p : num_expr =
+  let left = parse_num_multiplicative p in
+  parse_num_additive_rest p left
+
+and parse_num_additive_rest p left : num_expr =
+  match peek p with
+  | PLUS ->
+    advance p;
+    let right = parse_num_multiplicative p in
+    parse_num_additive_rest p (NumAdd (left, right))
+  | MINUS ->
+    advance p;
+    let right = parse_num_multiplicative p in
+    parse_num_additive_rest p (NumSub (left, right))
+  | _ -> left
+
+and parse_num_multiplicative p : num_expr =
+  let left = parse_num_atom p in
+  parse_num_multiplicative_rest p left
+
+and parse_num_multiplicative_rest p left : num_expr =
+  match peek p with
+  | STAR ->
+    advance p;
+    let right = parse_num_atom p in
+    parse_num_multiplicative_rest p (NumMul (left, right))
+  | SLASH ->
+    advance p;
+    let right = parse_num_atom p in
+    parse_num_multiplicative_rest p (NumDiv (left, right))
+  | _ -> left
+
+and parse_num_atom p : num_expr =
   match peek p with
   | NUMBER f ->
     advance p;
@@ -120,6 +155,10 @@ let rec parse_num_expr p : num_expr =
   | IDENT s ->
     advance p;
     NumVar s
+  | MINUS ->
+    advance p;
+    let e = parse_num_atom p in
+    NumNeg e
   | LPAREN ->
     advance p;
     let expr = parse_num_expr p in
@@ -127,17 +166,51 @@ let rec parse_num_expr p : num_expr =
     expr
   | _ -> expected_error (current p) "numeric expression"
 
-(** Parse a vector expression *)
+(** Parse a vector expression with arithmetic *)
 and parse_vec_expr p : vec_expr =
+  parse_vec_additive p
+
+and parse_vec_additive p : vec_expr =
+  let left = parse_vec_multiplicative p in
+  parse_vec_additive_rest p left
+
+and parse_vec_additive_rest p left : vec_expr =
   match peek p with
-  (* Literal vector: (x, y) *)
+  | PLUS ->
+    advance p;
+    let right = parse_vec_multiplicative p in
+    parse_vec_additive_rest p (VecAdd (left, right))
+  | MINUS ->
+    advance p;
+    let right = parse_vec_multiplicative p in
+    parse_vec_additive_rest p (VecSub (left, right))
+  | _ -> left
+
+and parse_vec_multiplicative p : vec_expr =
+  let left = parse_vec_atom p in
+  parse_vec_multiplicative_rest p left
+
+and parse_vec_multiplicative_rest p left : vec_expr =
+  match peek p with
+  | STAR ->
+    advance p;
+    let right = parse_num_atom p in
+    parse_vec_multiplicative_rest p (VecScale (left, right))
+  | _ -> left
+
+and parse_vec_atom p : vec_expr =
+  match peek p with
+  (* Vector construction: (expr, expr) *)
   | LPAREN ->
     advance p;
-    let x = parse_number p in
+    let x = parse_num_expr p in
     expect p COMMA ",";
-    let y = parse_number p in
+    let y = parse_num_expr p in
     expect p RPAREN ")";
-    VecLit (x, y)
+    (* Optimize: if both are literals, use VecLit *)
+    (match (x, y) with
+     | (NumLit fx, NumLit fy) -> VecLit (fx, fy)
+     | _ -> VecConstruct (x, y))
   
   (* "center of <sketch>" *)
   | CENTER ->
@@ -156,8 +229,24 @@ and parse_vec_expr p : vec_expr =
 (** Parse an axis specification *)
 and parse_axis p : axis =
   match peek p with
-  | X_AXIS -> advance p; XAxis
-  | Y_AXIS -> advance p; YAxis
+  | X_AXIS -> 
+    advance p;
+    (* Check for optional 'at' clause *)
+    if check p AT then begin
+      advance p;
+      let pos = parse_num_expr p in
+      XAxisAt pos
+    end else
+      XAxis
+  | Y_AXIS -> 
+    advance p;
+    (* Check for optional 'at' clause *)
+    if check p AT then begin
+      advance p;
+      let pos = parse_num_expr p in
+      YAxisAt pos
+    end else
+      YAxis
   | _ -> 
     (* Custom axis: from p1 to p2 *)
     let p1 = parse_vec_expr p in
