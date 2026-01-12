@@ -126,7 +126,7 @@ Update Jan 11.
 https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf
 
 ---Stuff to Read---
-https://www.codeproject.com/articles
+https://www.codeproject.com/articles/Draw-a-Smooth-Curve-through-a-Set-of-2D-Points-wit#comments-section
 https://en.wikipedia.org/wiki/Catmull–Rom_spline
 https://people.computing.clemson.edu/~dhouse/courses/405/notes/splines.pdf
 
@@ -141,8 +141,6 @@ rather than just trying to mechanically copy an image.
 i will likely end up re-writing a lot of the language but this
 is a good starting point. id like to improve the symmetry function
 
-
-
 -Symmetry Thoughts-
 https://en.wikipedia.org/wiki/Symmetry
 we need to be more concise with our language around "symmetry"
@@ -150,13 +148,13 @@ there are many kinds of symmetry we can employ { radial, bilateral,
 square, etc. } we should allow that sort of expressions and not just
 say "symmetry".
 
-
-primitive types:
+primitive types
 	- axis: vec2 * vec2 <position> <direction>  -- there should be
            some defaults here namely x_axis and y_axis.
 	- spline: <vec2> * <vec2> * []vec2 (start point, endpoint, control points)
 		--> this should be compiled to a cat
 	- point: vec2
+	- 
 		--> a built in 
 
 keywords:
@@ -164,5 +162,60 @@ keywords:
 	- repeat <sketch at <[]point>
 	- reflection <sketch> along <spline | axis>
 	- rotational <sketch> about <point> 
-	- 
 
+-----------------------------------------------------------
+Jan 12.
+-----------------------------------------------------------
+
+---- READINGS
+https://www.angusj.com/clipper2/Docs/Overview.htm
+https://linuxcnc.org/docs/html/gcode/g-code.html
+----
+
+-- exactness in drawing --
+I thought a bit more about how an artist can form an sketch
+and there are varying levels of exactness they apply to each
+stroke. For example they may be very light and quick and not
+so exact with their strokes in the beginning, but come back
+and be more exact and less quick when they are adding detail.
+there should be a way to express this easily, so many strokes
+can be grouped together in a "draw" statement, but maybe we
+require that the exactness or intent be specified as well.
+i'll need to come up with the correct words to describe the
+parameters of the different levels of exactness... but under
+the hood it is pretty simple, that the positions can have
+noise applied to them, and the gcode can specify faster or
+slower motor speeds.
+
+-- drafting --
+an artist probably does not one shot all their paintings, and
+they probably do many drafts before presenting their final
+version. this maybe something that can be worked into the language
+will more likely end up as a system, aside from the language.
+a controlled loop where the LLM can have drafts (image + code)
+and can iterate on their current draft with an adversary who
+critiques that draft.
+
+-- refine the language --
+lets have three sketch primitives, namely dots, dashes, and strokes.
+sketches are simply compositions of these primitives. we must also
+sketches are really an array of primitives, or an array of sketches,
+or an empty array. the language allows for vec2 and arithmetic such
+as adding and subtracting and scaling. we can infer points from a
+stroke, say we want a point on a stroke. since we have a start and
+end point and a way to calculate that point during compilation.
+
+-- level of detail --
+llms should express intention from a birds eye view and express
+precision on small areas of work. it should allow information to
+be passed down to workers at small levels, but at the same time
+bring information back up the tree to orchestration. we need to
+make abstractions avaiable, ways to extract information about a
+sketch that is meaningfull, something like meta information. a
+couple examples: center of mass calculation, convex to concave
+shape decomposition; spatial positioning.
+
+-- optimizing gcode --
+when we introduce the stroke type, we should compile it optimally.
+we can take advantage of gcodes ability to accept arcs and cubic
+splines!
