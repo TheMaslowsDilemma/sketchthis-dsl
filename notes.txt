@@ -2,7 +2,8 @@
 Sketch DSL
 -----------------------------------------------------------
 
---- goal ---
+
+--- GOAL ---
 a domain specific language for art which can be compiled to
 gcode for the uunatek to draw. ideally this allows language
 models to efficiently describe images instead of just directly
@@ -11,6 +12,11 @@ abstractions about the art, which after compilation can be
 expanded into immense gcode, similar to how high level cs
 languages can express complex ideas with minimal code and be
 expanded into asm or bytecode.
+
+
+-----------------------------------------------------------
+Jan. 10 2026
+-----------------------------------------------------------
 
 the language must be similar enough to english and popular 
 programming languages to take advantage of what they were 
@@ -22,7 +28,7 @@ sketches can be sent to the "draw" command which adds the lines
 to canvas "draw some_curve". when a program is finished running
 the canvas is then path optimized and translated into g-code.
 
---- Language Ideas --
+--- IDEAS --
 we need to have an easy way to describe primitives, transformations
 and identifiers.
 
@@ -69,7 +75,7 @@ need to account for how the parts at lower levels interact when brought
 together, for example, if a "face" was combined with "sunglasses"
 although maybe thats not the right way to think of it.
 
---- examples of expressions ---
+--- EXAMPLES ---
 
 "relative to center of D curve from A to B through C"
 	- this shows the "center of <expr>" expression which itself
@@ -88,17 +94,13 @@ although maybe thats not the right way to think of it.
 "scale A by 2.5 along C"
 	- A is an <expr> C is a <vector>
 
---- Notes on UUNATEK ---
-our current machine is the A3 pen plotter. they ship it with what is
-likely an arduino or esp32 running Grbl. you can connect it to your
-computer without needing any of their software (its a bit sketchy (; )
 
-on Mac for example you can just connect the usb and check your /dev/ ports
+--- MACHINE STATS ---
+on Mac we just connect the usb and check your /dev/ ports
 this particular machine shows up as `/dev/cu.usbserial-10` and it operates
-at 115200 baud rate.
+at 115200 baud rate. the micro controller is running GRBL.
+these are our stats, found by the "$$" command.
 
-Grbl Config ($$)
-[VER:3.0 UUNA TEK Plotter.<redacted serial number>]
 $22=0
 $21=0
 $20=1
@@ -119,60 +121,45 @@ $30=0
 ok
 
 -----------------------------------------------------------
-Update Jan 11.
+Jan. 11 2026
 -----------------------------------------------------------
 
---- Apology of mathmatician - G.H Hardy ---
+--- READINGS ---
 https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf
-
----Stuff to Read---
 https://www.codeproject.com/articles/Draw-a-Smooth-Curve-through-a-Set-of-2D-Points-wit#comments-section
 https://en.wikipedia.org/wiki/Catmull–Rom_spline
 https://people.computing.clemson.edu/~dhouse/courses/405/notes/splines.pdf
+https://en.wikipedia.org/wiki/Symmetry
 
---- Thoughts ---
+
+--- GENERAL THOUGHTS ---
 claude is able to read and understand the language specification
 and use it to describe images. it does not perform as well
 as intended. my hypothesis is that we need better, hand crafted
 examples of the language. there needs to be examples of best
 practices and how the language can be used to express intention
 rather than just trying to mechanically copy an image.
-
 i will likely end up re-writing a lot of the language but this
 is a good starting point. id like to improve the symmetry function
 
--Symmetry Thoughts-
-https://en.wikipedia.org/wiki/Symmetry
+--- SYMMETRIES ---
 we need to be more concise with our language around "symmetry"
 there are many kinds of symmetry we can employ { radial, bilateral,
 square, etc. } we should allow that sort of expressions and not just
-say "symmetry".
-
-primitive types
-	- axis: vec2 * vec2 <position> <direction>  -- there should be
-           some defaults here namely x_axis and y_axis.
-	- spline: <vec2> * <vec2> * []vec2 (start point, endpoint, control points)
-		--> this should be compiled to a cat
-	- point: vec2
-	- 
-		--> a built in 
-
-keywords:
-	- repeat <sketch> along <spline | axis>
-	- repeat <sketch at <[]point>
-	- reflection <sketch> along <spline | axis>
-	- rotational <sketch> about <point> 
+say "symmetry". we may want axis, splines, and points as primitive
+types, as well as constants that are provided such as x_axis, y_axis.
+repetitions of a sketch along a curve or axis should be definable?
+reflections and rotational symmetries could be functions as well.
 
 -----------------------------------------------------------
-Jan 12.
+Jan. 12 2026
 -----------------------------------------------------------
 
----- READINGS
+---- READINGS ----
 https://www.angusj.com/clipper2/Docs/Overview.htm
 https://linuxcnc.org/docs/html/gcode/g-code.html
-----
 
--- exactness in drawing --
+--- EXACTNESS ---
 I thought a bit more about how an artist can form an sketch
 and there are varying levels of exactness they apply to each
 stroke. For example they may be very light and quick and not
@@ -187,7 +174,7 @@ the hood it is pretty simple, that the positions can have
 noise applied to them, and the gcode can specify faster or
 slower motor speeds.
 
--- drafting --
+--- DRAFTING ---
 an artist probably does not one shot all their paintings, and
 they probably do many drafts before presenting their final
 version. this maybe something that can be worked into the language
@@ -196,7 +183,7 @@ a controlled loop where the LLM can have drafts (image + code)
 and can iterate on their current draft with an adversary who
 critiques that draft.
 
--- refine the language --
+--- REFINE THE LANGUAGE ---
 lets have three sketch primitives, namely dots, dashes, and strokes.
 sketches are simply compositions of these primitives. we must also
 sketches are really an array of primitives, or an array of sketches,
@@ -205,7 +192,7 @@ as adding and subtracting and scaling. we can infer points from a
 stroke, say we want a point on a stroke. since we have a start and
 end point and a way to calculate that point during compilation.
 
--- level of detail --
+--- LEVEL OF DETAIL ---
 llms should express intention from a birds eye view and express
 precision on small areas of work. it should allow information to
 be passed down to workers at small levels, but at the same time
@@ -215,7 +202,7 @@ sketch that is meaningfull, something like meta information. a
 couple examples: center of mass calculation, convex to concave
 shape decomposition; spatial positioning.
 
--- optimizing gcode --
+--- OPTIMIZE GCODE ---
 when we introduce the stroke type, we should compile it optimally.
 we can take advantage of gcodes ability to accept arcs and cubic
 splines!
