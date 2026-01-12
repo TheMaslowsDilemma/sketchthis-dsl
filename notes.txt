@@ -204,5 +204,25 @@ shape decomposition; spatial positioning.
 
 --- OPTIMIZE GCODE ---
 when we introduce the stroke type, we should compile it optimally.
-we can take advantage of gcodes ability to accept arcs and cubic
-splines!
+we can take advantage of gcodes ability to represent arcs and cubic
+splines.
+
+--- USAGE CONTEXT ---
+the language will be used by LLMs from within a iterative drawing
+and drafting environment. the LLMs actually using it will be given
+instructions by an orchestration agent. it is important to know
+this because it will help shape the language itself. the LLMs using
+the language can be considered the hand of the artist. the artist
+consists of three entities: hand manager, a planner, and a dreamer.
+the hand speaks Sketchlang and carries out the intentions of the
+manager, likely with imperfections. The hand manager focuses on
+following the planners steps, and provides detail to each part. the
+planner envisions the painting as in its complete state, and provides
+best estimated steps to get there and is injected with randomness
+from the dreamer, maybe we can inject dreams of the artist we chose
+as the personality. this all happens within a single iteration.
+there will be multiple iterations and at the end, a critque will be
+made, the planner must respond to those critiques. the language does
+not need to know about that, but it should be built in a way that is
+most helpful in that context.
+
