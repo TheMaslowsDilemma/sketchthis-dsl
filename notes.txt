@@ -118,12 +118,51 @@ $10=1
 $30=0
 ok
 
---- Language Specification ---
+-----------------------------------------------------------
+Update Jan 11.
+-----------------------------------------------------------
+
+--- Apology of mathmatician - G.H Hardy ---
+https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf
+
+---Stuff to Read---
+https://www.codeproject.com/articles
+https://en.wikipedia.org/wiki/Catmull–Rom_spline
+https://people.computing.clemson.edu/~dhouse/courses/405/notes/splines.pdf
+
+--- Thoughts ---
+claude is able to read and understand the language specification
+and use it to describe images. it does not perform as well
+as intended. my hypothesis is that we need better, hand crafted
+examples of the language. there needs to be examples of best
+practices and how the language can be used to express intention
+rather than just trying to mechanically copy an image.
+
+i will likely end up re-writing a lot of the language but this
+is a good starting point. id like to improve the symmetry function
 
 
---- Lexer ---
-id like to start with the lexer and be able to show the output
-from an input program.
+
+-Symmetry Thoughts-
+https://en.wikipedia.org/wiki/Symmetry
+we need to be more concise with our language around "symmetry"
+there are many kinds of symmetry we can employ { radial, bilateral,
+square, etc. } we should allow that sort of expressions and not just
+say "symmetry".
 
 
+primitive types:
+	- axis: vec2 * vec2 <position> <direction>  -- there should be
+           some defaults here namely x_axis and y_axis.
+	- spline: <vec2> * <vec2> * []vec2 (start point, endpoint, control points)
+		--> this should be compiled to a cat
+	- point: vec2
+		--> a built in 
+
+keywords:
+	- repeat <sketch> along <spline | axis>
+	- repeat <sketch at <[]point>
+	- reflection <sketch> along <spline | axis>
+	- rotational <sketch> about <point> 
+	- 
 
