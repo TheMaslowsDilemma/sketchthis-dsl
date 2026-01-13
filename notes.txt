@@ -263,6 +263,7 @@ Jan. 13 2026
 https://github.com/grbl/grbl
 https://www.cs.jhu.edu/~misha/Spring16/06.pdf
 https://www.geeksforgeeks.org/dsa/convex-hull-using-graham-scan/
+https://www.contextfreeart.org
 
 --- GCODE ---
 grbl doesn't support G5 yet. there is a fork that supports it
