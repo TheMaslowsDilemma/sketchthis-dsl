@@ -3,18 +3,11 @@ open Ast
 
 (*** Intermediate Representation ***)
 
-type segment =
-  | MoveTo of vec
-  | LineTo of vec
-
+type segment = MoveTo of vec | LineTo of vec
 type path = { start : vec; segments : segment list }
 type ir = path list
 type bounds = { min_x : float; max_x : float; min_y : float; max_y : float }
-
-type noise_level =
-  | NoiseScribble
-  | NoiseDraw
-  | NoiseTrace
+type noise_level = NoiseScribble | NoiseDraw | NoiseTrace
 
 (*** Compiler Errors ***)
 
@@ -35,7 +28,6 @@ let format_error = function
 (*** Random/Noise ***)
 
 let () = Random.init 42
-
 let random_jitter magnitude = Random.float (2.0 *. magnitude) -. magnitude
 
 let jitter_vec noise v =
@@ -53,6 +45,7 @@ let jitter_vec noise v =
 type value = VNum of float | VVec of vec | VSketch of sketch_expr
 
 module Env = Map.Make (String)
+
 type env = value Env.t
 
 let type_of_value = function
@@ -71,17 +64,26 @@ let lookup name env =
 let lookup_num name env =
   match lookup name env with
   | VNum f -> f
-  | v -> error (TypeMismatch (Printf.sprintf "%s is a '%s' not a 'number'" name (type_of_value v)))
+  | v ->
+      error
+        (TypeMismatch
+           (Printf.sprintf "%s is a '%s' not a 'number'" name (type_of_value v)))
 
 let lookup_vec name env =
   match lookup name env with
   | VVec v -> v
-  | v -> error (TypeMismatch (Printf.sprintf "%s is a '%s' not a 'vec'" name (type_of_value v)))
+  | v ->
+      error
+        (TypeMismatch
+           (Printf.sprintf "%s is a '%s' not a 'vec'" name (type_of_value v)))
 
 let lookup_sketch name env =
   match lookup name env with
   | VSketch sk -> sk
-  | v -> error (TypeMismatch (Printf.sprintf "%s is a '%s' not a 'sketch'" name (type_of_value v)))
+  | v ->
+      error
+        (TypeMismatch
+           (Printf.sprintf "%s is a '%s' not a 'sketch'" name (type_of_value v)))
 
 (*** Vector Operations ***)
 
@@ -110,18 +112,20 @@ let vec_lerp a b t =
 let catmull_rom_eval p0 p1 p2 p3 t =
   let t2 = t *. t in
   let t3 = t2 *. t in
-  let x = 0.5 *. (
-    (2.0 *. p1.x) +.
-    (-.p0.x +. p2.x) *. t +.
-    (2.0 *. p0.x -. 5.0 *. p1.x +. 4.0 *. p2.x -. p3.x) *. t2 +.
-    (-.p0.x +. 3.0 *. p1.x -. 3.0 *. p2.x +. p3.x) *. t3
-  ) in
-  let y = 0.5 *. (
-    (2.0 *. p1.y) +.
-    (-.p0.y +. p2.y) *. t +.
-    (2.0 *. p0.y -. 5.0 *. p1.y +. 4.0 *. p2.y -. p3.y) *. t2 +.
-    (-.p0.y +. 3.0 *. p1.y -. 3.0 *. p2.y +. p3.y) *. t3
-  ) in
+  let x =
+    0.5
+    *. ((2.0 *. p1.x)
+       +. ((-.p0.x +. p2.x) *. t)
+       +. (((2.0 *. p0.x) -. (5.0 *. p1.x) +. (4.0 *. p2.x) -. p3.x) *. t2)
+       +. ((-.p0.x +. (3.0 *. p1.x) -. (3.0 *. p2.x) +. p3.x) *. t3))
+  in
+  let y =
+    0.5
+    *. ((2.0 *. p1.y)
+       +. ((-.p0.y +. p2.y) *. t)
+       +. (((2.0 *. p0.y) -. (5.0 *. p1.y) +. (4.0 *. p2.y) -. p3.y) *. t2)
+       +. ((-.p0.y +. (3.0 *. p1.y) -. (3.0 *. p2.y) +. p3.y) *. t3))
+  in
   { x; y }
 
 (* Flatten a Catmull-Rom segment to line segments *)
@@ -139,22 +143,27 @@ let flatten_catmull_rom_segment p0 p1 p2 p3 num_segments =
    segments_per_span controls smoothness *)
 let spline_to_segments ?(segments_per_span = 8) points =
   match points with
-  | [] | [_] -> []
-  | [_; p1] -> [LineTo p1]
+  | [] | [ _ ] -> []
+  | [ _; p1 ] -> [ LineTo p1 ]
   | _ ->
       let arr = Array.of_list points in
       let n = Array.length arr in
       (* Phantom endpoints for natural spline behavior *)
       let get i =
         if i < 0 then vec_sub arr.(0) (vec_sub arr.(1) arr.(0))
-        else if i >= n then vec_add arr.(n-1) (vec_sub arr.(n-1) arr.(n-2))
+        else if i >= n then
+          vec_add arr.(n - 1) (vec_sub arr.(n - 1) arr.(n - 2))
         else arr.(i)
       in
       let segments = ref [] in
       for i = 0 to n - 2 do
-        let segs = flatten_catmull_rom_segment
-          (get (i-1)) (get i) (get (i+1)) (get (i+2))
-          segments_per_span
+        let segs =
+          flatten_catmull_rom_segment
+            (get (i - 1))
+            (get i)
+            (get (i + 1))
+            (get (i + 2))
+            segments_per_span
         in
         segments := List.rev_append segs !segments
       done;
@@ -164,15 +173,15 @@ let spline_to_segments ?(segments_per_span = 8) points =
 
 let add_wobble_points noise p0 p1 =
   match noise with
-  | NoiseTrace -> [p0; p1]
+  | NoiseTrace -> [ p0; p1 ]
   | NoiseDraw ->
       let mid = jitter_vec noise (vec_lerp p0 p1 0.5) in
-      [p0; mid; p1]
+      [ p0; mid; p1 ]
   | NoiseScribble ->
       let t1 = jitter_vec noise (vec_lerp p0 p1 0.25) in
       let t2 = jitter_vec noise (vec_lerp p0 p1 0.5) in
       let t3 = jitter_vec noise (vec_lerp p0 p1 0.75) in
-      [p0; t1; t2; t3; p1]
+      [ p0; t1; t2; t3; p1 ]
 
 (*** Segment Transformations ***)
 
@@ -181,8 +190,10 @@ let transform_segment f = function
   | LineTo v -> LineTo (f v)
 
 let transform_path f (path : path) : path =
-  { start = f path.start;
-    segments = List.map (transform_segment f) path.segments }
+  {
+    start = f path.start;
+    segments = List.map (transform_segment f) path.segments;
+  }
 
 let transform_ir f (ir : ir) : ir = List.map (transform_path f) ir
 
@@ -198,7 +209,8 @@ let rec eval_num env (expr : num_expr) : float =
   | NumMul (a, b) -> eval_num env a *. eval_num env b
   | NumDiv (a, b) ->
       let divisor = eval_num env b in
-      if Float.abs divisor < 1e-10 then error (InvalidOperation "Division by zero")
+      if Float.abs divisor < 1e-10 then
+        error (InvalidOperation "Division by zero")
       else eval_num env a /. divisor
 
 and eval_vec_basic env (expr : vec_expr) : vec =
@@ -223,10 +235,12 @@ and compute_center (ir : ir) : vec =
 
 and compute_bounds (ir : ir) : bounds =
   let update b v =
-    { min_x = Float.min b.min_x v.x;
+    {
+      min_x = Float.min b.min_x v.x;
       max_x = Float.max b.max_x v.x;
       min_y = Float.min b.min_y v.y;
-      max_y = Float.max b.max_y v.y }
+      max_y = Float.max b.max_y v.y;
+    }
   in
   let segment_bounds b = function
     | MoveTo v -> update b v
@@ -236,8 +250,14 @@ and compute_bounds (ir : ir) : bounds =
     let b = update b path.start in
     List.fold_left segment_bounds b path.segments
   in
-  let init = { min_x = Float.infinity; max_x = Float.neg_infinity;
-               min_y = Float.infinity; max_y = Float.neg_infinity } in
+  let init =
+    {
+      min_x = Float.infinity;
+      max_x = Float.neg_infinity;
+      min_y = Float.infinity;
+      max_y = Float.neg_infinity;
+    }
+  in
   List.fold_left path_bounds init ir
 
 and eval_sketch_basic env (expr : sketch_expr) : ir =
@@ -251,25 +271,34 @@ and eval_primitive_basic env (prim : primitive) : ir =
   | Dot v ->
       let p = eval_vec_basic env v in
       let r = 0.5 in
-      [{ start = { x = p.x +. r; y = p.y };
-         segments = [
-           LineTo { x = p.x; y = p.y +. r };
-           LineTo { x = p.x -. r; y = p.y };
-           LineTo { x = p.x; y = p.y -. r };
-           LineTo { x = p.x +. r; y = p.y };
-         ]}]
+      [
+        {
+          start = { x = p.x +. r; y = p.y };
+          segments =
+            [
+              LineTo { x = p.x; y = p.y +. r };
+              LineTo { x = p.x -. r; y = p.y };
+              LineTo { x = p.x; y = p.y -. r };
+              LineTo { x = p.x +. r; y = p.y };
+            ];
+        };
+      ]
   | Dash v ->
       let p = eval_vec_basic env v in
       let half = 1.0 in
-      [{ start = { x = p.x -. half; y = p.y };
-         segments = [LineTo { x = p.x +. half; y = p.y }] }]
+      [
+        {
+          start = { x = p.x -. half; y = p.y };
+          segments = [ LineTo { x = p.x +. half; y = p.y } ];
+        };
+      ]
   | Stroke (v0, via, v1) ->
       let p0 = eval_vec_basic env v0 in
       let p1 = eval_vec_basic env v1 in
       let via_pts = List.map (eval_vec_basic env) via in
-      let all_pts = [p0] @ via_pts @ [p1] in
+      let all_pts = [ p0 ] @ via_pts @ [ p1 ] in
       let segments = spline_to_segments all_pts in
-      [{ start = p0; segments }]
+      [ { start = p0; segments } ]
 
 (*** Flow Field ***)
 
@@ -280,7 +309,7 @@ let rec collect_flow_sources env (expr : sketch_expr) : flow_source list =
   | Primitive (Stroke (v0, _, v1)) ->
       let p0 = eval_vec_basic env v0 in
       let p1 = eval_vec_basic env v1 in
-      [{ fs_p0 = p0; fs_p1 = p1; fs_dir = vec_normalize (vec_sub p1 p0) }]
+      [ { fs_p0 = p0; fs_p1 = p1; fs_dir = vec_normalize (vec_sub p1 p0) } ]
   | Primitive _ -> []
   | SketchVar name -> collect_flow_sources env (lookup_sketch name env)
   | SketchList sks -> List.concat_map (collect_flow_sources env) sks
@@ -288,12 +317,15 @@ let rec collect_flow_sources env (expr : sketch_expr) : flow_source list =
 let sample_flow_field sources p =
   if sources = [] then { x = 1.0; y = 0.0 }
   else
-    let (sx, sy, sw) = List.fold_left (fun (ax, ay, aw) src ->
-      let mid = vec_lerp src.fs_p0 src.fs_p1 0.5 in
-      let dist = vec_distance p mid in
-      let w = 1.0 /. (1.0 +. dist *. dist) in
-      (ax +. src.fs_dir.x *. w, ay +. src.fs_dir.y *. w, aw +. w)
-    ) (0.0, 0.0, 0.0) sources in
+    let sx, sy, sw =
+      List.fold_left
+        (fun (ax, ay, aw) src ->
+          let mid = vec_lerp src.fs_p0 src.fs_p1 0.5 in
+          let dist = vec_distance p mid in
+          let w = 1.0 /. (1.0 +. (dist *. dist)) in
+          (ax +. (src.fs_dir.x *. w), ay +. (src.fs_dir.y *. w), aw +. w))
+        (0.0, 0.0, 0.0) sources
+    in
     if sw < 1e-10 then { x = 1.0; y = 0.0 }
     else vec_normalize { x = sx /. sw; y = sy /. sw }
 
@@ -302,7 +334,8 @@ let sample_flow_field sources p =
 let rec eval_sketch env noise flow_sources (expr : sketch_expr) : ir =
   match expr with
   | Primitive prim -> eval_primitive env noise flow_sources prim
-  | SketchVar name -> eval_sketch env noise flow_sources (lookup_sketch name env)
+  | SketchVar name ->
+      eval_sketch env noise flow_sources (lookup_sketch name env)
   | SketchList sks -> List.concat_map (eval_sketch env noise flow_sources) sks
 
 and eval_primitive env noise flow_sources (prim : primitive) : ir =
@@ -310,38 +343,56 @@ and eval_primitive env noise flow_sources (prim : primitive) : ir =
   | Dot v ->
       let p = jitter_vec noise (eval_vec_basic env v) in
       let r = 0.5 in
-      [{ start = { x = p.x +. r; y = p.y };
-         segments = [
-           LineTo { x = p.x; y = p.y +. r };
-           LineTo { x = p.x -. r; y = p.y };
-           LineTo { x = p.x; y = p.y -. r };
-           LineTo { x = p.x +. r; y = p.y };
-         ]}]
+      [
+        {
+          start = { x = p.x +. r; y = p.y };
+          segments =
+            [
+              LineTo { x = p.x; y = p.y +. r };
+              LineTo { x = p.x -. r; y = p.y };
+              LineTo { x = p.x; y = p.y -. r };
+              LineTo { x = p.x +. r; y = p.y };
+            ];
+        };
+      ]
   | Dash v ->
       let p = jitter_vec noise (eval_vec_basic env v) in
       let dir = sample_flow_field flow_sources p in
       let half = 1.0 in
-      let p0 = jitter_vec noise { x = p.x -. half *. dir.x; y = p.y -. half *. dir.y } in
-      let p1 = jitter_vec noise { x = p.x +. half *. dir.x; y = p.y +. half *. dir.y } in
-      [{ start = p0; segments = [LineTo p1] }]
+      let p0 =
+        jitter_vec noise
+          { x = p.x -. (half *. dir.x); y = p.y -. (half *. dir.y) }
+      in
+      let p1 =
+        jitter_vec noise
+          { x = p.x +. (half *. dir.x); y = p.y +. (half *. dir.y) }
+      in
+      [ { start = p0; segments = [ LineTo p1 ] } ]
   | Stroke (v0, via, v1) ->
       let p0 = jitter_vec noise (eval_vec_basic env v0) in
       let p1 = jitter_vec noise (eval_vec_basic env v1) in
-      let via_pts = List.map (fun v -> jitter_vec noise (eval_vec_basic env v)) via in
-      let all_pts = match noise with
-        | NoiseTrace -> [p0] @ via_pts @ [p1]
+      let via_pts =
+        List.map (fun v -> jitter_vec noise (eval_vec_basic env v)) via
+      in
+      let all_pts =
+        match noise with
+        | NoiseTrace -> [ p0 ] @ via_pts @ [ p1 ]
         | NoiseDraw | NoiseScribble ->
             let rec add_wobbles prev = function
-              | [] -> [prev]
+              | [] -> [ prev ]
               | next :: rest ->
                   let wobbled = add_wobble_points noise prev next in
-                  let trimmed = match List.rev wobbled with _ :: t -> List.rev t | [] -> [] in
+                  let trimmed =
+                    match List.rev wobbled with
+                    | _ :: t -> List.rev t
+                    | [] -> []
+                  in
                   trimmed @ add_wobbles next rest
             in
-            add_wobbles p0 (via_pts @ [p1])
+            add_wobbles p0 (via_pts @ [ p1 ])
       in
       let segments = spline_to_segments all_pts in
-      [{ start = p0; segments }]
+      [ { start = p0; segments } ]
 
 let eval_sketch_full env noise expr =
   let flow_sources = collect_flow_sources env expr in
@@ -391,5 +442,8 @@ let bounds_to_string b =
 
 let ir_stats ir =
   let num_paths = List.length ir in
-  let num_segments = List.fold_left (fun acc p -> acc + List.length p.segments) 0 ir in
-  Printf.sprintf "Paths: %d, Segments: %d, %s" num_paths num_segments (bounds_to_string (compute_bounds ir))
+  let num_segments =
+    List.fold_left (fun acc p -> acc + List.length p.segments) 0 ir
+  in
+  Printf.sprintf "Paths: %d, Segments: %d, %s" num_paths num_segments
+    (bounds_to_string (compute_bounds ir))

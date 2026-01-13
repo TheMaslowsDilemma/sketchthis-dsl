@@ -3,7 +3,8 @@
 
 open Sketch_dsl
 
-let usage = {|
+let usage =
+  {|
 Sketch DSL Compiler
 
 Usage: sketch_dsl [options] [file]
@@ -36,8 +37,7 @@ let read_stdin () =
       Buffer.add_char buf '\n'
     done;
     ""
-  with End_of_file ->
-    Buffer.contents buf
+  with End_of_file -> Buffer.contents buf
 
 let run_lexer input =
   try
@@ -46,12 +46,11 @@ let run_lexer input =
     print_endline (Lexer.located_tokens_to_string tokens);
     print_endline "";
     print_endline "=== Compact ===";
-    print_endline (Lexer.tokens_to_string (List.map (fun t -> t.Lexer.token) tokens))
+    print_endline
+      (Lexer.tokens_to_string (List.map (fun t -> t.Lexer.token) tokens))
   with Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
+    Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+      err.position.column err.message;
     exit 1
 
 let run_parser input =
@@ -60,19 +59,18 @@ let run_parser input =
     print_endline "=== AST ===";
     print_endline (Ast.program_to_string ast);
     print_endline "";
-    print_endline (Printf.sprintf "=== Parsed %d statement(s) ===" (List.length ast))
-  with 
+    print_endline
+      (Printf.sprintf "=== Parsed %d statement(s) ===" (List.length ast))
+  with
   | Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
-    exit 1
+      Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+        err.position.column err.message;
+      exit 1
   | Parser.ParseError err ->
-    Printf.eprintf "%s\n" (Parser.format_error err);
-    exit 1
+      Printf.eprintf "%s\n" (Parser.format_error err);
+      exit 1
 
-let run_compiler ?(show_stats=false) input =
+let run_compiler ?(show_stats = false) input =
   try
     let ast = Parser.parse input in
     let ir = Compiler.compile ast in
@@ -83,21 +81,19 @@ let run_compiler ?(show_stats=false) input =
       print_endline "=== Statistics ===";
       print_endline (Compiler.ir_stats ir)
     end
-  with 
+  with
   | Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
-    exit 1
+      Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+        err.position.column err.message;
+      exit 1
   | Parser.ParseError err ->
-    Printf.eprintf "%s\n" (Parser.format_error err);
-    exit 1
+      Printf.eprintf "%s\n" (Parser.format_error err);
+      exit 1
   | Compiler.CompileError err ->
-    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
-    exit 1
+      Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+      exit 1
 
-let run_gcode ?(show_stats=false) input =
+let run_gcode ?(show_stats = false) input =
   try
     let ast = Parser.parse input in
     let ir = Compiler.compile ast in
@@ -107,23 +103,22 @@ let run_gcode ?(show_stats=false) input =
       print_endline "";
       print_endline "=== Optimization Statistics ===";
       print_endline stats
-    end else begin
+    end
+    else begin
       let gcode = Gcode.generate ir in
       print_endline gcode
     end
-  with 
+  with
   | Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
-    exit 1
+      Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+        err.position.column err.message;
+      exit 1
   | Parser.ParseError err ->
-    Printf.eprintf "%s\n" (Parser.format_error err);
-    exit 1
+      Printf.eprintf "%s\n" (Parser.format_error err);
+      exit 1
   | Compiler.CompileError err ->
-    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
-    exit 1
+      Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+      exit 1
 
 let run_svg input output_filepath =
   try
@@ -133,21 +128,19 @@ let run_svg input output_filepath =
     let oc = open_out output_filepath in
     Printf.fprintf oc "%s" svg;
     close_out oc
-  with 
+  with
   | Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
-    exit 1
+      Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+        err.position.column err.message;
+      exit 1
   | Parser.ParseError err ->
-    Printf.eprintf "%s\n" (Parser.format_error err);
-    exit 1
+      Printf.eprintf "%s\n" (Parser.format_error err);
+      exit 1
   | Compiler.CompileError err ->
-    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
-    exit 1
+      Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+      exit 1
 
-let run_machine ?(show_stats=false) input =
+let run_machine ?(show_stats = false) input =
   try
     let ast = Parser.parse input in
     let ir = Compiler.compile ast in
@@ -157,100 +150,82 @@ let run_machine ?(show_stats=false) input =
       print_endline "";
       print_endline "=== Uunatek Statistics ===";
       print_endline stats
-    end else begin
+    end
+    else begin
       let gcode = Gcode.generate_machine ir in
       print_endline gcode
     end
-  with 
+  with
   | Lexer.LexerError err ->
-    Printf.eprintf "Lexer error at line %d, column %d: %s\n"
-      err.position.line
-      err.position.column
-      err.message;
-    exit 1
+      Printf.eprintf "Lexer error at line %d, column %d: %s\n" err.position.line
+        err.position.column err.message;
+      exit 1
   | Parser.ParseError err ->
-    Printf.eprintf "%s\n" (Parser.format_error err);
-    exit 1
+      Printf.eprintf "%s\n" (Parser.format_error err);
+      exit 1
   | Compiler.CompileError err ->
-    Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
-    exit 1
+      Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
+      exit 1
   | Failure msg ->
-    Printf.eprintf "Error: %s\n" msg;
-    exit 1
+      Printf.eprintf "Error: %s\n" msg;
+      exit 1
 
 let () =
   let args = Array.to_list Sys.argv |> List.tl in
-  
+
   match args with
-  | ["--help"] | ["-h"] ->
-    print_endline usage
-  
-  | ["--lex"] ->
-    let input = read_stdin () in
-    run_lexer input
-  
-  | ["--lex"; filename] ->
-    let input = read_file filename in
-    run_lexer input
-  
-  | ["--parse"] ->
-    let input = read_stdin () in
-    run_parser input
-  
-  | ["--parse"; filename] ->
-    let input = read_file filename in
-    run_parser input
-  
-  | ["--compile"] ->
-    let input = read_stdin () in
-    run_compiler input
-  
-  | ["--compile"; filename] ->
-    let input = read_file filename in
-    run_compiler ~show_stats:true input
-  
-  | ["--gcode"] ->
-    let input = read_stdin () in
-    run_gcode input
-  
-  | ["--gcode"; filename] ->
-    let input = read_file filename in
-    run_gcode input
-  
-  | ["--svg"; "-o"; output_path] ->
-    let input = read_stdin () in
-    run_svg input output_path
-  
-  | ["--svg"; "-i"; filename; "-o"; output_path ] ->
-    let input = read_file filename in
-    run_svg input output_path
-  | ["--machine"] ->
-    let input = read_stdin () in
-    run_machine input
-  
-  | ["--machine"; filename] ->
-    let input = read_file filename in
-    run_machine input
-  
-  | ["--stats"] ->
-    let input = read_stdin () in
-    run_machine ~show_stats:true input
-  
-  | ["--stats"; filename] ->
-    let input = read_file filename in
-    run_machine ~show_stats:true input
-  
-  | [filename] ->
-    (* Default: generate Uunatek G-code with stats *)
-    let input = read_file filename in
-    run_machine ~show_stats:true input
-  
+  | [ "--help" ] | [ "-h" ] -> print_endline usage
+  | [ "--lex" ] ->
+      let input = read_stdin () in
+      run_lexer input
+  | [ "--lex"; filename ] ->
+      let input = read_file filename in
+      run_lexer input
+  | [ "--parse" ] ->
+      let input = read_stdin () in
+      run_parser input
+  | [ "--parse"; filename ] ->
+      let input = read_file filename in
+      run_parser input
+  | [ "--compile" ] ->
+      let input = read_stdin () in
+      run_compiler input
+  | [ "--compile"; filename ] ->
+      let input = read_file filename in
+      run_compiler ~show_stats:true input
+  | [ "--gcode" ] ->
+      let input = read_stdin () in
+      run_gcode input
+  | [ "--gcode"; filename ] ->
+      let input = read_file filename in
+      run_gcode input
+  | [ "--svg"; "-o"; output_path ] ->
+      let input = read_stdin () in
+      run_svg input output_path
+  | [ "--svg"; "-i"; filename; "-o"; output_path ] ->
+      let input = read_file filename in
+      run_svg input output_path
+  | [ "--machine" ] ->
+      let input = read_stdin () in
+      run_machine input
+  | [ "--machine"; filename ] ->
+      let input = read_file filename in
+      run_machine input
+  | [ "--stats" ] ->
+      let input = read_stdin () in
+      run_machine ~show_stats:true input
+  | [ "--stats"; filename ] ->
+      let input = read_file filename in
+      run_machine ~show_stats:true input
+  | [ filename ] ->
+      (* Default: generate Uunatek G-code with stats *)
+      let input = read_file filename in
+      run_machine ~show_stats:true input
   | [] ->
-    (* Interactive mode - read from stdin *)
-    print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
-    let input = read_stdin () in
-    run_machine ~show_stats:true input
-  
+      (* Interactive mode - read from stdin *)
+      print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
+      let input = read_stdin () in
+      run_machine ~show_stats:true input
   | _ ->
-    prerr_endline usage;
-    exit 1
+      prerr_endline usage;
+      exit 1
