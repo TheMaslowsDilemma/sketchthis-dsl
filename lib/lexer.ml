@@ -16,11 +16,11 @@ type token =
   | STROKE
   (* Keywords - Spatial Relations *)
   | FROM (* stroke FROM ... *)
-  | TO (* stroke from <vec2> TO ... *)
-  | VIA (* stroke from <vec2> to <vec2> VIA <list vev2> *)
+  | TO (* stroke from <vec> TO ... *)
+  | VIA (* stroke from <vec> to <vec> VIA <list vev2> *)
   | CENTER (* center of <sketch> *)
   | OF (* center *)
-  | FLOW (* flow at <vec2> *)
+  | FLOW (* flow at <vec> *)
   | AT (* "at" *)
   (* Keywords - Commands *)
   | SCRIBBLE
@@ -171,7 +171,7 @@ let keywords =
   [
     (* Types *)
     ("number", NUMBER_TYPE);
-    ("vec2", VEC2_TYPE);
+    ("vec", VEC2_TYPE);
     ("sketch", SKETCH_TYPE);
     (* Primitives *)
     ("dot", DOT);

@@ -1,13 +1,6 @@
-(* Sketch DSL Abstract Syntax Tree *)
-(* Defines the AST types produced by the parser *)
+type vec = { x : float; y : float }
+type type_annotation = TNumber | TVec | TSketch
 
-type vec2 = { x : float; y : float }
-(** A 2D vector - the fundamental coordinate type *)
-
-(** Type annotations in the language *)
-type type_annotation = TNumber | TVec2 | TSketch
-
-(** Numeric expression - can be a literal or variable *)
 type num_expr =
   | NumLit of float
   | NumVar of string
@@ -17,55 +10,44 @@ type num_expr =
   | NumMul of num_expr * num_expr
   | NumDiv of num_expr * num_expr
 
-(** Vector expression - evaluates to a vec2 *)
 type vec_expr =
-  | VecLit of float * float (* Literal: (1.0, 2.0) *)
-  | VecConstruct of num_expr * num_expr (* Constructed: (expr, expr) *)
-  | VecVar of string (* Variable reference *)
-  | VecCenter of sketch_expr (* "center of <sketch>" *)
-  | VecAdd of vec_expr * vec_expr (* v1 + v2 *)
-  | VecSub of vec_expr * vec_expr (* v1 - v2 *)
-  | VecScale of vec_expr * num_expr (* v * scalar *)
-  | VecFlow of vec_expr (* flow at <vec2> - direction from flow field *)
+  | VecLit of float * float
+  | VecConstruct of num_expr * num_expr
+  | VecVar of string
+  | VecCenter of sketch_expr
+  | VecAdd of vec_expr * vec_expr
+  | VecSub of vec_expr * vec_expr
+  | VecScale of vec_expr * num_expr
+  | VecFlow of vec_expr
 
-(** Sketch primitives *)
 and primitive =
-  | Dot of vec_expr (* dot at point *)
-  | Dash of vec_expr (* dash at point - direction from flow field *)
-  | Stroke of
-      vec_expr
-      * vec_expr list
-      * vec_expr (* stroke from <vec2> to <vec2> [via <vec2 list>] *)
+  | Dot of vec_expr
+  | Dash of vec_expr
+  | Stroke of vec_expr * vec_expr list * vec_expr
 
-(** Sketch expression - the main drawing type *)
 and sketch_expr =
   | Primitive of primitive
   | SketchVar of string
   | SketchList of sketch_expr list
 
-(** Expression that can be any type - resolved during type checking *)
 type expr =
   | ExprNum of num_expr
   | ExprVec of vec_expr
   | ExprSketch of sketch_expr
 
-(** Top-level statements -- either assignments or drawing calls *)
 type statement =
-  | LetNum of string * num_expr (* let name : number = expr *)
-  | LetVec of string * vec_expr (* let name : vec2 = expr *)
-  | LetSketch of string * sketch_expr (* let name : sketch = expr *)
-  | Scribble of sketch_expr (* scribble <sketch> *)
-  | Draw of sketch_expr (* draw <sketch> *)
-  | Trace of sketch_expr (* trace <sketch> *)
+  | LetNum of string * num_expr
+  | LetVec of string * vec_expr
+  | LetSketch of string * sketch_expr
+  | Scribble of sketch_expr
+  | Draw of sketch_expr
+  | Trace of sketch_expr
 
 type program = statement list
-(** A complete program *)
-
-(* ===== Pretty Printing ===== *)
 
 let type_to_string = function
   | TNumber -> "number"
-  | TVec2 -> "vec2"
+  | TVec -> "vec"
   | TSketch -> "sketch"
 
 let rec num_expr_to_string = function
@@ -127,7 +109,7 @@ let statement_to_string = function
   | LetNum (name, expr) ->
       Printf.sprintf "let %s : number = %s" name (num_expr_to_string expr)
   | LetVec (name, expr) ->
-      Printf.sprintf "let %s : vec2 = %s" name (vec_expr_to_string expr)
+      Printf.sprintf "let %s : vec = %s" name (vec_expr_to_string expr)
   | LetSketch (name, expr) ->
       Printf.sprintf "let %s : sketch = %s" name (sketch_expr_to_string expr)
   | Scribble sk -> Printf.sprintf "scribble %s" (sketch_expr_to_string sk)
@@ -136,8 +118,6 @@ let statement_to_string = function
 
 let program_to_string (stmts : program) =
   stmts |> List.map statement_to_string |> String.concat "\n"
-
-(* ===== Helper Constructors ===== *)
 
 let vec x y = { x; y }
 let num f = NumLit f

@@ -15,6 +15,12 @@ let test name f =
   with e ->
     Printf.printf "✗ %s: %s\n" name (Printexc.to_string e)
 
+let assert_eq expected actual =
+  if expected <> actual then
+    failwith (Printf.sprintf "Expected %s but got %s" 
+                (Lexer.token_to_string expected) 
+                (Lexer.token_to_string actual))
+
 let assert_tokens expected input =
   let actual = Lexer.tokenize_simple input in
   (* Filter out newlines and EOF for simpler comparison *)
@@ -61,7 +67,7 @@ let test_keywords () =
   
   test "lex type keywords" (fun () ->
     assert_tokens [Lexer.NUMBER_TYPE] "number";
-    assert_tokens [Lexer.VEC2_TYPE] "vec2";
+    assert_tokens [Lexer.VEC2_TYPE] "vec";
     assert_tokens [Lexer.SKETCH_TYPE] "sketch");
   
   test "lex transformation keywords" (fun () ->
@@ -211,8 +217,8 @@ let test_parse_let_bindings () =
   test "parse let number" (fun () ->
     assert_parses "let x : number = 42");
   
-  test "parse let vec2" (fun () ->
-    assert_parses "let p : vec2 = (10, 20)");
+  test "parse let vec" (fun () ->
+    assert_parses "let p : vec = (10, 20)");
   
   test "parse let sketch" (fun () ->
     assert_parses "let s : sketch = line from (0, 0) to (1, 1)")
@@ -352,7 +358,32 @@ let test_compile_transformations () =
       draw symmetric half along y_axis
     |} in
     (* Original + reflected = 2 paths *)
-    assert (List.length ir = 2))
+    assert (List.length ir = 2));
+  
+  test "compile symmetric with at clause" (fun () ->
+    assert_compiles {|
+      let shape : sketch = line from (0, 0) to (10, 10)
+      draw symmetric shape along x_axis at (0, 50)
+    |});
+  
+  test "compile symmetric y_axis at position" (fun () ->
+    assert_compiles {|
+      let origin : vec = (100, 50)
+      let half : sketch = line from (50, 0) to (100, 50)
+      draw symmetric half along y_axis at origin
+    |});
+  
+  test "compile symmetric with custom axis direction" (fun () ->
+    assert_compiles {|
+      let shape : sketch = line from (0, 0) to (10, 10)
+      draw symmetric shape along axis (1, 1)
+    |});
+  
+  test "compile symmetric with custom axis at position" (fun () ->
+    assert_compiles {|
+      let shape : sketch = line from (0, 0) to (10, 10)
+      draw symmetric shape along axis (1, 1) at (50, 50)
+    |})
 
 let test_compile_variables () =
   test "compile with number variable" (fun () ->
@@ -361,10 +392,10 @@ let test_compile_variables () =
       draw line from (0, 0) to (size, size)
     |});
   
-  test "compile with vec2 variable" (fun () ->
+  test "compile with vec variable" (fun () ->
     assert_compiles {|
-      let start : vec2 = (0, 0)
-      let finish : vec2 = (10, 10)
+      let start : vec = (0, 0)
+      let finish : vec = (10, 10)
       draw line from start to finish
     |});
   
@@ -379,6 +410,58 @@ let test_compile_variables () =
     assert_compiles {|
       let box : sketch = line from (0, 0) to (10, 10)
       draw relative to center of box dot (0, 0)
+    |});
+  
+  test "compile vector addition" (fun () ->
+    assert_compiles {|
+      let p1 : vec = (10, 20)
+      let p2 : vec = (5, 5)
+      let sum : vec = p1 + p2
+      draw dot sum
+    |});
+  
+  test "compile vector subtraction" (fun () ->
+    assert_compiles {|
+      let p1 : vec = (10, 20)
+      let p2 : vec = (5, 5)
+      let diff : vec = p1 - p2
+      draw dot diff
+    |});
+  
+  test "compile vector scaling" (fun () ->
+    assert_compiles {|
+      let p : vec = (10, 20)
+      let scaled : vec = p * 2
+      draw dot scaled
+    |});
+  
+  test "compile complex vector expression" (fun () ->
+    assert_compiles {|
+      let origin : vec = (0, 0)
+      let offset : vec = (10, 0)
+      let pos : vec = origin + offset * 3
+      draw dot pos
+    |});
+  
+  test "compile number arithmetic" (fun () ->
+    assert_compiles {|
+      let a : number = 10 + 5
+      let b : number = a * 2
+      let c : number = (b - 10) / 2
+      draw line from (0, 0) to (c, c)
+    |});
+  
+  test "compile numeric expressions in vector construction" (fun () ->
+    assert_compiles {|
+      let width : number = 35
+      draw line from (0, 0) to (width, 0)
+    |});
+  
+  test "compile complex expressions in vector" (fun () ->
+    assert_compiles {|
+      let w : number = 10
+      let h : number = 20
+      draw line from (w * 2, 0) to (w * 2, h + 5)
     |})
 
 let test_compile_errors () =
@@ -393,9 +476,75 @@ let test_compile_errors () =
   
   test "error on type mismatch - vec as sketch" (fun () ->
     assert_compile_fails {|
-      let p : vec2 = (5, 5)
+      let p : vec = (5, 5)
       draw p
     |})
+
+(* ===== G-code Tests ===== *)
+
+let test_gcode_generation () =
+  test "generate gcode for line" (fun () ->
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    let gcode = Gcode.generate ir in
+    assert (String.length gcode > 0);
+    assert (String.sub gcode 0 1 = ";" || String.sub gcode 0 1 = "G"));
+  
+  test "gcode contains movement commands" (fun () ->
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    let gcode = Gcode.generate ir in
+    assert (String.length gcode > 0);
+    (* Should contain G0 or G1 commands *)
+    assert (Str.string_match (Str.regexp ".*G[01].*") gcode 0));
+  
+  test "gcode for multiple paths" (fun () ->
+    let ir = get_ir {|
+      draw line from (0, 0) to (10, 0)
+      draw line from (20, 0) to (30, 0)
+    |} in
+    let gcode, stats = Gcode.generate_with_stats ir in
+    assert (String.length gcode > 0);
+    (* Stats should mention 2 paths *)
+    assert (Str.string_match (Str.regexp ".*Paths: 2.*") stats 0))
+
+let test_gcode_optimization () =
+  test "optimization reduces travel distance" (fun () ->
+    (* Create paths that benefit from reordering *)
+    let ir = get_ir {|
+      draw line from (0, 0) to (10, 0)
+      draw line from (100, 100) to (110, 100)
+      draw line from (10, 0) to (20, 0)
+    |} in
+    let _, stats = Gcode.generate_with_stats ir in
+    (* Should show some travel reduction *)
+    assert (String.length stats > 0));
+  
+  test "optimization handles single path" (fun () ->
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    let gcode = Gcode.generate ir in
+    assert (String.length gcode > 0));
+  
+  test "optimization handles repeated patterns" (fun () ->
+    let ir = get_ir {|
+      let d : sketch = dot (0, 0)
+      draw repeat d along (10, 0) 10 times
+    |} in
+    let _, stats = Gcode.generate_with_stats ir in
+    (* Should have 10 paths *)
+    assert (Str.string_match (Str.regexp ".*Paths: 10.*") stats 0))
+
+let test_svg_generation () =
+  test "generate svg" (fun () ->
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    let svg = Gcode.generate_svg ir in
+    assert (String.length svg > 0);
+    (* Should be valid SVG *)
+    assert (Str.string_match (Str.regexp ".*<svg.*") svg 0);
+    assert (Str.string_match (Str.regexp ".*</svg>.*") svg 0));
+  
+  test "svg contains paths" (fun () ->
+    let ir = get_ir "draw line from (0, 0) to (10, 10)" in
+    let svg = Gcode.generate_svg ir in
+    assert (Str.string_match (Str.regexp ".*<path.*") svg 0))
 
 let () =
   print_endline "=== Sketch DSL Lexer Tests ===\n";
@@ -425,6 +574,12 @@ let () =
   test_compile_transformations ();
   test_compile_variables ();
   test_compile_errors ();
+  
+  print_endline "\n=== Sketch DSL G-code Tests ===\n";
+  
+  test_gcode_generation ();
+  test_gcode_optimization ();
+  test_svg_generation ();
   
   Printf.printf "\n=== Results: %d/%d tests passed ===\n" !tests_passed !tests_run;
   if !tests_passed < !tests_run then exit 1

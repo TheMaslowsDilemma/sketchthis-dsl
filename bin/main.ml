@@ -13,7 +13,7 @@ Options:
   --parse       Parse input and print AST
   --compile     Compile input and print IR
   --gcode       Generate generic G-code
-  --uunatek     Generate G-code for Uunatek plotter (default)
+  --machine     Generate G-code for Uunatek plotter (default)
   --svg         Generate SVG preview
   --stats       Show compilation and optimization statistics
   --help        Show this help message
@@ -147,18 +147,18 @@ let run_svg input output_filepath =
     Printf.eprintf "Compile error: %s\n" (Compiler.format_error err);
     exit 1
 
-let run_uunatek ?(show_stats=false) input =
+let run_machine ?(show_stats=false) input =
   try
     let ast = Parser.parse input in
     let ir = Compiler.compile ast in
     if show_stats then begin
-      let gcode, stats = Gcode.generate_uunatek_with_stats ir in
+      let gcode, stats = Gcode.generate_machine_with_stats ir in
       print_endline gcode;
       print_endline "";
       print_endline "=== Uunatek Statistics ===";
       print_endline stats
     end else begin
-      let gcode = Gcode.generate_uunatek ir in
+      let gcode = Gcode.generate_machine ir in
       print_endline gcode
     end
   with 
@@ -224,32 +224,32 @@ let () =
   | ["--svg"; "-i"; filename; "-o"; output_path ] ->
     let input = read_file filename in
     run_svg input output_path
-  | ["--uunatek"] ->
+  | ["--machine"] ->
     let input = read_stdin () in
-    run_uunatek input
+    run_machine input
   
-  | ["--uunatek"; filename] ->
+  | ["--machine"; filename] ->
     let input = read_file filename in
-    run_uunatek input
+    run_machine input
   
   | ["--stats"] ->
     let input = read_stdin () in
-    run_uunatek ~show_stats:true input
+    run_machine ~show_stats:true input
   
   | ["--stats"; filename] ->
     let input = read_file filename in
-    run_uunatek ~show_stats:true input
+    run_machine ~show_stats:true input
   
   | [filename] ->
     (* Default: generate Uunatek G-code with stats *)
     let input = read_file filename in
-    run_uunatek ~show_stats:true input
+    run_machine ~show_stats:true input
   
   | [] ->
     (* Interactive mode - read from stdin *)
     print_endline "Sketch DSL - Enter your program (Ctrl+D to finish):";
     let input = read_stdin () in
-    run_uunatek ~show_stats:true input
+    run_machine ~show_stats:true input
   
   | _ ->
     prerr_endline usage;

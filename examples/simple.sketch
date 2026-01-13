@@ -11,8 +11,13 @@ let nose : sketch = line from (0, 10) to (0, -5)
 -- Smile
 let smile : sketch = curve from (-25, -20) to (25, -20) through (0, -35)
 
--- Compose and draw
-draw head
-draw eyes
-draw nose
-draw smile
+let all : sketch = [
+	head,
+	eyes,
+	nose,
+	smile
+]
+
+let sym_all : sketch = symmetric all along 
+
+draw all

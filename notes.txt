@@ -34,19 +34,19 @@ and identifiers.
 
 **types**
 	- number : float
-	- vec2 : (x, y) : float * float
+	- vec : (x, y) : float * float
 	- sketch : primitive | transformed sketch | list of sketch 
 
 
 **primitives**
-	- dot : vec2 ---> compiled this to a small circle
-	- hdash : vec2 --> compiled this to very short horizontal line
-	- vdash : vec2 --> compiled this to very short verticle line
+	- dot : vec ---> compiled this to a small circle
+	- hdash : vec --> compiled this to very short horizontal line
+	- vdash : vec --> compiled this to very short verticle line
 
-	- line : (p0, p1) : vec2 * vec2
-	- curve : (p0, through, p1) : vec2 * list vec2 * vec2
+	- line : (p0, p1) : vec * vec
+	- curve : (p0, through, p1) : vec * list vec * vec
 		--> this is like a quadratic bezier curve
-	- arc : (center, radius, a0, a1) : vec2 * vec2 * float * float
+	- arc : (center, radius, a0, a1) : vec * vec * float * float
 		--> this can be an oval, circle, somewhere in between depending on radius
 		    and angle0 / angle1
 
@@ -79,9 +79,9 @@ although maybe thats not the right way to think of it.
 
 "relative to center of D curve from A to B through C"
 	- this shows the "center of <expr>" expression which itself
-	  is evaluated to a <vec2>.
+	  is evaluated to a <vec>.
     - "relative to" then shifts the expression after it to be
-       shifted in scope. "relative to <vec2> <expr>"
+       shifted in scope. "relative to <vec> <expr>"
 "point A inside B"
 	- this would create a compilation error if B exceeds Bs
 	bounding box. Otherwise, would be evaluated to A.
@@ -128,6 +128,8 @@ Jan. 11 2026
 https://www.arvindguptatoys.com/arvindgupta/mathsapology-hardy.pdf
 https://www.codeproject.com/articles/Draw-a-Smooth-Curve-through-a-Set-of-2D-Points-wit#comments-section
 https://en.wikipedia.org/wiki/Catmull–Rom_spline
+https://en.wikipedia.org/wiki/Elliptic_function
+https://en.wikipedia.org/wiki/Charles_Hermite
 https://people.computing.clemson.edu/~dhouse/courses/405/notes/splines.pdf
 https://en.wikipedia.org/wiki/Symmetry
 
@@ -158,6 +160,8 @@ Jan. 12 2026
 ---- READINGS ----
 https://www.angusj.com/clipper2/Docs/Overview.htm
 https://linuxcnc.org/docs/html/gcode/g-code.html
+https://en.wikipedia.org/wiki/Field_line
+http://aero-comlab.stanford.edu/Papers/splines.pdf
 
 --- EXACTNESS ---
 I thought a bit more about how an artist can form an sketch
@@ -187,7 +191,7 @@ critiques that draft.
 lets have three sketch primitives, namely dots, dashes, and strokes.
 sketches are simply compositions of these primitives. we must also
 sketches are really an array of primitives, or an array of sketches,
-or an empty array. the language allows for vec2 and arithmetic such
+or an empty array. the language allows for vec and arithmetic such
 as adding and subtracting and scaling. we can infer points from a
 stroke, say we want a point on a stroke. since we have a start and
 end point and a way to calculate that point during compilation.
@@ -200,7 +204,8 @@ bring information back up the tree to orchestration. we need to
 make abstractions avaiable, ways to extract information about a
 sketch that is meaningfull, something like meta information. a
 couple examples: center of mass calculation, convex to concave
-shape decomposition; spatial positioning.
+shape decomposition; spatial positioning; field lines / flow
+direction at any given point in a sketch;
 
 --- OPTIMIZE GCODE ---
 when we introduce the stroke type, we should compile it optimally.
@@ -225,4 +230,58 @@ there will be multiple iterations and at the end, a critque will be
 made, the planner must respond to those critiques. the language does
 not need to know about that, but it should be built in a way that is
 most helpful in that context.
+
+--- REMOVING SYMMETRIES & SIMPLIFYING LANGUAGE ---
+we should simplify the language and get the drafting system working.
+the reflection and rotational symmetries sound nice but are likely
+to complex at this point. ill consider adding them back eventually.
+additionally, translation symmetry is being removed. same deal.
+
+--- UPDATES ---
+First we simplified the "hdash" and "vdash" into a singular "dash"
+sketch.this sketch takes on a minimal size, same as before, however
+now the direction is determined by the directions of the other sketches
+on the canvas. each stroke produces a flow field in its direction p0
+via p1, and those flow fields can be determined at any given point. we
+default to horizontal if no strokes are in the sketch. Second we are
+adding a new type, "stroke" which combines line and curve depending
+on the number of control points. the "stroke" should be decomposed into
+cubic splines and ideally make use of the G code: 
+G5 Cubic Spline G5 X- Y- <I- J-> P- Q-
+if that doesn't make sense than maybe we use something like Catmul Rom
+spline. Third we want to apply noise to sketches as they enter into the
+rendering function. for example we add "via" points to strokes, some
+epsilon away from their path along the way. we also can slightly
+translate (add or sub) the vecs in the sketch "scribble" has the most
+noise applied "draw" gets some noise applied "trace" has no noise applied
+
+-----------------------------------------------------------
+Jan. 13 2026
+-----------------------------------------------------------
+
+--- READINGS ---
+https://github.com/grbl/grbl
+https://www.cs.jhu.edu/~misha/Spring16/06.pdf
+https://www.geeksforgeeks.org/dsa/convex-hull-using-graham-scan/
+
+--- GCODE ---
+grbl doesn't support G5 yet. there is a fork that supports it
+but that isn't on the machine. i'll have to investigate updating
+the firmware eventually. For now Ill stick with segments.
+
+--- BOUNDING SHAPES ---
+we can draw convex hull around any sketch and use this in the compiler
+to determine "center of". this might cause problems with strokes that
+are colinear points, we can check for that before. not sure if this is
+actually necessary. might come back to it.
+
+
+--- UPDATES ---
+renamved vec2 to vec and we should re-use the vec from Ast in the compiler.
+we no longer are using G5 since grbl doesn't support it yet, this removes
+some need for decomposing splines. instead we can just create line segments
+from the spline. i want less comments, only critical ones. we should review
+how we are making the splines
+
+
 
