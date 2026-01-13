@@ -1,23 +1,920 @@
--- Head outline
-let head : sketch = arc center (0, 0) (50, 60) from 0 to 360
+# ═══════════════════════════════════════════════════════════════
+# THE HUNDRED GUILDERS PRINT - REMBRANDT 1649
+# "Christ Healing the Sick"
+# Dense hatching, expressive faces, dramatic chiaroscuro
+# ═══════════════════════════════════════════════════════════════
 
--- Eyes (symmetric)
-let left_eye : sketch = dot (-20, 15)
-let eyes : sketch = symmetric left_eye along y_axis
+# Canvas: 280mm x 190mm (proportional to original etching)
 
--- Nose
-let nose : sketch = line from (0, 10) to (0, -5)
+# ═══════════════════════════════════════════════════════════════
+# PART 1: CHRIST - THE LUMINOUS CENTER
+# Serene face, gentle eyes, flowing hair, commanding presence
+# ═══════════════════════════════════════════════════════════════
 
--- Smile
-let smile : sketch = curve from (-25, -20) to (25, -20) through (0, -35)
+# -- Christ's Face (detailed) --
+# Oval structure
+let christ_face_left : sketch = stroke from (137, 58) to (135, 72) via [(134, 65)]
+let christ_face_right : sketch = stroke from (143, 58) to (145, 72) via [(146, 65)]
+let christ_chin : sketch = stroke from (135, 72) to (145, 72) via [(140, 78)]
+let christ_forehead : sketch = stroke from (137, 58) to (143, 58) via [(140, 56)]
 
-let all : sketch = [
-	head,
-	eyes,
-	nose,
-	smile
+# Eyes - gentle, compassionate gaze
+let christ_left_eye : sketch = [
+  stroke from (136, 63) to (139, 63) via [(137.5, 62)],
+  stroke from (136, 63) to (139, 63) via [(137.5, 64)],
+  dot at (137.5, 63)
+]
+let christ_right_eye : sketch = [
+  stroke from (141, 63) to (144, 63) via [(142.5, 62)],
+  stroke from (141, 63) to (144, 63) via [(142.5, 64)],
+  dot at (142.5, 63)
+]
+# Eyebrows - soft
+let christ_brows : sketch = [
+  stroke from (135, 61) to (139, 60),
+  stroke from (141, 60) to (145, 61)
 ]
 
-let sym_all : sketch = symmetric all along 
+# Nose - straight, noble
+let christ_nose : sketch = [
+  stroke from (140, 62) to (140, 70),
+  stroke from (140, 70) to (138, 72),
+  stroke from (140, 70) to (142, 72)
+]
 
-draw all
+# Mouth - slight gentle smile
+let christ_mouth : sketch = [
+  stroke from (138, 74) to (142, 74) via [(140, 75)],
+  stroke from (138, 74) to (140, 74.5),
+  stroke from (142, 74) to (140, 74.5)
+]
+
+# Beard - flowing
+let christ_beard : sketch = [
+  stroke from (136, 75) to (134, 85) via [(135, 80)],
+  stroke from (138, 76) to (137, 88) via [(137, 82)],
+  stroke from (140, 77) to (140, 90),
+  stroke from (142, 76) to (143, 88) via [(143, 82)],
+  stroke from (144, 75) to (146, 85) via [(145, 80)]
+]
+
+# Hair - long, flowing, parted
+let christ_hair : sketch = [
+  stroke from (137, 56) to (130, 75) via [(132, 62), (129, 70)],
+  stroke from (135, 57) to (128, 78) via [(130, 65)],
+  stroke from (134, 58) to (126, 80) via [(128, 68)],
+  stroke from (143, 56) to (150, 75) via [(148, 62), (151, 70)],
+  stroke from (145, 57) to (152, 78) via [(150, 65)],
+  stroke from (146, 58) to (154, 80) via [(152, 68)],
+  # Top of head
+  stroke from (137, 55) to (143, 55) via [(140, 52)]
+]
+
+# Hair shading dashes - following flow
+let christ_hair_shading : sketch = [
+  dash at (131, 65), dash at (130, 70), dash at (129, 75),
+  dash at (133, 63), dash at (132, 68), dash at (131, 73),
+  dash at (149, 65), dash at (150, 70), dash at (151, 75),
+  dash at (147, 63), dash at (148, 68), dash at (149, 73)
+]
+
+# Halo/light area - kept sparse (negative space)
+
+# -- Christ's Body --
+let christ_neck : sketch = [
+  stroke from (138, 78) to (136, 88),
+  stroke from (142, 78) to (144, 88)
+]
+
+# Robes - flowing vertical
+let christ_robe_main : sketch = [
+  stroke from (130, 88) to (122, 160) via [(126, 120), (124, 145)],
+  stroke from (136, 88) to (132, 162) via [(134, 125)],
+  stroke from (140, 90) to (140, 165),
+  stroke from (144, 88) to (148, 162) via [(146, 125)],
+  stroke from (150, 88) to (158, 160) via [(154, 120), (156, 145)]
+]
+
+# Arms extended - welcoming gesture
+let christ_left_arm : sketch = [
+  stroke from (130, 92) to (100, 105) via [(115, 95)],
+  stroke from (128, 95) to (98, 108) via [(113, 98)]
+]
+let christ_right_arm : sketch = [
+  stroke from (150, 92) to (180, 105) via [(165, 95)],
+  stroke from (152, 95) to (182, 108) via [(167, 98)]
+]
+
+# Hands - open, blessing
+let christ_left_hand : sketch = [
+  stroke from (100, 105) to (94, 108),
+  stroke from (100, 105) to (95, 111),
+  stroke from (100, 105) to (97, 114),
+  stroke from (100, 105) to (100, 115),
+  stroke from (98, 108) to (93, 106)
+]
+let christ_right_hand : sketch = [
+  stroke from (180, 105) to (186, 108),
+  stroke from (180, 105) to (185, 111),
+  stroke from (180, 105) to (183, 114),
+  stroke from (180, 105) to (180, 115),
+  stroke from (182, 108) to (187, 106)
+]
+
+# Robe fold shading - light touch
+let christ_robe_folds : sketch = [
+  stroke from (128, 110) to (126, 130),
+  stroke from (152, 110) to (154, 130),
+  stroke from (130, 140) to (128, 155),
+  stroke from (150, 140) to (152, 155),
+  stroke from (125, 155) to (140, 163),
+  stroke from (155, 155) to (140, 163)
+]
+
+# Sparse shading on robe (light figure)
+let christ_robe_shading : sketch = [
+  dash at (127, 115), dash at (129, 125), dash at (127, 135),
+  dash at (153, 115), dash at (151, 125), dash at (153, 135),
+  dash at (135, 145), dash at (145, 145),
+  dash at (132, 155), dash at (148, 155)
+]
+
+let christ_complete : sketch = [
+  christ_face_left, christ_face_right, christ_chin, christ_forehead,
+  christ_left_eye, christ_right_eye, christ_brows,
+  christ_nose, christ_mouth, christ_beard, christ_hair,
+  christ_neck, christ_robe_main, christ_left_arm, christ_right_arm,
+  christ_left_hand, christ_right_hand, christ_robe_folds
+]
+
+trace christ_complete
+draw christ_hair_shading
+draw christ_robe_shading
+
+# ═══════════════════════════════════════════════════════════════
+# PART 2: LEFT GROUP - THE SICK, POOR, AND SUFFERING
+# Anguished faces, desperate eyes, reaching hands
+# ═══════════════════════════════════════════════════════════════
+
+# -- PARALYTIC ON BED (prominent left) --
+# His face - gaunt, suffering, hopeful
+let paralytic_face : sketch = [
+  stroke from (42, 128) to (40, 138) via [(39, 133)],
+  stroke from (48, 128) to (50, 138) via [(51, 133)],
+  stroke from (40, 138) to (50, 138) via [(45, 142)]
+]
+# Sunken eyes
+let paralytic_eyes : sketch = [
+  stroke from (41, 131) to (44, 131),
+  stroke from (46, 131) to (49, 131),
+  dot at (42.5, 131),
+  dot at (47.5, 131)
+]
+# Hollow cheeks - heavy shading
+let paralytic_face_shading : sketch = [
+  dash at (40, 133), dash at (41, 135), dash at (40, 137),
+  dash at (50, 133), dash at (49, 135), dash at (50, 137),
+  dash at (43, 139), dash at (47, 139),
+  dash at (42, 132), dash at (48, 132)
+]
+# Nose
+let paralytic_nose : sketch = stroke from (45, 132) to (45, 137)
+# Open mouth - gasping
+let paralytic_mouth : sketch = [
+  stroke from (43, 139) to (47, 139) via [(45, 140)],
+  stroke from (44, 139) to (46, 139)
+]
+# Emaciated body on bed
+let paralytic_body : sketch = [
+  stroke from (38, 140) to (35, 155) via [(36, 148)],
+  stroke from (52, 140) to (65, 155) via [(58, 148)],
+  stroke from (35, 155) to (65, 155)
+]
+# Bed/stretcher
+let paralytic_bed : sketch = [
+  stroke from (25, 150) to (70, 155),
+  stroke from (25, 150) to (25, 165),
+  stroke from (70, 155) to (70, 170),
+  stroke from (25, 165) to (70, 170)
+]
+# Bed shading
+let bed_shading : sketch = [
+  dash at (30, 158), dash at (40, 160), dash at (50, 158), dash at (60, 162),
+  dash at (35, 165), dash at (45, 163), dash at (55, 166), dash at (65, 164)
+]
+
+# -- BEARER 1 (left side, straining) --
+let bearer1_face : sketch = [
+  stroke from (18, 118) to (16, 126) via [(15, 122)],
+  stroke from (24, 118) to (26, 126) via [(27, 122)],
+  stroke from (16, 126) to (26, 126) via [(21, 130)]
+]
+let bearer1_eyes : sketch = [
+  stroke from (17, 121) to (20, 121),
+  stroke from (22, 121) to (25, 121),
+  dot at (18.5, 121), dot at (23.5, 121)
+]
+let bearer1_strain : sketch = [
+  # Furrowed brow
+  stroke from (17, 119) to (20, 118),
+  stroke from (22, 118) to (25, 119),
+  # Grimacing mouth
+  stroke from (19, 127) to (23, 127) via [(21, 128)]
+]
+let bearer1_body : sketch = [
+  stroke from (21, 130) to (23, 155),
+  stroke from (18, 128) to (15, 145),
+  stroke from (24, 128) to (28, 148)
+]
+let bearer1_shading : sketch = [
+  dash at (16, 123), dash at (17, 125), dash at (15, 127),
+  dash at (26, 123), dash at (25, 125), dash at (27, 127),
+  dash at (19, 135), dash at (22, 140), dash at (20, 148)
+]
+
+# -- BEARER 2 (right of bed) --
+let bearer2_face : sketch = [
+  stroke from (72, 125) to (70, 133) via [(69, 129)],
+  stroke from (78, 125) to (80, 133) via [(81, 129)],
+  stroke from (70, 133) to (80, 133) via [(75, 137)]
+]
+let bearer2_eyes : sketch = [
+  stroke from (71, 128) to (74, 128),
+  stroke from (76, 128) to (79, 128),
+  dot at (72.5, 128), dot at (77.5, 128)
+]
+let bearer2_body : sketch = [
+  stroke from (75, 137) to (76, 160),
+  stroke from (72, 135) to (68, 158),
+  stroke from (78, 135) to (82, 155)
+]
+let bearer2_shading : sketch = [
+  dash at (70, 130), dash at (71, 132), dash at (69, 134),
+  dash at (80, 130), dash at (79, 132), dash at (81, 134),
+  dash at (74, 145), dash at (77, 150)
+]
+
+# -- OLD BLIND MAN WITH STAFF --
+let oldman_face : sketch = [
+  stroke from (55, 98) to (52, 108) via [(51, 103)],
+  stroke from (62, 98) to (65, 108) via [(66, 103)],
+  stroke from (52, 108) to (65, 108) via [(58, 113)]
+]
+# Blind/clouded eyes
+let oldman_eyes : sketch = [
+  stroke from (53, 102) to (57, 102) via [(55, 101)],
+  stroke from (53, 102) to (57, 102) via [(55, 103)],
+  stroke from (60, 102) to (64, 102) via [(62, 101)],
+  stroke from (60, 102) to (64, 102) via [(62, 103)]
+]
+# Wrinkled, aged
+let oldman_wrinkles : sketch = [
+  stroke from (52, 100) to (56, 99),
+  stroke from (61, 99) to (65, 100),
+  stroke from (53, 105) to (51, 107),
+  stroke from (64, 105) to (66, 107)
+]
+let oldman_beard : sketch = [
+  stroke from (54, 110) to (52, 125) via [(53, 118)],
+  stroke from (58, 112) to (58, 128),
+  stroke from (62, 110) to (64, 125) via [(63, 118)]
+]
+let oldman_body : sketch = [
+  stroke from (58, 115) to (55, 165) via [(56, 140)],
+  stroke from (52, 108) to (48, 160) via [(50, 135)],
+  stroke from (65, 108) to (68, 155) via [(67, 130)]
+]
+# Staff
+let oldman_staff : sketch = stroke from (48, 95) to (45, 170)
+# Heavy shading - in shadow
+let oldman_shading : sketch = [
+  dash at (51, 104), dash at (52, 106), dash at (50, 108),
+  dash at (66, 104), dash at (65, 106), dash at (67, 108),
+  dash at (54, 115), dash at (56, 120), dash at (58, 118),
+  dash at (53, 130), dash at (55, 140), dash at (52, 150),
+  dash at (60, 135), dash at (62, 145), dash at (65, 150)
+]
+
+# -- KNEELING MOTHER WITH SICK CHILD --
+let mother_face : sketch = [
+  stroke from (82, 132) to (80, 140) via [(79, 136)],
+  stroke from (88, 132) to (90, 140) via [(91, 136)],
+  stroke from (80, 140) to (90, 140) via [(85, 144)]
+]
+# Pleading eyes - looking up at Christ
+let mother_eyes : sketch = [
+  stroke from (81, 135) to (84, 134) via [(82.5, 133.5)],
+  stroke from (86, 134) to (89, 135) via [(87.5, 133.5)],
+  dot at (82.5, 134.5), dot at (87.5, 134.5)
+]
+# Worried brow
+let mother_brow : sketch = [
+  stroke from (81, 133) to (84, 132),
+  stroke from (86, 132) to (89, 133)
+]
+let mother_body : sketch = [
+  stroke from (85, 144) to (83, 170) via [(84, 158)],
+  stroke from (80, 142) to (75, 168) via [(77, 155)],
+  stroke from (90, 142) to (95, 165) via [(93, 154)]
+]
+# Arms cradling child
+let mother_arms : sketch = [
+  stroke from (82, 148) to (90, 155),
+  stroke from (88, 148) to (95, 152)
+]
+# Child - small, limp
+let child_body : sketch = [
+  stroke from (92, 150) to (100, 160) via [(96, 152)],
+  stroke from (92, 152) to (98, 165)
+]
+let child_face : sketch = [
+  stroke from (93, 148) to (97, 148) via [(95, 146)],
+  stroke from (93, 148) to (97, 148) via [(95, 150)],
+  dot at (94, 148), dot at (96, 148)
+]
+let mother_shading : sketch = [
+  dash at (79, 137), dash at (80, 139), dash at (78, 141),
+  dash at (91, 137), dash at (90, 139), dash at (92, 141),
+  dash at (82, 152), dash at (80, 158), dash at (78, 165),
+  dash at (88, 155), dash at (92, 158), dash at (94, 162)
+]
+
+# -- CRAWLING FIGURE (desperate, reaching) --
+let crawling_face : sketch = [
+  stroke from (95, 158) to (98, 162) via [(95, 161)],
+  stroke from (100, 155) to (103, 160) via [(103, 157)],
+  stroke from (98, 162) to (103, 160) via [(100, 163)]
+]
+let crawling_eyes : sketch = [
+  dot at (96, 159), dot at (100, 157)
+]
+let crawling_body : sketch = [
+  stroke from (100, 162) to (85, 175) via [(92, 170)],
+  stroke from (95, 165) to (80, 178) via [(87, 173)]
+]
+let crawling_arm : sketch = stroke from (103, 160) to (115, 155) via [(110, 156)]
+let crawling_shading : sketch = [
+  dash at (94, 160), dash at (97, 163), dash at (92, 168),
+  dash at (88, 172), dash at (85, 176), dash at (90, 175)
+]
+
+# -- HUDDLED MASS FAR LEFT (deep shadow) --
+let left_mass_figures : sketch = [
+  # Faces barely visible
+  stroke from (8, 105) to (12, 115) via [(8, 110)],
+  stroke from (15, 100) to (20, 112) via [(15, 106)],
+  stroke from (22, 95) to (28, 108) via [(23, 102)],
+  # Bodies merged in darkness
+  stroke from (5, 115) to (10, 155),
+  stroke from (12, 112) to (18, 160),
+  stroke from (20, 108) to (28, 158),
+  stroke from (26, 105) to (35, 155)
+]
+# HEAVY shadow hatching
+let left_mass_shading : sketch = [
+  # Dense diagonal hatching
+  dash at (6, 108), dash at (8, 112), dash at (7, 118), dash at (9, 124),
+  dash at (5, 130), dash at (7, 136), dash at (6, 142), dash at (8, 148),
+  dash at (12, 105), dash at (14, 110), dash at (13, 116), dash at (15, 122),
+  dash at (12, 128), dash at (14, 134), dash at (13, 140), dash at (15, 146),
+  dash at (18, 102), dash at (20, 108), dash at (19, 114), dash at (21, 120),
+  dash at (18, 126), dash at (20, 132), dash at (19, 138), dash at (21, 144),
+  dash at (24, 100), dash at (26, 106), dash at (25, 112), dash at (27, 118),
+  dash at (24, 124), dash at (26, 130), dash at (25, 136), dash at (27, 142),
+  dash at (30, 105), dash at (32, 111), dash at (31, 117), dash at (33, 123),
+  dash at (30, 129), dash at (32, 135), dash at (31, 141), dash at (33, 147)
+]
+
+let left_group : sketch = [
+  paralytic_face, paralytic_eyes, paralytic_nose, paralytic_mouth, paralytic_body, paralytic_bed,
+  bearer1_face, bearer1_eyes, bearer1_strain, bearer1_body,
+  bearer2_face, bearer2_eyes, bearer2_body,
+  oldman_face, oldman_eyes, oldman_wrinkles, oldman_beard, oldman_body, oldman_staff,
+  mother_face, mother_eyes, mother_brow, mother_body, mother_arms,
+  child_body, child_face,
+  crawling_face, crawling_eyes, crawling_body, crawling_arm,
+  left_mass_figures
+]
+
+draw left_group
+scribble paralytic_face_shading
+scribble bearer1_shading
+scribble bearer2_shading
+scribble oldman_shading
+scribble mother_shading
+scribble crawling_shading
+scribble left_mass_shading
+scribble bed_shading
+
+# ═══════════════════════════════════════════════════════════════
+# PART 3: RIGHT GROUP - PHARISEES, SKEPTICS, WEALTHY
+# Suspicious eyes, furrowed brows, crossed arms, shadowed faces
+# ═══════════════════════════════════════════════════════════════
+
+# -- MAIN PHARISEE (prominent, skeptical) --
+let pharisee1_face : sketch = [
+  stroke from (195, 88) to (192, 98) via [(191, 93)],
+  stroke from (203, 88) to (206, 98) via [(207, 93)],
+  stroke from (192, 98) to (206, 98) via [(199, 103)]
+]
+# Narrowed, judgmental eyes
+let pharisee1_eyes : sketch = [
+  stroke from (193, 92) to (197, 91),
+  stroke from (193, 92) to (197, 93),
+  stroke from (201, 91) to (205, 92),
+  stroke from (201, 93) to (205, 92),
+  dot at (195, 92), dot at (203, 92)
+]
+# Furrowed skeptical brow
+let pharisee1_brow : sketch = [
+  stroke from (193, 90) to (197, 89),
+  stroke from (201, 89) to (205, 90),
+  stroke from (197, 89) to (201, 89)
+]
+# Hooked nose
+let pharisee1_nose : sketch = [
+  stroke from (199, 91) to (199, 97),
+  stroke from (199, 97) to (197, 99),
+  stroke from (199, 97) to (196, 98)
+]
+# Thin disapproving mouth
+let pharisee1_mouth : sketch = stroke from (196, 100) to (202, 100)
+# Elaborate beard
+let pharisee1_beard : sketch = [
+  stroke from (194, 101) to (192, 118) via [(193, 110)],
+  stroke from (199, 103) to (199, 120),
+  stroke from (204, 101) to (206, 118) via [(205, 110)],
+  stroke from (196, 102) to (195, 115),
+  stroke from (202, 102) to (203, 115)
+]
+# Turban/head covering
+let pharisee1_turban : sketch = [
+  stroke from (192, 88) to (206, 88) via [(199, 82)],
+  stroke from (190, 90) to (208, 90) via [(199, 85)],
+  stroke from (191, 86) to (189, 92),
+  stroke from (207, 86) to (209, 92)
+]
+# Rich robes
+let pharisee1_body : sketch = [
+  stroke from (192, 100) to (185, 165) via [(188, 130)],
+  stroke from (199, 103) to (199, 168),
+  stroke from (206, 100) to (213, 165) via [(210, 130)]
+]
+# Arms folded (closed posture)
+let pharisee1_arms : sketch = [
+  stroke from (190, 110) to (195, 125) via [(188, 118)],
+  stroke from (208, 110) to (203, 125) via [(210, 118)],
+  stroke from (195, 125) to (203, 125)
+]
+# Heavy shading (in moral darkness)
+let pharisee1_shading : sketch = [
+  dash at (191, 94), dash at (192, 96), dash at (190, 98),
+  dash at (207, 94), dash at (206, 96), dash at (208, 98),
+  dash at (194, 108), dash at (196, 112), dash at (198, 116),
+  dash at (204, 108), dash at (202, 112), dash at (200, 116),
+  dash at (188, 125), dash at (190, 135), dash at (187, 145), dash at (189, 155),
+  dash at (210, 125), dash at (208, 135), dash at (211, 145), dash at (209, 155),
+  dash at (196, 140), dash at (202, 140), dash at (199, 150), dash at (199, 160)
+]
+
+# -- SECOND PHARISEE (whispering, conspiring) --
+let pharisee2_face : sketch = [
+  stroke from (215, 95) to (213, 103) via [(212, 99)],
+  stroke from (222, 95) to (224, 103) via [(225, 99)],
+  stroke from (213, 103) to (224, 103) via [(218, 107)]
+]
+let pharisee2_eyes : sketch = [
+  stroke from (214, 98) to (217, 98),
+  stroke from (220, 98) to (223, 98),
+  dot at (215.5, 98), dot at (221.5, 98)
+]
+# Whispering mouth
+let pharisee2_mouth : sketch = [
+  stroke from (216, 104) to (220, 104) via [(218, 105)],
+  stroke from (215, 104) to (216, 105)
+]
+let pharisee2_beard : sketch = [
+  stroke from (214, 105) to (212, 118),
+  stroke from (218, 107) to (218, 120),
+  stroke from (222, 105) to (224, 118)
+]
+let pharisee2_body : sketch = [
+  stroke from (213, 105) to (208, 160) via [(210, 132)],
+  stroke from (218, 107) to (218, 165),
+  stroke from (224, 105) to (228, 160) via [(226, 132)]
+]
+# Leaning toward pharisee1
+let pharisee2_lean : sketch = stroke from (213, 100) to (208, 95)
+let pharisee2_shading : sketch = [
+  dash at (212, 100), dash at (213, 102), dash at (211, 104),
+  dash at (225, 100), dash at (224, 102), dash at (226, 104),
+  dash at (210, 115), dash at (212, 125), dash at (209, 135),
+  dash at (226, 115), dash at (224, 125), dash at (227, 135),
+  dash at (215, 145), dash at (220, 150), dash at (217, 158)
+]
+
+# -- WEALTHY MERCHANT (fat, comfortable) --
+let merchant_face : sketch = [
+  stroke from (232, 100) to (228, 112) via [(226, 106)],
+  stroke from (242, 100) to (246, 112) via [(248, 106)],
+  stroke from (228, 112) to (246, 112) via [(237, 118)]
+]
+# Small satisfied eyes
+let merchant_eyes : sketch = [
+  stroke from (230, 105) to (234, 105),
+  stroke from (240, 105) to (244, 105),
+  dot at (232, 105), dot at (242, 105)
+]
+# Double chin
+let merchant_chin : sketch = [
+  stroke from (232, 114) to (242, 114) via [(237, 116)],
+  stroke from (234, 116) to (240, 116) via [(237, 118)]
+]
+# Small nose
+let merchant_nose : sketch = [
+  stroke from (237, 104) to (237, 110),
+  stroke from (237, 110) to (235, 111)
+]
+# Smug mouth
+let merchant_mouth : sketch = stroke from (234, 112) to (240, 112) via [(237, 113)]
+# Expensive hat
+let merchant_hat : sketch = [
+  stroke from (228, 100) to (246, 100) via [(237, 94)],
+  stroke from (226, 102) to (248, 102) via [(237, 97)],
+  stroke from (230, 95) to (244, 95) via [(237, 90)]
+]
+let merchant_body : sketch = [
+  stroke from (228, 115) to (220, 165) via [(224, 140)],
+  stroke from (237, 118) to (237, 168),
+  stroke from (246, 115) to (254, 165) via [(250, 140)]
+]
+let merchant_shading : sketch = [
+  dash at (227, 107), dash at (228, 109), dash at (226, 111),
+  dash at (247, 107), dash at (246, 109), dash at (248, 111),
+  dash at (233, 115), dash at (237, 115), dash at (241, 115),
+  dash at (222, 130), dash at (224, 140), dash at (221, 150), dash at (223, 160),
+  dash at (252, 130), dash at (250, 140), dash at (253, 150), dash at (251, 160),
+  dash at (232, 145), dash at (237, 150), dash at (242, 145)
+]
+
+# -- YOUNG SCRIBE (taking notes, detached) --
+let scribe_face : sketch = [
+  stroke from (182, 108) to (180, 116) via [(179, 112)],
+  stroke from (188, 108) to (190, 116) via [(191, 112)],
+  stroke from (180, 116) to (190, 116) via [(185, 120)]
+]
+let scribe_eyes : sketch = [
+  stroke from (181, 111) to (184, 111),
+  stroke from (186, 111) to (189, 111),
+  dot at (182.5, 111), dot at (187.5, 111)
+]
+# Looking down at scroll
+let scribe_downcast : sketch = [
+  stroke from (181, 112) to (183, 113),
+  stroke from (187, 113) to (189, 112)
+]
+let scribe_body : sketch = [
+  stroke from (185, 120) to (183, 165) via [(184, 142)],
+  stroke from (180, 118) to (175, 162) via [(177, 140)],
+  stroke from (190, 118) to (195, 162) via [(193, 140)]
+]
+# Holding scroll
+let scribe_arms : sketch = [
+  stroke from (178, 125) to (172, 140),
+  stroke from (192, 125) to (198, 140),
+  stroke from (172, 140) to (172, 155),
+  stroke from (198, 140) to (198, 155)
+]
+let scribe_shading : sketch = [
+  dash at (179, 113), dash at (180, 115), dash at (178, 117),
+  dash at (191, 113), dash at (190, 115), dash at (192, 117),
+  dash at (176, 130), dash at (178, 140), dash at (175, 150),
+  dash at (194, 130), dash at (192, 140), dash at (195, 150)
+]
+
+# -- RIGHT MASS (deep shadow, barely visible) --
+let right_mass_figures : sketch = [
+  stroke from (252, 95) to (255, 110) via [(250, 102)],
+  stroke from (258, 92) to (262, 108) via [(256, 100)],
+  stroke from (265, 95) to (270, 112) via [(263, 103)],
+  stroke from (250, 110) to (248, 160),
+  stroke from (258, 108) to (260, 158),
+  stroke from (268, 112) to (272, 155)
+]
+# VERY heavy shading
+let right_mass_shading : sketch = [
+  dash at (250, 98), dash at (252, 104), dash at (249, 110), dash at (251, 116),
+  dash at (248, 122), dash at (250, 128), dash at (247, 134), dash at (249, 140),
+  dash at (246, 146), dash at (248, 152), dash at (245, 158),
+  dash at (256, 95), dash at (258, 101), dash at (255, 107), dash at (257, 113),
+  dash at (254, 119), dash at (256, 125), dash at (253, 131), dash at (255, 137),
+  dash at (252, 143), dash at (254, 149), dash at (251, 155),
+  dash at (262, 98), dash at (264, 104), dash at (261, 110), dash at (263, 116),
+  dash at (260, 122), dash at (262, 128), dash at (259, 134), dash at (261, 140),
+  dash at (258, 146), dash at (260, 152), dash at (257, 158),
+  dash at (268, 100), dash at (270, 106), dash at (267, 112), dash at (269, 118),
+  dash at (266, 124), dash at (268, 130), dash at (265, 136), dash at (267, 142),
+  dash at (264, 148), dash at (266, 154), dash at (263, 160),
+  dash at (273, 105), dash at (275, 111), dash at (272, 117), dash at (274, 123),
+  dash at (271, 129), dash at (273, 135), dash at (270, 141), dash at (272, 147)
+]
+
+let right_group : sketch = [
+  pharisee1_face, pharisee1_eyes, pharisee1_brow, pharisee1_nose, pharisee1_mouth,
+  pharisee1_beard, pharisee1_turban, pharisee1_body, pharisee1_arms,
+  pharisee2_face, pharisee2_eyes, pharisee2_mouth, pharisee2_beard, pharisee2_body, pharisee2_lean,
+  merchant_face, merchant_eyes, merchant_chin, merchant_nose, merchant_mouth, merchant_hat, merchant_body,
+  scribe_face, scribe_eyes, scribe_downcast, scribe_body, scribe_arms,
+  right_mass_figures
+]
+
+draw right_group
+scribble pharisee1_shading
+scribble pharisee2_shading
+scribble merchant_shading
+scribble scribe_shading
+scribble right_mass_shading
+
+# ═══════════════════════════════════════════════════════════════
+# PART 4: FOREGROUND FIGURES
+# Mother presenting children, kneeling supplicants
+# ═══════════════════════════════════════════════════════════════
+
+# -- MOTHER PRESENTING CHILDREN TO CHRIST --
+let presenting_mother_face : sketch = [
+  stroke from (112, 128) to (110, 136) via [(109, 132)],
+  stroke from (118, 128) to (120, 136) via [(121, 132)],
+  stroke from (110, 136) to (120, 136) via [(115, 140)]
+]
+# Hopeful upward gaze
+let presenting_mother_eyes : sketch = [
+  stroke from (111, 131) to (114, 130) via [(112.5, 129.5)],
+  stroke from (116, 130) to (119, 131) via [(117.5, 129.5)],
+  dot at (112.5, 130.5), dot at (117.5, 130.5)
+]
+let presenting_mother_body : sketch = [
+  stroke from (115, 140) to (113, 172) via [(114, 156)],
+  stroke from (110, 138) to (105, 170) via [(107, 154)],
+  stroke from (120, 138) to (125, 168) via [(123, 153)]
+]
+# Guiding child forward
+let presenting_mother_arm : sketch = stroke from (118, 145) to (130, 150) via [(125, 145)]
+let presenting_mother_shading : sketch = [
+  dash at (109, 133), dash at (110, 135), dash at (108, 137),
+  dash at (121, 133), dash at (120, 135), dash at (122, 137),
+  dash at (106, 150), dash at (108, 158), dash at (105, 166),
+  dash at (122, 152), dash at (124, 160)
+]
+
+# -- CHILD BEING PRESENTED --
+let presented_child_face : sketch = [
+  stroke from (128, 145) to (127, 150) via [(126, 147.5)],
+  stroke from (132, 145) to (133, 150) via [(134, 147.5)],
+  stroke from (127, 150) to (133, 150) via [(130, 153)]
+]
+# Innocent eyes looking at Christ
+let presented_child_eyes : sketch = [
+  dot at (128.5, 147), dot at (131.5, 147)
+]
+let presented_child_body : sketch = [
+  stroke from (130, 153) to (130, 172),
+  stroke from (127, 152) to (125, 170),
+  stroke from (133, 152) to (135, 170)
+]
+let presented_child_shading : sketch = [
+  dash at (126, 148), dash at (127, 150),
+  dash at (134, 148), dash at (133, 150),
+  dash at (126, 160), dash at (130, 165), dash at (134, 160)
+]
+
+# -- SECOND CHILD (smaller, behind) --
+let second_child : sketch = [
+  stroke from (120, 150) to (119, 154) via [(118, 152)],
+  stroke from (124, 150) to (125, 154) via [(126, 152)],
+  stroke from (119, 154) to (125, 154) via [(122, 156)],
+  dot at (120.5, 152), dot at (123.5, 152)
+]
+let second_child_body : sketch = [
+  stroke from (122, 156) to (122, 172),
+  stroke from (119, 155) to (118, 170)
+]
+let second_child_shading : sketch = [
+  dash at (118, 153), dash at (119, 155),
+  dash at (119, 162), dash at (121, 168)
+]
+
+# -- KNEELING MAN (right of center) --
+let kneeling_man_face : sketch = [
+  stroke from (158, 138) to (156, 146) via [(155, 142)],
+  stroke from (164, 138) to (166, 146) via [(167, 142)],
+  stroke from (156, 146) to (166, 146) via [(161, 150)]
+]
+# Eyes looking up in awe
+let kneeling_man_eyes : sketch = [
+  stroke from (157, 141) to (160, 140),
+  stroke from (162, 140) to (165, 141),
+  dot at (158.5, 141), dot at (163.5, 141)
+]
+let kneeling_man_body : sketch = [
+  stroke from (161, 150) to (163, 175) via [(162, 162)],
+  stroke from (156, 148) to (150, 172) via [(153, 160)],
+  stroke from (166, 148) to (172, 170) via [(169, 159)]
+]
+# Hands clasped
+let kneeling_man_hands : sketch = [
+  stroke from (158, 155) to (164, 155),
+  stroke from (158, 155) to (161, 160),
+  stroke from (164, 155) to (161, 160)
+]
+let kneeling_man_shading : sketch = [
+  dash at (155, 143), dash at (156, 145), dash at (154, 147),
+  dash at (167, 143), dash at (166, 145), dash at (168, 147),
+  dash at (152, 158), dash at (154, 165), dash at (151, 172),
+  dash at (170, 158), dash at (168, 165), dash at (171, 170)
+]
+
+# -- PROSTRATE FIGURE (far foreground) --
+let prostrate_face : sketch = [
+  stroke from (138, 168) to (142, 168) via [(140, 165)],
+  stroke from (138, 168) to (142, 168) via [(140, 171)],
+  dot at (139, 168), dot at (141, 168)
+]
+let prostrate_body : sketch = [
+  stroke from (142, 168) to (165, 175) via [(155, 170)],
+  stroke from (138, 170) to (130, 180) via [(134, 176)]
+]
+let prostrate_arm : sketch = stroke from (142, 167) to (155, 162) via [(148, 163)]
+let prostrate_shading : sketch = [
+  dash at (145, 172), dash at (150, 173), dash at (155, 174), dash at (160, 175),
+  dash at (135, 175), dash at (132, 178)
+]
+
+let foreground_group : sketch = [
+  presenting_mother_face, presenting_mother_eyes, presenting_mother_body, presenting_mother_arm,
+  presented_child_face, presented_child_eyes, presented_child_body,
+  second_child, second_child_body,
+  kneeling_man_face, kneeling_man_eyes, kneeling_man_body, kneeling_man_hands,
+  prostrate_face, prostrate_body, prostrate_arm
+]
+
+draw foreground_group
+scribble presenting_mother_shading
+scribble presented_child_shading
+scribble second_child_shading
+scribble kneeling_man_shading
+scribble prostrate_shading
+
+# ═══════════════════════════════════════════════════════════════
+# PART 5: ARCHITECTURAL FRAME AND BACKGROUND
+# ═══════════════════════════════════════════════════════════════
+
+# Main arch structure
+let arch_left : sketch = stroke from (25, 175) to (25, 35)
+let arch_right : sketch = stroke from (255, 175) to (255, 35)
+let arch_top : sketch = stroke from (25, 35) to (255, 35) via [(140, 12)]
+
+let arch_inner_left : sketch = stroke from (35, 172) to (35, 42)
+let arch_inner_right : sketch = stroke from (245, 172) to (245, 42)
+let arch_inner_top : sketch = stroke from (35, 42) to (245, 42) via [(140, 22)]
+
+# Stone texture on arch
+let arch_stones : sketch = [
+  stroke from (25, 50) to (35, 50),
+  stroke from (25, 70) to (35, 70),
+  stroke from (25, 90) to (35, 90),
+  stroke from (255, 50) to (245, 50),
+  stroke from (255, 70) to (245, 70),
+  stroke from (255, 90) to (245, 90)
+]
+
+let architecture : sketch = [
+  arch_left, arch_right, arch_top,
+  arch_inner_left, arch_inner_right, arch_inner_top,
+  arch_stones
+]
+
+trace architecture
+
+# ═══════════════════════════════════════════════════════════════
+# PART 6: MASSIVE SHADOW HATCHING
+# The drama of Rembrandt - pools of darkness
+# ═══════════════════════════════════════════════════════════════
+
+# -- LEFT UPPER DARKNESS --
+let left_upper_shadow : sketch = [
+  stroke from (5, 30) to (30, 60),
+  stroke from (5, 40) to (32, 70),
+  stroke from (5, 50) to (34, 80),
+  stroke from (8, 60) to (36, 90),
+  stroke from (10, 70) to (38, 100)
+]
+let left_upper_cross : sketch = [
+  stroke from (30, 30) to (5, 60),
+  stroke from (32, 40) to (7, 70),
+  stroke from (34, 50) to (9, 80),
+  stroke from (36, 60) to (11, 90)
+]
+let left_upper_dashes : sketch = [
+  dash at (10, 35), dash at (15, 40), dash at (12, 48), dash at (18, 55),
+  dash at (8, 60), dash at (14, 65), dash at (10, 72), dash at (16, 78),
+  dash at (20, 45), dash at (25, 52), dash at (22, 60), dash at (28, 68),
+  dash at (18, 85), dash at (24, 90), dash at (20, 95)
+]
+
+# -- RIGHT UPPER DARKNESS (even darker) --
+let right_upper_shadow : sketch = [
+  stroke from (275, 30) to (250, 60),
+  stroke from (275, 40) to (248, 70),
+  stroke from (275, 50) to (246, 80),
+  stroke from (272, 60) to (244, 90),
+  stroke from (270, 70) to (242, 100)
+]
+let right_upper_cross : sketch = [
+  stroke from (250, 30) to (275, 60),
+  stroke from (248, 40) to (273, 70),
+  stroke from (246, 50) to (271, 80),
+  stroke from (244, 60) to (269, 90)
+]
+let right_upper_dashes : sketch = [
+  dash at (270, 35), dash at (265, 40), dash at (268, 48), dash at (262, 55),
+  dash at (272, 60), dash at (266, 65), dash at (270, 72), dash at (264, 78),
+  dash at (260, 45), dash at (255, 52), dash at (258, 60), dash at (252, 68),
+  dash at (262, 85), dash at (256, 90), dash at (260, 95),
+  # Extra density
+  dash at (268, 42), dash at (263, 50), dash at (270, 55), dash at (265, 62),
+  dash at (258, 48), dash at (253, 55), dash at (256, 62), dash at (251, 70)
+]
+
+# -- CEILING DARKNESS --
+let ceiling_shadow : sketch = [
+  stroke from (50, 15) to (80, 38),
+  stroke from (60, 12) to (90, 35),
+  stroke from (70, 10) to (100, 33),
+  stroke from (180, 10) to (210, 33),
+  stroke from (190, 12) to (220, 35),
+  stroke from (200, 15) to (230, 38)
+]
+let ceiling_dashes : sketch = [
+  dash at (55, 20), dash at (65, 18), dash at (75, 22), dash at (85, 25),
+  dash at (60, 28), dash at (70, 30), dash at (80, 32),
+  dash at (195, 20), dash at (205, 18), dash at (215, 22), dash at (225, 25),
+  dash at (200, 28), dash at (210, 30), dash at (220, 32)
+]
+
+scribble left_upper_shadow
+scribble left_upper_cross
+scribble left_upper_dashes
+scribble right_upper_shadow
+scribble right_upper_cross
+scribble right_upper_dashes
+scribble ceiling_shadow
+scribble ceiling_dashes
+
+# ═══════════════════════════════════════════════════════════════
+# PART 7: GROUND PLANE
+# ═══════════════════════════════════════════════════════════════
+
+let ground_line : sketch = stroke from (25, 175) to (255, 175)
+
+let ground_texture : sketch = [
+  stroke from (30, 180) to (90, 178) via [(60, 182)],
+  stroke from (85, 182) to (145, 179) via [(115, 184)],
+  stroke from (140, 181) to (200, 178) via [(170, 183)],
+  stroke from (195, 180) to (250, 177) via [(225, 182)]
+]
+
+let ground_dots : sketch = [
+  dot at (40, 182), dot at (55, 185), dot at (70, 181), dot at (85, 184),
+  dot at (100, 180), dot at (115, 183), dot at (130, 186), dot at (145, 181),
+  dot at (160, 184), dot at (175, 180), dot at (190, 183), dot at (205, 185),
+  dot at (220, 181), dot at (235, 184), dot at (250, 180)
+]
+
+let ground_dashes : sketch = [
+  dash at (45, 183), dash at (75, 182), dash at (105, 184), dash at (135, 181),
+  dash at (165, 183), dash at (195, 182), dash at (225, 184), dash at (245, 181)
+]
+
+draw ground_line
+draw ground_texture
+scribble ground_dots
+draw ground_dashes
+
+# ═══════════════════════════════════════════════════════════════
+# PART 8: LIGHT RAYS FROM CHRIST (subtle, not geometric)
+# ═══════════════════════════════════════════════════════════════
+
+let light_glow : sketch = [
+  # Soft curves suggesting emanating light
+  stroke from (130, 70) to (115, 55) via [(122, 62)],
+  stroke from (150, 70) to (165, 55) via [(158, 62)],
+  stroke from (125, 80) to (105, 70) via [(115, 76)],
+  stroke from (155, 80) to (175, 70) via [(165, 76)],
+  stroke from (120, 90) to (95, 85) via [(108, 88)],
+  stroke from (160, 90) to (185, 85) via [(172, 88)]
+]
+
+draw light_glow
+
+# ═══════════════════════════════════════════════════════════════
+# PART 9: DONKEY (characterist

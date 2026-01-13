@@ -106,9 +106,19 @@ let vec_distance a b =
 let vec_lerp a b t =
   { x = a.x +. (t *. (b.x -. a.x)); y = a.y +. (t *. (b.y -. a.y)) }
 
+(* Project point p onto line segment ab, return closest point and parameter t *)
+let point_to_segment_closest p a b =
+  let ab = vec_sub b a in
+  let ap = vec_sub p a in
+  let len_sq = (ab.x *. ab.x) +. (ab.y *. ab.y) in
+  if len_sq < 1e-10 then (a, 0.0)
+  else
+    let t = Float.max 0.0 (Float.min 1.0 (((ap.x *. ab.x) +. (ap.y *. ab.y)) /. len_sq)) in
+    let closest = vec_add a (vec_scale ab t) in
+    (closest, t)
+
 (*** Catmull-Rom Spline Evaluation ***)
 
-(* Evaluate Catmull-Rom spline at parameter t given 4 control points *)
 let catmull_rom_eval p0 p1 p2 p3 t =
   let t2 = t *. t in
   let t3 = t2 *. t in
@@ -128,7 +138,6 @@ let catmull_rom_eval p0 p1 p2 p3 t =
   in
   { x; y }
 
-(* Flatten a Catmull-Rom segment to line segments *)
 let flatten_catmull_rom_segment p0 p1 p2 p3 num_segments =
   let rec go i acc =
     if i > num_segments then acc
@@ -139,8 +148,6 @@ let flatten_catmull_rom_segment p0 p1 p2 p3 num_segments =
   in
   List.rev (go 1 [])
 
-(* Convert a list of points to line segments via Catmull-Rom interpolation
-   segments_per_span controls smoothness *)
 let spline_to_segments ?(segments_per_span = 8) points =
   match points with
   | [] | [ _ ] -> []
@@ -148,7 +155,6 @@ let spline_to_segments ?(segments_per_span = 8) points =
   | _ ->
       let arr = Array.of_list points in
       let n = Array.length arr in
-      (* Phantom endpoints for natural spline behavior *)
       let get i =
         if i < 0 then vec_sub arr.(0) (vec_sub arr.(1) arr.(0))
         else if i >= n then
@@ -197,6 +203,45 @@ let transform_path f (path : path) : path =
 
 let transform_ir f (ir : ir) : ir = List.map (transform_path f) ir
 
+(*** Flow Field ***)
+
+(* A flow source represents a directed stroke segment *)
+type flow_source = { 
+  fs_p0 : vec;      (* start point *)
+  fs_p1 : vec;      (* end point *)
+  fs_dir : vec;     (* normalized direction from p0 to p1 *)
+  fs_length : float (* length of the segment *)
+}
+
+let make_flow_source p0 p1 =
+  let dir = vec_sub p1 p0 in
+  let len = vec_length dir in
+  {
+    fs_p0 = p0;
+    fs_p1 = p1;
+    fs_dir = (if len < 1e-10 then { x = 1.0; y = 0.0 } else vec_scale dir (1.0 /. len));
+    fs_length = len;
+  }
+
+(* Sample the flow field at point p
+   Uses inverse-distance weighting based on closest point on each stroke segment *)
+let sample_flow_field sources p =
+  if sources = [] then { x = 1.0; y = 0.0 }
+  else
+    let sx, sy, sw =
+      List.fold_left
+        (fun (ax, ay, aw) src ->
+          (* Find closest point on this stroke segment to p *)
+          let closest, _ = point_to_segment_closest p src.fs_p0 src.fs_p1 in
+          let dist = vec_distance p closest in
+          (* Inverse square falloff, with small epsilon to avoid division by zero *)
+          let w = 1.0 /. (1.0 +. (dist *. dist)) in
+          (ax +. (src.fs_dir.x *. w), ay +. (src.fs_dir.y *. w), aw +. w))
+        (0.0, 0.0, 0.0) sources
+    in
+    if sw < 1e-10 then { x = 1.0; y = 0.0 }
+    else vec_normalize { x = sx /. sw; y = sy /. sw }
+
 (*** Expression Evaluation ***)
 
 let rec eval_num env (expr : num_expr) : float =
@@ -213,7 +258,8 @@ let rec eval_num env (expr : num_expr) : float =
         error (InvalidOperation "Division by zero")
       else eval_num env a /. divisor
 
-and eval_vec_basic env (expr : vec_expr) : vec =
+(* Vector evaluation with flow sources available *)
+and eval_vec env flow_sources (expr : vec_expr) : vec =
   match expr with
   | VecLit (x, y) -> vec x y
   | VecConstruct (x_expr, y_expr) ->
@@ -222,10 +268,19 @@ and eval_vec_basic env (expr : vec_expr) : vec =
   | VecCenter sk ->
       let ir = eval_sketch_basic env sk in
       compute_center ir
-  | VecAdd (a, b) -> vec_add (eval_vec_basic env a) (eval_vec_basic env b)
-  | VecSub (a, b) -> vec_sub (eval_vec_basic env a) (eval_vec_basic env b)
-  | VecScale (v, n) -> vec_scale (eval_vec_basic env v) (eval_num env n)
-  | VecFlow v -> eval_vec_basic env v
+  | VecAdd (a, b) -> 
+      vec_add (eval_vec env flow_sources a) (eval_vec env flow_sources b)
+  | VecSub (a, b) -> 
+      vec_sub (eval_vec env flow_sources a) (eval_vec env flow_sources b)
+  | VecScale (v, n) -> 
+      vec_scale (eval_vec env flow_sources v) (eval_num env n)
+  | VecFlow v ->
+      (* Sample the flow field at the given point, returning direction vector *)
+      let p = eval_vec env flow_sources v in
+      sample_flow_field flow_sources p
+
+(* Vector evaluation without flow (for bootstrapping / collecting flow sources) *)
+and eval_vec_basic env expr = eval_vec env [] expr
 
 and compute_center (ir : ir) : vec =
   if ir = [] then vec 0.0 0.0
@@ -260,6 +315,7 @@ and compute_bounds (ir : ir) : bounds =
   in
   List.fold_left path_bounds init ir
 
+(* Basic sketch evaluation (no noise, no flow) - used for bounds, center, etc. *)
 and eval_sketch_basic env (expr : sketch_expr) : ir =
   match expr with
   | Primitive prim -> eval_primitive_basic env prim
@@ -300,36 +356,29 @@ and eval_primitive_basic env (prim : primitive) : ir =
       let segments = spline_to_segments all_pts in
       [ { start = p0; segments } ]
 
-(*** Flow Field ***)
+(*** Flow Source Collection ***)
 
-type flow_source = { fs_p0 : vec; fs_p1 : vec; fs_dir : vec }
+(* Helper to create pairs from a list *)
+let rec pairs = function
+  | a :: (b :: _ as rest) -> (a, b) :: pairs rest
+  | _ -> []
 
+(* Collect all flow sources from strokes in a sketch expression
+   This is done in the first pass before full evaluation *)
 let rec collect_flow_sources env (expr : sketch_expr) : flow_source list =
   match expr with
-  | Primitive (Stroke (v0, _, v1)) ->
+  | Primitive (Stroke (v0, via, v1)) ->
       let p0 = eval_vec_basic env v0 in
       let p1 = eval_vec_basic env v1 in
-      [ { fs_p0 = p0; fs_p1 = p1; fs_dir = vec_normalize (vec_sub p1 p0) } ]
+      let via_pts = List.map (eval_vec_basic env) via in
+      (* Create flow sources for each segment of the stroke *)
+      let all_pts = [ p0 ] @ via_pts @ [ p1 ] in
+      List.map (fun (a, b) -> make_flow_source a b) (pairs all_pts)
   | Primitive _ -> []
   | SketchVar name -> collect_flow_sources env (lookup_sketch name env)
   | SketchList sks -> List.concat_map (collect_flow_sources env) sks
 
-let sample_flow_field sources p =
-  if sources = [] then { x = 1.0; y = 0.0 }
-  else
-    let sx, sy, sw =
-      List.fold_left
-        (fun (ax, ay, aw) src ->
-          let mid = vec_lerp src.fs_p0 src.fs_p1 0.5 in
-          let dist = vec_distance p mid in
-          let w = 1.0 /. (1.0 +. (dist *. dist)) in
-          (ax +. (src.fs_dir.x *. w), ay +. (src.fs_dir.y *. w), aw +. w))
-        (0.0, 0.0, 0.0) sources
-    in
-    if sw < 1e-10 then { x = 1.0; y = 0.0 }
-    else vec_normalize { x = sx /. sw; y = sy /. sw }
-
-(*** Full Evaluation with Noise ***)
+(*** Full Evaluation with Noise and Flow ***)
 
 let rec eval_sketch env noise flow_sources (expr : sketch_expr) : ir =
   match expr with
@@ -341,7 +390,7 @@ let rec eval_sketch env noise flow_sources (expr : sketch_expr) : ir =
 and eval_primitive env noise flow_sources (prim : primitive) : ir =
   match prim with
   | Dot v ->
-      let p = jitter_vec noise (eval_vec_basic env v) in
+      let p = jitter_vec noise (eval_vec env flow_sources v) in
       let r = 0.5 in
       [
         {
@@ -356,7 +405,7 @@ and eval_primitive env noise flow_sources (prim : primitive) : ir =
         };
       ]
   | Dash v ->
-      let p = jitter_vec noise (eval_vec_basic env v) in
+      let p = jitter_vec noise (eval_vec env flow_sources v) in
       let dir = sample_flow_field flow_sources p in
       let half = 1.0 in
       let p0 =
@@ -369,10 +418,10 @@ and eval_primitive env noise flow_sources (prim : primitive) : ir =
       in
       [ { start = p0; segments = [ LineTo p1 ] } ]
   | Stroke (v0, via, v1) ->
-      let p0 = jitter_vec noise (eval_vec_basic env v0) in
-      let p1 = jitter_vec noise (eval_vec_basic env v1) in
+      let p0 = jitter_vec noise (eval_vec env flow_sources v0) in
+      let p1 = jitter_vec noise (eval_vec env flow_sources v1) in
       let via_pts =
-        List.map (fun v -> jitter_vec noise (eval_vec_basic env v)) via
+        List.map (fun v -> jitter_vec noise (eval_vec env flow_sources v)) via
       in
       let all_pts =
         match noise with
@@ -394,30 +443,45 @@ and eval_primitive env noise flow_sources (prim : primitive) : ir =
       let segments = spline_to_segments all_pts in
       [ { start = p0; segments } ]
 
-let eval_sketch_full env noise expr =
-  let flow_sources = collect_flow_sources env expr in
-  eval_sketch env noise flow_sources expr
-
 (*** Statement Evaluation ***)
 
-let eval_statement env (stmt : statement) : env * ir option =
+(* Evaluate a statement, threading flow_sources through the program
+   Returns: updated env, updated flow_sources, optional IR output *)
+let eval_statement env flow_sources (stmt : statement) : env * flow_source list * ir option =
   match stmt with
-  | LetNum (name, expr) -> (bind name (VNum (eval_num env expr)) env, None)
-  | LetVec (name, expr) -> (bind name (VVec (eval_vec_basic env expr)) env, None)
-  | LetSketch (name, expr) -> (bind name (VSketch expr) env, None)
-  | Scribble expr -> (env, Some (eval_sketch_full env NoiseScribble expr))
-  | Draw expr -> (env, Some (eval_sketch_full env NoiseDraw expr))
-  | Trace expr -> (env, Some (eval_sketch_full env NoiseTrace expr))
+  | LetNum (name, expr) -> 
+      (bind name (VNum (eval_num env expr)) env, flow_sources, None)
+  | LetVec (name, expr) -> 
+      (bind name (VVec (eval_vec_basic env expr)) env, flow_sources, None)
+  | LetSketch (name, expr) ->
+      (* When binding a sketch, collect its flow sources for later use *)
+      let new_sources = collect_flow_sources env expr in
+      (bind name (VSketch expr) env, flow_sources @ new_sources, None)
+  | Scribble expr ->
+      (* Collect any new flow sources from inline sketches *)
+      let new_sources = collect_flow_sources env expr in
+      let all_sources = flow_sources @ new_sources in
+      (env, all_sources, Some (eval_sketch env NoiseScribble all_sources expr))
+  | Draw expr ->
+      let new_sources = collect_flow_sources env expr in
+      let all_sources = flow_sources @ new_sources in
+      (env, all_sources, Some (eval_sketch env NoiseDraw all_sources expr))
+  | Trace expr ->
+      let new_sources = collect_flow_sources env expr in
+      let all_sources = flow_sources @ new_sources in
+      (env, all_sources, Some (eval_sketch env NoiseTrace all_sources expr))
+
+(*** Program Compilation ***)
 
 let compile (program : program) : ir =
-  let rec go env acc = function
+  let rec go env flow_sources acc = function
     | [] -> List.concat (List.rev acc)
     | stmt :: rest ->
-        let env', ir_opt = eval_statement env stmt in
+        let env', flow_sources', ir_opt = eval_statement env flow_sources stmt in
         let acc' = match ir_opt with Some ir -> ir :: acc | None -> acc in
-        go env' acc' rest
+        go env' flow_sources' acc' rest
   in
-  go empty_env [] program
+  go empty_env [] [] program
 
 let compile_safe (program : program) : (ir, compile_error) result =
   try Ok (compile program) with CompileError e -> Error e
