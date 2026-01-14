@@ -79,8 +79,8 @@ trace stroke from (0, 0) to (100, 100)
 
 ### Variables and composition
 ```
-let p1 : vec = (10, 10)
-let p2 : vec = (90, 90)
+let p1 : vec = (10, 10) * 2
+let p2 : vec = (90, 90) + (10, 10)
 let line : sketch = stroke from p1 to p2
 draw line
 ```
@@ -89,17 +89,6 @@ draw line
 ```
 let curve : sketch = stroke from (0, 50) to (100, 50) via [(50, 0)]
 trace curve
-```
-
-### Multiple sketches
-```
-let box : sketch = [
-  stroke from (0, 0) to (10, 0),
-  stroke from (10, 0) to (10, 10),
-  stroke from (10, 10) to (0, 10),
-  stroke from (0, 10) to (0, 0)
-]
-draw box
 ```
 
 ### Dots and dashes
@@ -113,14 +102,6 @@ let pattern : sketch = [
   dot at (50, -5)
 ]
 draw pattern
-```
-
-### Using center
-```
-let shape : sketch = stroke from (0, 0) to (100, 50)
-let c : vec = center of shape
-let marker : sketch = dot at c
-trace [shape, marker]
 ```
 
 ### Computed positions
@@ -140,19 +121,19 @@ let row3 : sketch = [dot at (0,20), dot at (10,20), dot at (20,20)]
 scribble [row1, row2, row3]
 ```
 
-### Sketch reuse
+### Using center
 ```
-let corner : sketch = [
-  stroke from (0, 0) to (5, 0),
-  stroke from (0, 0) to (0, 5)
-]
-draw corner
+let shape : sketch = stroke from (0, 0) to (100, 50)
+let c : vec = center of shape
+let marker : sketch = dot at c
+trace [shape, marker]
 ```
 
-## Notes
+## Important Notes
 
 - Coordinates are in mm
-- Comments start with `#` or `--`
+- dot notation is such as vec1.x or vec1.y is NOT AVAILABLE
+- Comments start with `#`
 - Newlines separate statements
 - Flow field only affects `dash`, not `stroke` or `dot`
 - `via` points create smooth Catmull-Rom splines
