@@ -285,4 +285,19 @@ from the spline. i want less comments, only critical ones. we should review
 how we are making the splines
 
 
+-----------------------------------------------------------
+Jan. 14 2026
+-----------------------------------------------------------
+
+--- FINDINGS ---
+i have seen smaller models get tripped up and try to use dot
+notation to access x and y coordinates of vectors. i don't
+plan on adding that to the language, so will add a warning,
+that that is NOT allowed in the language spec. the language
+currently does not warn about when a value is re-assigned. i'll
+need to add that in order to support merging documents.
+the 3 draw statements are only applied to the final value that
+was assigned to the sketch, so lets actually make this an
+error, that way we don't have to worry about re-assignment ever.
+
 

@@ -14,9 +14,9 @@ type noise_level = NoiseScribble | NoiseDraw | NoiseTrace
 type compile_error =
   | UndefinedVariable of string
   | TypeMismatch of string
-  | InvalidOperation of string
+  | InvalidOperation of string (* adding this - all values are constant! *)
 
-exception CompileError of compile_error
+exception CompileError of compile_error (* id like to add *)
 
 let error e = raise (CompileError e)
 
@@ -454,9 +454,7 @@ let eval_statement env flow_sources (stmt : statement) : env * flow_source list 
   | LetVec (name, expr) -> 
       (bind name (VVec (eval_vec_basic env expr)) env, flow_sources, None)
   | LetSketch (name, expr) ->
-      (* When binding a sketch, collect its flow sources for later use *)
-      let new_sources = collect_flow_sources env expr in
-      (bind name (VSketch expr) env, flow_sources @ new_sources, None)
+      (bind name (VSketch expr) env, flow_sources , None)
   | Scribble expr ->
       (* Collect any new flow sources from inline sketches *)
       let new_sources = collect_flow_sources env expr in

@@ -77,48 +77,27 @@ vec_list := "[" vec_expr ("," vec_expr)* "]"
 trace stroke from (0, 0) to (100, 100)
 ```
 
-### Variables and composition
+### Variable Arithmetic and Sketch Composition
 ```
-let p1 : vec = (10, 10) * 2
-let p2 : vec = (90, 90) + (10, 10)
+
+let base : vec = (50, 50)
+let offset : vec = (10, 0)
+let p1 : vec = (20, 0) - offset * 2
+let p2 : vec = (90, 100) + offset
+
 let line : sketch = stroke from p1 to p2
-draw line
+let some_dashes : sketch = [
+  dash at offset * 3,
+  dash at offset * 4,
+  dash at offset * 5
+]
+draw [ line, 
 ```
 
 ### Curves with control points
 ```
 let curve : sketch = stroke from (0, 50) to (100, 50) via [(50, 0)]
 trace curve
-```
-
-### Dots and dashes
-```
-let s : sketch = stroke from (0, 0) to (100, 0)
-let pattern : sketch = [
-  s,
-  dash at (20, 5),
-  dash at (50, 5),
-  dash at (80, 5),
-  dot at (50, -5)
-]
-draw pattern
-```
-
-### Computed positions
-```
-let base : vec = (50, 50)
-let offset : vec = (10, 0)
-let p1 : vec = base - offset
-let p2 : vec = base + offset
-draw stroke from p1 to p2
-```
-
-### Grid of dots
-```
-let row1 : sketch = [dot at (0,0), dot at (10,0), dot at (20,0)]
-let row2 : sketch = [dot at (0,10), dot at (10,10), dot at (20,10)]
-let row3 : sketch = [dot at (0,20), dot at (10,20), dot at (20,20)]
-scribble [row1, row2, row3]
 ```
 
 ### Using center
@@ -131,8 +110,11 @@ trace [shape, marker]
 
 ## Important Notes
 
+- dot notation is such as vec1.x or vec1.y is NOT SUPPORTED
+- variable re-assignment is NOT SUPPORTED
+- Dashes can be helpful with shading
+- Use comments to organize sections and plan
 - Coordinates are in mm
-- dot notation is such as vec1.x or vec1.y is NOT AVAILABLE
 - Comments start with `#`
 - Newlines separate statements
 - Flow field only affects `dash`, not `stroke` or `dot`
