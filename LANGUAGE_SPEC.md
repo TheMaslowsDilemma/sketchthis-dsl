@@ -100,13 +100,26 @@ let curve : sketch = stroke from (0, 50) to (100, 50) via [(50, 0)]
 trace curve
 ```
 
-### Using center
+### Using Center in a minimal Poem
 ```
-let shape : sketch = stroke from (0, 0) to (100, 50)
-let c : vec = center of shape
-let marker : sketch = dot at c
-trace [shape, marker]
+# Build outward from a shape's own centroid
+let triangle : sketch = [
+  stroke from (50, 10) to (10, 90),
+  stroke from (10, 90) to (90, 90),
+  stroke from (90, 90) to (50, 10)
+]
+let heart : vec = center of triangle
+let spokes : sketch = [
+  stroke from heart to (50, 10),
+  stroke from heart to (10, 90),
+  stroke from heart to (90, 90)
+]
+trace [triangle, spokes]
+
+# A little Haiku
+scribble stroke from origin to center of stroke from heart to (20, 26)
 ```
+
 
 ## Important Notes
 
@@ -114,7 +127,7 @@ trace [shape, marker]
 - variable re-assignment is NOT SUPPORTED
 - Dashes can be helpful with shading
 - Comments start with `#`
-- Use comments to organize sections and plan
+- Comments are helpful to plan and label sections
 - Coordinates are in mm
 - Newlines separate statements
 - Flow field only affects `dash`, not `stroke` or `dot`

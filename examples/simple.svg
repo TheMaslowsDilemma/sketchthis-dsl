@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="100%" height="100%" fill="white"/>
+  <path d="M 330.73 517.72 L 81.87 20.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 81.87 20.00 L 579.59 20.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 579.59 20.00 L 330.73 517.72" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 330.73 268.86 L 330.73 517.72" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 330.73 268.86 L 81.87 20.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 330.73 268.86 L 579.59 20.00" fill="none" stroke="black" stroke-width="1"/>
+  <path d="M 20.00 580.00 L 26.82 572.63 L 33.65 565.27 L 40.47 557.90 L 47.30 550.54 L 54.12 543.17 L 60.94 535.80 L 67.75 528.43 L 74.55 521.05 L 81.34 513.66 L 88.12 506.28 L 94.90 498.88 L 101.67 491.49 L 108.43 484.09 L 115.19 476.69 L 121.95 469.28 L 128.70 461.86 L 135.45 454.43 L 142.17 446.98 L 148.89 439.52 L 155.61 432.06 L 162.33 424.60 L 169.06 417.15 L 175.81 409.73 L 182.57 402.32 L 189.37 394.95 L 196.18 387.60 L 203.00 380.26 L 209.84 372.94 L 216.68 365.63 L 223.52 358.32 L 230.37 351.00 L 237.20 343.67" fill="none" stroke="black" stroke-width="1"/>
+</svg>
