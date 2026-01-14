@@ -17,9 +17,12 @@ let expected_error tok expected =
 
 (*** Parser State ***)
 
-type parser = { tokens : located_token array; pos : int }
+(* Using mutable state to enable backtracking *)
+type parser = { tokens : located_token array; mutable pos : int }
 
 let create tokens = { tokens = Array.of_list tokens; pos = 0 }
+let save p = p.pos
+let restore p saved = p.pos <- saved
 
 (*** Token Navigation ***)
 
@@ -29,248 +32,339 @@ let current p =
 
 let peek p = (current p).token
 let is_at_end p = match peek p with EOF -> true | _ -> false
-let advance p = if is_at_end p then p else { p with pos = p.pos + 1 }
+let advance p = if not (is_at_end p) then p.pos <- p.pos + 1
 let check p tok = peek p = tok
 let check_ident p = match peek p with IDENT _ -> true | _ -> false
-let match_token p tok = if check p tok then (advance p, true) else (p, false)
+
+let match_token p tok =
+  if check p tok then (
+    advance p;
+    true)
+  else false
 
 let expect p tok msg =
   if check p tok then advance p else expected_error (current p) msg
 
 let rec skip_newlines p =
-  if check p NEWLINE then skip_newlines (advance p) else p
+  if check p NEWLINE then (
+    advance p;
+    skip_newlines p)
 
 let parse_number p =
   match peek p with
-  | NUMBER f -> (advance p, f)
+  | NUMBER f ->
+      advance p;
+      f
   | _ -> expected_error (current p) "number"
 
 let parse_ident p =
   match peek p with
-  | IDENT s -> (advance p, s)
+  | IDENT s ->
+      advance p;
+      s
   | _ -> expected_error (current p) "identifier"
 
 let parse_type_annotation p =
   match peek p with
-  | NUMBER_TYPE -> (advance p, TNumber)
-  | VEC2_TYPE -> (advance p, TVec)
-  | SKETCH_TYPE -> (advance p, TSketch)
+  | NUMBER_TYPE ->
+      advance p;
+      TNumber
+  | VEC2_TYPE ->
+      advance p;
+      TVec
+  | SKETCH_TYPE ->
+      advance p;
+      TSketch
   | _ -> expected_error (current p) "type (number, vec, or sketch)"
 
-let rec parse_num_expr p : parser * num_expr = parse_num_additive p
+(* Forward declarations via mutual recursion *)
+let rec parse_num_expr p : num_expr = parse_num_additive p
 
-and parse_num_additive p : parser * num_expr =
-  let p, left = parse_num_multiplicative p in
+and parse_num_additive p : num_expr =
+  let left = parse_num_multiplicative p in
   parse_num_additive_rest p left
 
-and parse_num_additive_rest p left : parser * num_expr =
+and parse_num_additive_rest p left : num_expr =
   match peek p with
   | PLUS ->
-      let p = advance p in
-      let p, right = parse_num_multiplicative p in
+      advance p;
+      let right = parse_num_multiplicative p in
       parse_num_additive_rest p (NumAdd (left, right))
   | MINUS ->
-      let p = advance p in
-      let p, right = parse_num_multiplicative p in
+      advance p;
+      let right = parse_num_multiplicative p in
       parse_num_additive_rest p (NumSub (left, right))
-  | _ -> (p, left)
+  | _ -> left
 
-and parse_num_multiplicative p : parser * num_expr =
-  let p, left = parse_num_atom p in
+and parse_num_multiplicative p : num_expr =
+  let left = parse_num_atom p in
   parse_num_multiplicative_rest p left
 
-and parse_num_multiplicative_rest p left : parser * num_expr =
+and parse_num_multiplicative_rest p left : num_expr =
   match peek p with
   | STAR ->
-      let p = advance p in
-      let p, right = parse_num_atom p in
+      advance p;
+      let right = parse_num_atom p in
       parse_num_multiplicative_rest p (NumMul (left, right))
   | SLASH ->
-      let p = advance p in
-      let p, right = parse_num_atom p in
+      advance p;
+      let right = parse_num_atom p in
       parse_num_multiplicative_rest p (NumDiv (left, right))
-  | _ -> (p, left)
+  | _ -> left
 
-and parse_num_atom p : parser * num_expr =
+and parse_num_atom p : num_expr =
   match peek p with
-  | NUMBER f -> (advance p, NumLit f)
-  | IDENT s -> (advance p, NumVar s)
+  | NUMBER f ->
+      advance p;
+      NumLit f
+  | IDENT s ->
+      advance p;
+      NumVar s
   | MINUS ->
-      let p = advance p in
-      let p, e = parse_num_atom p in
-      (p, NumNeg e)
+      advance p;
+      let e = parse_num_atom p in
+      NumNeg e
   | LPAREN ->
-      let p = advance p in
-      let p, expr = parse_num_expr p in
-      let p = expect p RPAREN ")" in
-      (p, expr)
+      advance p;
+      let expr = parse_num_expr p in
+      expect p RPAREN ")";
+      expr
   | _ -> expected_error (current p) "numeric expression"
 
-and parse_vec_expr p : parser * vec_expr = parse_vec_additive p
+and parse_vec_expr p : vec_expr = parse_vec_additive p
 
-and parse_vec_additive p : parser * vec_expr =
-  let p, left = parse_vec_multiplicative p in
+and parse_vec_additive p : vec_expr =
+  let left = parse_vec_multiplicative p in
   parse_vec_additive_rest p left
 
-and parse_vec_additive_rest p left : parser * vec_expr =
+and parse_vec_additive_rest p left : vec_expr =
   match peek p with
   | PLUS ->
-      let p = advance p in
-      let p, right = parse_vec_multiplicative p in
+      advance p;
+      let right = parse_vec_multiplicative p in
       parse_vec_additive_rest p (VecAdd (left, right))
   | MINUS ->
-      let p = advance p in
-      let p, right = parse_vec_multiplicative p in
+      advance p;
+      let right = parse_vec_multiplicative p in
       parse_vec_additive_rest p (VecSub (left, right))
-  | _ -> (p, left)
+  | _ -> left
 
-and parse_vec_multiplicative p : parser * vec_expr =
-  let p, left = parse_vec_atom p in
-  parse_vec_multiplicative_rest p left
+and parse_vec_multiplicative p : vec_expr =
+  (* Handle both: num * vec  AND  vec * num *)
+  match peek p with
+  | NUMBER _ ->
+      (* Scalar first: num * vec *)
+      let num = parse_num_atom p in
+      if check p STAR then begin
+        advance p;
+        let vec = parse_vec_multiplicative p in
+        parse_vec_multiplicative_rest p (VecScale (vec, num))
+      end
+      else expected_error (current p) "* after number in vector context"
+  | MINUS -> (
+      (* Could be negative number: -num * vec, or start of something else *)
+      let saved = save p in
+      try
+        let num = parse_num_atom p in
+        if check p STAR then begin
+          advance p;
+          let vec = parse_vec_multiplicative p in
+          parse_vec_multiplicative_rest p (VecScale (vec, num))
+        end
+        else begin
+          restore p saved;
+          expected_error (current p) "vector expression"
+        end
+      with ParseError _ ->
+        restore p saved;
+        expected_error (current p) "vector expression")
+  | _ ->
+      (* Normal: vec possibly followed by * num *)
+      let left = parse_vec_atom p in
+      parse_vec_multiplicative_rest p left
 
-and parse_vec_multiplicative_rest p left : parser * vec_expr =
+and parse_vec_multiplicative_rest p left : vec_expr =
   match peek p with
   | STAR ->
-      let p = advance p in
-      let p, right = parse_num_atom p in
+      advance p;
+      let right = parse_num_atom p in
       parse_vec_multiplicative_rest p (VecScale (left, right))
-  | _ -> (p, left)
+  | _ -> left
 
-and parse_vec_atom p : parser * vec_expr =
+and parse_vec_atom p : vec_expr =
   match peek p with
-  (* Vector construction: (expr, expr) *)
-  | LPAREN ->
-      let p = advance p in
-      let p, x = parse_num_expr p in
-      let p = expect p COMMA "," in
-      let p, y = parse_num_expr p in
-      let p = expect p RPAREN ")" in
-      let expr =
-        match (x, y) with
-        | NumLit fx, NumLit fy -> VecLit (fx, fy)
-        | _ -> VecConstruct (x, y)
-      in
-      (p, expr)
+  | LPAREN -> (
+      advance p;
+      (* Distinguish between:
+         1. Vector construction: (num_expr, num_expr)
+         2. Grouped vec expression: (vec_expr)
+         Strategy: Try parsing as num_expr. If we see COMMA, it's construction.
+         If we see RPAREN and the result makes sense as a vec, it might be grouping.
+         If we see a vec operator (+, *, -) it's grouping. *)
+      let saved = save p in
+      try
+        let first_num = parse_num_expr p in
+        match peek p with
+        | COMMA -> (
+            (* Vector construction: (num, num) *)
+            advance p;
+            let second_num = parse_num_expr p in
+            expect p RPAREN ")";
+            match (first_num, second_num) with
+            | NumLit fx, NumLit fy -> VecLit (fx, fy)
+            | _ -> VecConstruct (first_num, second_num))
+        | RPAREN ->
+            (* Just (num_expr) - not valid as vec_atom, so backtrack and try vec_expr *)
+            restore p saved;
+            let inner = parse_vec_expr p in
+            expect p RPAREN ")";
+            inner
+        | PLUS | MINUS ->
+            (* After num_expr we see + or -, this must be vec arithmetic.
+               Backtrack and parse as vec_expr *)
+            restore p saved;
+            let inner = parse_vec_expr p in
+            expect p RPAREN ")";
+            inner
+        | _ -> expected_error (current p) ", or ) or vector operator"
+      with ParseError _ ->
+        (* Parsing as num_expr failed, try as vec_expr *)
+        restore p saved;
+        let inner = parse_vec_expr p in
+        expect p RPAREN ")";
+        inner)
   | CENTER ->
-      let p = advance p in
-      let p = expect p OF "of" in
-      let p, sk = parse_sketch_atom p in
-      (p, VecCenter sk)
+      advance p;
+      expect p OF "of";
+      let sk = parse_sketch_atom p in
+      VecCenter sk
   | FLOW ->
-      let p = advance p in
-      let p = expect p AT "at" in
-      let p, v = parse_vec_atom p in
-      (p, VecFlow v)
-  | ORIGIN -> (advance p, VecLit (0.0, 0.0))
-  | X_MAX -> (advance p, VecVar "x_max")
-  | Y_MAX -> (advance p, VecVar "y_max")
-  | IDENT s -> (advance p, VecVar s)
+      advance p;
+      expect p AT "at";
+      let v = parse_vec_atom p in
+      VecFlow v
+  | ORIGIN ->
+      advance p;
+      VecLit (0.0, 0.0)
+  | X_MAX ->
+      advance p;
+      VecVar "x_max"
+  | Y_MAX ->
+      advance p;
+      VecVar "y_max"
+  | IDENT s ->
+      advance p;
+      VecVar s
   | _ -> expected_error (current p) "vector expression"
 
-and parse_sketch_atom p : parser * sketch_expr =
+and parse_sketch_atom p : sketch_expr =
   match peek p with
   | DOT ->
-      let p = advance p in
-      let p = expect p AT "at" in
-      let p, v = parse_vec_expr p in
-      (p, Primitive (Dot v))
+      advance p;
+      expect p AT "at";
+      let v = parse_vec_expr p in
+      Primitive (Dot v)
   | DASH ->
-      let p = advance p in
-      let p = expect p AT "at" in
-      let p, v = parse_vec_expr p in
-      (p, Primitive (Dash v))
+      advance p;
+      expect p AT "at";
+      let v = parse_vec_expr p in
+      Primitive (Dash v)
   | STROKE ->
-      let p = advance p in
-      let p = expect p FROM "from" in
-      let p, p0 = parse_vec_expr p in
-      let p = expect p TO "to" in
-      let p, p1 = parse_vec_expr p in
+      advance p;
+      expect p FROM "from";
+      let p0 = parse_vec_expr p in
+      expect p TO "to";
+      let p1 = parse_vec_expr p in
       (* Optional via clause *)
-      let p, matched = match_token p VIA in
-      let p, via = if matched then parse_vec_list_bracket p else (p, []) in
-      (p, Primitive (Stroke (p0, via, p1)))
+      let via = if match_token p VIA then parse_vec_list_bracket p else [] in
+      Primitive (Stroke (p0, via, p1))
   | LBRACKET ->
-      let p = advance p in
-      let p = skip_newlines p in
-      let p, sketches = parse_sketch_list p in
-      let p = skip_newlines p in
-      let p = expect p RBRACKET "]" in
-      (p, SketchList sketches)
-  | IDENT s -> (advance p, SketchVar s)
+      advance p;
+      skip_newlines p;
+      let sketches = parse_sketch_list p in
+      skip_newlines p;
+      expect p RBRACKET "]";
+      SketchList sketches
+  | IDENT s ->
+      advance p;
+      SketchVar s
   | _ -> expected_error (current p) "sketch expression"
 
-and parse_vec_list_bracket p : parser * vec_expr list =
-  let p = expect p LBRACKET "[" in
-  let p = skip_newlines p in
-  if check p RBRACKET then
-    let p = advance p in
-    (p, [])
-  else
-    let p, first = parse_vec_expr p in
-    let rec go p acc =
-      let p, matched = match_token p COMMA in
-      if matched then
-        let p = skip_newlines p in
-        let p, v = parse_vec_expr p in
-        go p (v :: acc)
-      else (p, List.rev acc)
+and parse_vec_list_bracket p : vec_expr list =
+  expect p LBRACKET "[";
+  skip_newlines p;
+  if check p RBRACKET then begin
+    advance p;
+    []
+  end
+  else begin
+    let first = parse_vec_expr p in
+    let rec go acc =
+      if match_token p COMMA then begin
+        skip_newlines p;
+        let v = parse_vec_expr p in
+        go (v :: acc)
+      end
+      else List.rev acc
     in
-    let p, rest = go p [ first ] in
-    let p = skip_newlines p in
-    let p = expect p RBRACKET "]" in
-    (p, rest)
+    let result = go [ first ] in
+    skip_newlines p;
+    expect p RBRACKET "]";
+    result
+  end
 
-and parse_sketch_list p : parser * sketch_expr list =
-  let p = skip_newlines p in
-  if check p RBRACKET then (p, [])
-  else
-    let p, first = parse_sketch_expr p in
-    let rec go p acc =
-      let p, matched = match_token p COMMA in
-      if matched then
-        let p = skip_newlines p in
-        let p, sk = parse_sketch_expr p in
-        go p (sk :: acc)
-      else (p, List.rev acc)
+and parse_sketch_list p : sketch_expr list =
+  skip_newlines p;
+  if check p RBRACKET then []
+  else begin
+    let first = parse_sketch_expr p in
+    let rec go acc =
+      if match_token p COMMA then begin
+        skip_newlines p;
+        let sk = parse_sketch_expr p in
+        go (sk :: acc)
+      end
+      else List.rev acc
     in
-    go p [ first ]
+    go [ first ]
+  end
 
-and parse_sketch_expr p : parser * sketch_expr = parse_sketch_atom p
+and parse_sketch_expr p : sketch_expr = parse_sketch_atom p
 
-let parse_let_binding p : parser * statement =
-  let p = expect p LET "let" in
-  let p, name = parse_ident p in
-  let p = expect p COLON ":" in
-  let p, typ = parse_type_annotation p in
-  let p = expect p EQUALS "=" in
+let parse_let_binding p : statement =
+  expect p LET "let";
+  let name = parse_ident p in
+  expect p COLON ":";
+  let typ = parse_type_annotation p in
+  expect p EQUALS "=";
   match typ with
   | TNumber ->
-      let p, expr = parse_num_expr p in
-      (p, LetNum (name, expr))
+      let expr = parse_num_expr p in
+      LetNum (name, expr)
   | TVec ->
-      let p, expr = parse_vec_expr p in
-      (p, LetVec (name, expr))
+      let expr = parse_vec_expr p in
+      LetVec (name, expr)
   | TSketch ->
-      let p, expr = parse_sketch_expr p in
-      (p, LetSketch (name, expr))
+      let expr = parse_sketch_expr p in
+      LetSketch (name, expr)
 
-let parse_draw p : parser * statement =
-  let p = expect p DRAW "draw" in
-  let p, sk = parse_sketch_expr p in
-  (p, Draw sk)
+let parse_draw p : statement =
+  expect p DRAW "draw";
+  let sk = parse_sketch_expr p in
+  Draw sk
 
-let parse_scribble p : parser * statement =
-  let p = expect p SCRIBBLE "scribble" in
-  let p, sk = parse_sketch_expr p in
-  (p, Scribble sk)
+let parse_scribble p : statement =
+  expect p SCRIBBLE "scribble";
+  let sk = parse_sketch_expr p in
+  Scribble sk
 
-let parse_trace p : parser * statement =
-  let p = expect p TRACE "trace" in
-  let p, sk = parse_sketch_expr p in
-  (p, Trace sk)
+let parse_trace p : statement =
+  expect p TRACE "trace";
+  let sk = parse_sketch_expr p in
+  Trace sk
 
-let parse_statement p : parser * statement =
-  let p = skip_newlines p in
+let parse_statement p : statement =
+  skip_newlines p;
   match peek p with
   | LET -> parse_let_binding p
   | DRAW -> parse_draw p
@@ -280,15 +374,16 @@ let parse_statement p : parser * statement =
 
 (** Parse a complete program *)
 let parse_program p : program =
-  let rec go p acc =
-    let p = skip_newlines p in
+  let rec go acc =
+    skip_newlines p;
     if is_at_end p then List.rev acc
-    else
-      let p, stmt = parse_statement p in
-      let p = skip_newlines p in
-      go p (stmt :: acc)
+    else begin
+      let stmt = parse_statement p in
+      skip_newlines p;
+      go (stmt :: acc)
+    end
   in
-  go p []
+  go []
 
 (*** Public Interface ***)
 
@@ -303,14 +398,12 @@ let parse_safe input : (program, parse_error) result =
 let parse_sketch_expr_string input : sketch_expr =
   let tokens = Lexer.tokenize input in
   let p = create tokens in
-  let _, expr = parse_sketch_expr p in
-  expr
+  parse_sketch_expr p
 
 let parse_vec_expr_string input : vec_expr =
   let tokens = Lexer.tokenize input in
   let p = create tokens in
-  let _, expr = parse_vec_expr p in
-  expr
+  parse_vec_expr p
 
 let format_error (e : parse_error) : string =
   Printf.sprintf "Parse error at line %d, column %d: %s" e.position.line

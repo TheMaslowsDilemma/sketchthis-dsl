@@ -300,4 +300,9 @@ the 3 draw statements are only applied to the final value that
 was assigned to the sketch, so lets actually make this an
 error, that way we don't have to worry about re-assignment ever.
 
+--- BUGS ---
+currently the parantheses are a bit buggy and ill address those,
+same with how we allow vector arithmetic with a number on the
+right side but not the left side.
+
 

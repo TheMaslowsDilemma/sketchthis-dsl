@@ -113,7 +113,10 @@ let point_to_segment_closest p a b =
   let len_sq = (ab.x *. ab.x) +. (ab.y *. ab.y) in
   if len_sq < 1e-10 then (a, 0.0)
   else
-    let t = Float.max 0.0 (Float.min 1.0 (((ap.x *. ab.x) +. (ap.y *. ab.y)) /. len_sq)) in
+    let t =
+      Float.max 0.0
+        (Float.min 1.0 (((ap.x *. ab.x) +. (ap.y *. ab.y)) /. len_sq))
+    in
     let closest = vec_add a (vec_scale ab t) in
     (closest, t)
 
@@ -206,11 +209,11 @@ let transform_ir f (ir : ir) : ir = List.map (transform_path f) ir
 (*** Flow Field ***)
 
 (* A flow source represents a directed stroke segment *)
-type flow_source = { 
-  fs_p0 : vec;      (* start point *)
-  fs_p1 : vec;      (* end point *)
-  fs_dir : vec;     (* normalized direction from p0 to p1 *)
-  fs_length : float (* length of the segment *)
+type flow_source = {
+  fs_p0 : vec; (* start point *)
+  fs_p1 : vec; (* end point *)
+  fs_dir : vec; (* normalized direction from p0 to p1 *)
+  fs_length : float; (* length of the segment *)
 }
 
 let make_flow_source p0 p1 =
@@ -219,7 +222,8 @@ let make_flow_source p0 p1 =
   {
     fs_p0 = p0;
     fs_p1 = p1;
-    fs_dir = (if len < 1e-10 then { x = 1.0; y = 0.0 } else vec_scale dir (1.0 /. len));
+    fs_dir =
+      (if len < 1e-10 then { x = 1.0; y = 0.0 } else vec_scale dir (1.0 /. len));
     fs_length = len;
   }
 
@@ -268,12 +272,11 @@ and eval_vec env flow_sources (expr : vec_expr) : vec =
   | VecCenter sk ->
       let ir = eval_sketch_basic env sk in
       compute_center ir
-  | VecAdd (a, b) -> 
+  | VecAdd (a, b) ->
       vec_add (eval_vec env flow_sources a) (eval_vec env flow_sources b)
-  | VecSub (a, b) -> 
+  | VecSub (a, b) ->
       vec_sub (eval_vec env flow_sources a) (eval_vec env flow_sources b)
-  | VecScale (v, n) -> 
-      vec_scale (eval_vec env flow_sources v) (eval_num env n)
+  | VecScale (v, n) -> vec_scale (eval_vec env flow_sources v) (eval_num env n)
   | VecFlow v ->
       (* Sample the flow field at the given point, returning direction vector *)
       let p = eval_vec env flow_sources v in
@@ -447,14 +450,14 @@ and eval_primitive env noise flow_sources (prim : primitive) : ir =
 
 (* Evaluate a statement, threading flow_sources through the program
    Returns: updated env, updated flow_sources, optional IR output *)
-let eval_statement env flow_sources (stmt : statement) : env * flow_source list * ir option =
+let eval_statement env flow_sources (stmt : statement) :
+    env * flow_source list * ir option =
   match stmt with
-  | LetNum (name, expr) -> 
+  | LetNum (name, expr) ->
       (bind name (VNum (eval_num env expr)) env, flow_sources, None)
-  | LetVec (name, expr) -> 
+  | LetVec (name, expr) ->
       (bind name (VVec (eval_vec_basic env expr)) env, flow_sources, None)
-  | LetSketch (name, expr) ->
-      (bind name (VSketch expr) env, flow_sources , None)
+  | LetSketch (name, expr) -> (bind name (VSketch expr) env, flow_sources, None)
   | Scribble expr ->
       (* Collect any new flow sources from inline sketches *)
       let new_sources = collect_flow_sources env expr in
@@ -475,7 +478,9 @@ let compile (program : program) : ir =
   let rec go env flow_sources acc = function
     | [] -> List.concat (List.rev acc)
     | stmt :: rest ->
-        let env', flow_sources', ir_opt = eval_statement env flow_sources stmt in
+        let env', flow_sources', ir_opt =
+          eval_statement env flow_sources stmt
+        in
         let acc' = match ir_opt with Some ir -> ir :: acc | None -> acc in
         go env' flow_sources' acc' rest
   in

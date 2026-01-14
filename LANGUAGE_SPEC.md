@@ -113,9 +113,9 @@ trace [shape, marker]
 - dot notation is such as vec1.x or vec1.y is NOT SUPPORTED
 - variable re-assignment is NOT SUPPORTED
 - Dashes can be helpful with shading
+- Comments start with `#`
 - Use comments to organize sections and plan
 - Coordinates are in mm
-- Comments start with `#`
 - Newlines separate statements
 - Flow field only affects `dash`, not `stroke` or `dot`
 - `via` points create smooth Catmull-Rom splines
