@@ -62,14 +62,6 @@ vec_list := "[" vec_expr ("," vec_expr)* "]"
 
 `dash` orientation is determined by nearby `stroke` directions. Strokes contribute to a flow field weighted by inverse-square distance. Default direction is horizontal if no strokes exist.
 
-## Compilation
-
-1. Evaluate expressions to intermediate representation (IR)
-2. Apply noise based on render command
-3. Convert curves to line segments via Catmull-Rom splines
-4. Optimize path order (greedy nearest-neighbor + 2-opt)
-5. Generate G-code (G0 rapid, G1 linear, M3/M5 pen control)
-
 ## Examples
 
 ### Simple line

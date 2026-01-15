@@ -1,0 +1,366 @@
+# ============================================================================
+# NOTRE DAME CATHEDRAL - LINEAR PERSPECTIVE SKETCH
+# ============================================================================
+# 
+# ARTWORK SUMMARY:
+# A front-facing view of Notre-Dame de Paris cathedral rendered in single-point
+# linear perspective. The composition emphasizes the iconic west facade with its
+# twin towers, rose window, and Gothic architectural details. The vanishing point
+# is centered on the main entrance, drawing the viewer's eye into the sacred space.
+#
+# META INFORMATION:
+# Subject:       Notre-Dame de Paris, West Facade
+# Style:         Architectural sketch with linear perspective
+# Perspective:   Single-point, centered vanishing point
+# Canvas:        200mm x 280mm (portrait orientation)
+# Technique:     Mixed - traced structure, drawn details, scribbled texture
+# Influences:    Gothic architectural drawings, Viollet-le-Duc studies
+# ============================================================================
+
+# -----------------------------------------------------------------------------
+# SECTION: VANISHING POINT & PERSPECTIVE GRID
+# Description: Establishes the central vanishing point and primary perspective
+# lines that guide the entire composition. All architectural elements converge
+# toward this focal point at the cathedral entrance.
+# -----------------------------------------------------------------------------
+
+let vp : vec = (100, 140)
+
+# Ground plane perspective lines radiating from vanishing point
+trace stroke from vp to (0, 280)
+trace stroke from vp to (200, 280)
+trace stroke from vp to (40, 280)
+trace stroke from vp to (160, 280)
+
+# -----------------------------------------------------------------------------
+# SECTION: GROUND PLANE & PARVIS
+# Description: The plaza (parvis) in front of the cathedral, shown with 
+# perspective lines converging toward the entrance. Cobblestone texture
+# suggested through dashes following the flow field.
+# -----------------------------------------------------------------------------
+
+let ground_left : sketch = stroke from (0, 280) to (0, 200)
+let ground_right : sketch = stroke from (200, 280) to (200, 200)
+trace [ground_left, ground_right]
+
+# Horizontal ground lines with perspective foreshortening
+trace stroke from (0, 260) to (200, 260)
+trace stroke from (10, 240) to (190, 240)
+trace stroke from (25, 220) to (175, 220)
+trace stroke from (40, 205) to (160, 205)
+
+# Ground texture dashes
+let parvis_texture : sketch = [
+    dash at (30, 270),
+    dash at (60, 265),
+    dash at (90, 268),
+    dash at (130, 263),
+    dash at (170, 270),
+    dash at (50, 250),
+    dash at (100, 245),
+    dash at (150, 248)
+]
+scribble parvis_texture
+
+# -----------------------------------------------------------------------------
+# SECTION: MAIN FACADE BASE
+# Description: The lower horizontal foundation of the cathedral facade,
+# establishing the wide rectangular base from which the towers rise.
+# Strong horizontal lines ground the composition.
+# -----------------------------------------------------------------------------
+
+let facade_base_y : number = 200
+let facade_left : number = 30
+let facade_right : number = 170
+
+# Base foundation line
+trace stroke from (facade_left, facade_base_y) to (facade_right, facade_base_y)
+
+# Portal level platform
+trace stroke from (facade_left, 195) to (facade_right, 195)
+
+# -----------------------------------------------------------------------------
+# SECTION: THREE PORTALS (ENTRANCE DOORS)
+# Description: The three iconic Gothic pointed-arch doorways. Center portal
+# (Portal of the Last Judgment) is largest; flanking portals slightly smaller.
+# Pointed arches created with via control points for Gothic curves.
+# -----------------------------------------------------------------------------
+
+# Left Portal - Portal of the Virgin
+let portal_l_base_l : vec = (35, 195)
+let portal_l_base_r : vec = (65, 195)
+let portal_l_peak : vec = (50, 165)
+
+draw stroke from portal_l_base_l to portal_l_peak via [(42, 172)]
+draw stroke from portal_l_base_r to portal_l_peak via [(58, 172)]
+trace stroke from portal_l_base_l to portal_l_base_r
+
+# Center Portal - Portal of the Last Judgment (largest)
+let portal_c_base_l : vec = (75, 195)
+let portal_c_base_r : vec = (125, 195)
+let portal_c_peak : vec = (100, 155)
+
+draw stroke from portal_c_base_l to portal_c_peak via [(85, 162)]
+draw stroke from portal_c_base_r to portal_c_peak via [(115, 162)]
+trace stroke from portal_c_base_l to portal_c_base_r
+
+# Right Portal - Portal of Saint Anne
+let portal_r_base_l : vec = (135, 195)
+let portal_r_base_r : vec = (165, 195)
+let portal_r_peak : vec = (150, 165)
+
+draw stroke from portal_r_base_l to portal_r_peak via [(142, 172)]
+draw stroke from portal_r_base_r to portal_r_peak via [(158, 172)]
+trace stroke from portal_r_base_l to portal_r_base_r
+
+# Portal depth shadows
+let portal_shadows : sketch = [
+    dash at (50, 180),
+    dash at (50, 185),
+    dash at (100, 175),
+    dash at (100, 182),
+    dash at (100, 188),
+    dash at (150, 180),
+    dash at (150, 185)
+]
+scribble portal_shadows
+
+# -----------------------------------------------------------------------------
+# SECTION: GALLERY OF KINGS
+# Description: The horizontal band of 28 statues of biblical kings above the
+# portals. Represented as a series of vertical elements within a framed band.
+# -----------------------------------------------------------------------------
+
+let gallery_bottom : number = 150
+let gallery_top : number = 138
+
+# Gallery frame
+trace stroke from (facade_left, gallery_bottom) to (facade_right, gallery_bottom)
+trace stroke from (facade_left, gallery_top) to (facade_right, gallery_top)
+
+# King figures suggested as vertical dashes
+let kings : sketch = [
+    dash at (40, 144),
+    dash at (50, 144),
+    dash at (60, 144),
+    dash at (70, 144),
+    dash at (80, 144),
+    dash at (90, 144),
+    dash at (100, 144),
+    dash at (110, 144),
+    dash at (120, 144),
+    dash at (130, 144),
+    dash at (140, 144),
+    dash at (150, 144),
+    dash at (160, 144)
+]
+draw kings
+
+# -----------------------------------------------------------------------------
+# SECTION: ROSE WINDOW
+# Description: The magnificent central rose window, approximately 10m in
+# diameter. Circular form with radiating tracery lines suggesting the
+# intricate Gothic stonework and stained glass patterns.
+# -----------------------------------------------------------------------------
+
+let rose_center : vec = (100, 115)
+let rose_radius : number = 18
+
+# Outer circle approximated with curved strokes
+draw stroke from (82, 115) to (100, 97) via [(85, 100)]
+draw stroke from (100, 97) to (118, 115) via [(115, 100)]
+draw stroke from (118, 115) to (100, 133) via [(115, 130)]
+draw stroke from (100, 133) to (82, 115) via [(85, 130)]
+
+# Inner tracery - radiating lines from center
+let tracery : sketch = [
+    stroke from rose_center to (100, 97),
+    stroke from rose_center to (118, 115),
+    stroke from rose_center to (100, 133),
+    stroke from rose_center to (82, 115),
+    stroke from rose_center to (87, 102),
+    stroke from rose_center to (113, 102),
+    stroke from rose_center to (113, 128),
+    stroke from rose_center to (87, 128)
+]
+draw tracery
+
+# Rose window texture
+let rose_texture : sketch = [
+    dash at (92, 108),
+    dash at (108, 108),
+    dash at (92, 122),
+    dash at (108, 122)
+]
+scribble rose_texture
+
+# -----------------------------------------------------------------------------
+# SECTION: FLANKING WINDOWS
+# Description: Tall pointed-arch windows on either side of the rose window,
+# typical Gothic lancet design echoing the portal shapes below.
+# -----------------------------------------------------------------------------
+
+# Left lancet window
+draw stroke from (45, 135) to (55, 100) via [(48, 108)]
+draw stroke from (65, 135) to (55, 100) via [(62, 108)]
+trace stroke from (45, 135) to (65, 135)
+
+# Right lancet window
+draw stroke from (135, 135) to (145, 100) via [(138, 108)]
+draw stroke from (155, 135) to (145, 100) via [(152, 108)]
+trace stroke from (135, 135) to (155, 135)
+
+# -----------------------------------------------------------------------------
+# SECTION: GRAND GALLERY (BALUSTRADE)
+# Description: The openwork gallery running across the facade above the rose
+# window level, featuring the famous chimera and gargoyle statues.
+# -----------------------------------------------------------------------------
+
+let balustrade_y : number = 90
+
+trace stroke from (facade_left, balustrade_y) to (facade_right, balustrade_y)
+trace stroke from (facade_left, 85) to (facade_right, 85)
+
+# Balustrade vertical elements
+let balustrade_posts : sketch = [
+    stroke from (40, 90) to (40, 85),
+    stroke from (55, 90) to (55, 85),
+    stroke from (70, 90) to (70, 85),
+    stroke from (85, 90) to (85, 85),
+    stroke from (100, 90) to (100, 85),
+    stroke from (115, 90) to (115, 85),
+    stroke from (130, 90) to (130, 85),
+    stroke from (145, 90) to (145, 85),
+    stroke from (160, 90) to (160, 85)
+]
+draw balustrade_posts
+
+# -----------------------------------------------------------------------------
+# SECTION: LEFT TOWER (NORTH TOWER)
+# Description: The northern bell tower rising from the left side of the facade.
+# Flat-topped as per the actual cathedral (spires were never completed).
+# Contains twin Gothic window openings.
+# -----------------------------------------------------------------------------
+
+let tower_l_left : number = 30
+let tower_l_right : number = 70
+let tower_top : number = 20
+
+# Tower vertical edges
+trace stroke from (tower_l_left, 85) to (tower_l_left, tower_top)
+trace stroke from (tower_l_right, 85) to (tower_l_right, tower_top)
+
+# Tower top
+trace stroke from (tower_l_left, tower_top) to (tower_l_right, tower_top)
+
+# Tower window openings (belfry level)
+draw stroke from (38, 70) to (45, 45) via [(40, 52)]
+draw stroke from (52, 70) to (45, 45) via [(50, 52)]
+
+draw stroke from (48, 70) to (55, 45) via [(50, 52)]
+draw stroke from (62, 70) to (55, 45) via [(60, 52)]
+
+# Tower horizontal bands
+trace stroke from (tower_l_left, 70) to (tower_l_right, 70)
+trace stroke from (tower_l_left, 40) to (tower_l_right, 40)
+
+# Tower shadow texture
+let tower_l_shadow : sketch = [
+    dash at (35, 60),
+    dash at (35, 50),
+    dash at (35, 40),
+    dash at (35, 30)
+]
+scribble tower_l_shadow
+
+# -----------------------------------------------------------------------------
+# SECTION: RIGHT TOWER (SOUTH TOWER)
+# Description: The southern bell tower, mirror of the north tower. Houses
+# the famous Emmanuel bell. Symmetric design maintains facade balance.
+# -----------------------------------------------------------------------------
+
+let tower_r_left : number = 130
+let tower_r_right : number = 170
+
+# Tower vertical edges
+trace stroke from (tower_r_left, 85) to (tower_r_left, tower_top)
+trace stroke from (tower_r_right, 85) to (tower_r_right, tower_top)
+
+# Tower top
+trace stroke from (tower_r_left, tower_top) to (tower_r_right, tower_top)
+
+# Tower window openings
+draw stroke from (138, 70) to (145, 45) via [(140, 52)]
+draw stroke from (152, 70) to (145, 45) via [(150, 52)]
+
+draw stroke from (148, 70) to (155, 45) via [(150, 52)]
+draw stroke from (162, 70) to (155, 45) via [(160, 52)]
+
+# Tower horizontal bands
+trace stroke from (tower_r_left, 70) to (tower_r_right, 70)
+trace stroke from (tower_r_left, 40) to (tower_r_right, 40)
+
+# Tower shadow texture
+let tower_r_shadow : sketch = [
+    dash at (165, 60),
+    dash at (165, 50),
+    dash at (165, 40),
+    dash at (165, 30)
+]
+scribble tower_r_shadow
+
+# -----------------------------------------------------------------------------
+# SECTION: CENTRAL SECTION (BETWEEN TOWERS)
+# Description: The triangular gable section between the two towers, featuring
+# smaller decorative elements and leading the eye upward.
+# -----------------------------------------------------------------------------
+
+# Upper facade wall between towers
+trace stroke from (tower_l_right, 85) to (tower_l_right, 40)
+trace stroke from (tower_r_left, 85) to (tower_r_left, 40)
+trace stroke from (tower_l_right, 40) to (tower_r_left, 40)
+
+# Small decorative arch
+draw stroke from (85, 60) to (100, 50) via [(90, 52)]
+draw stroke from (115, 60) to (100, 50) via [(110, 52)]
+
+# -----------------------------------------------------------------------------
+# SECTION: SPIRE SUGGESTION (RECONSTRUCTION REFERENCE)
+# Description: Light indication of where the central spire rises, rendered
+# as ghostly lines acknowledging both the historical spire and reconstruction.
+# -----------------------------------------------------------------------------
+
+let spire_base : vec = (100, 40)
+let spire_tip : vec = (100, 0)
+
+# Spire outline - drawn lightly
+draw stroke from (90, 40) to spire_tip via [(95, 15)]
+draw stroke from (110, 40) to spire_tip via [(105, 15)]
+
+# Spire texture
+let spire_texture : sketch = [
+    dash at (100, 30),
+    dash at (100, 20),
+    dash at (100, 10)
+]
+scribble spire_texture
+
+# -----------------------------------------------------------------------------
+# SECTION: ATMOSPHERIC PERSPECTIVE & SKY
+# Description: Subtle texture in the background suggesting atmosphere and
+# depth. Lighter marks above the cathedral create sense of open sky.
+# -----------------------------------------------------------------------------
+
+let sky_marks : sketch = [
+    dash at (10, 30),
+    dash at (25, 15),
+    dash at (175, 25),
+    dash at (190, 40),
+    dash at (15, 60),
+    dash at (185, 55)
+]
+scribble sky_marks
+
+# ============================================================================
+# END OF SKETCH
+# ============================================================================

@@ -2,7 +2,7 @@
 # Center of the rose at (100, 120)
 
 # ============================================
-# INNERMOST SPIRAL CENTER (tight bud)
+# TITLE : ROSE_CENTER
 # ============================================
 let inner1 : sketch = stroke from (100, 122) to (102, 118) via [(104, 120)]
 let inner2 : sketch = stroke from (102, 118) to (98, 116) via [(100, 115)]
@@ -18,7 +18,7 @@ let innerShade3 : sketch = dash at (101, 120)
 let roseCenter : sketch = [inner1, inner2, inner3, inner4, inner5, innerShade1, innerShade2, innerShade3]
 
 # ============================================
-# SECOND LAYER PETALS (slightly unfurled)
+# TITLE : LAYER PETALS
 # ============================================
 let petal2a : sketch = stroke from (94, 124) to (88, 118) via [(89, 122)]
 let petal2b : sketch = stroke from (88, 118) to (92, 110) via [(88, 113)]
@@ -40,7 +40,7 @@ let shade2d : sketch = dash at (110, 120)
 let layer2 : sketch = [petal2a, petal2b, petal2c, petal2d, petal2e, petal2f, petal2g, petal2h, shade2a, shade2b, shade2c, shade2d]
 
 # ============================================
-# THIRD LAYER PETALS (more open)
+# TITLE : THIRD_LAYER_PETALS
 # ============================================
 # Left petal
 let petal3aTop : sketch = stroke from (85, 128) to (78, 120) via [(79, 126)]
@@ -71,8 +71,9 @@ let shade3g : sketch = dash at (102, 132)
 let layer3 : sketch = [petal3aTop, petal3aSide, petal3aBot, petal3aInner, petal3bTop, petal3bSide, petal3bBot, petal3bInner, petal3cLeft, petal3cRight, petal3cInner, shade3a, shade3b, shade3c, shade3d, shade3e, shade3f, shade3g]
 
 # ============================================
-# FOURTH LAYER PETALS (outermost, most open)
+# TITLE : FOURTH LAYER PETALS (outermost, most open)
 # ============================================
+
 # Far left petal (curling outward)
 let petal4aOuter : sketch = stroke from (72, 130) to (65, 118) via [(64, 126)]
 let petal4aCurl : sketch = stroke from (65, 118) to (62, 122) via [(62, 119)]
