@@ -20,8 +20,8 @@ let default_config =
   {
     travel_speed = 3000.0;
     draw_speed = 1000.0;
-    pen_up_command = "M3 S0";
-    pen_down_command = "M3 S50";
+    pen_up_command = "G0 Z0";
+    pen_down_command = "G0 Z1.5";
     scale = 1.0;
     x_offset = 0.0;
     y_offset = 0.0;
@@ -33,8 +33,8 @@ let machine_config =
   {
     travel_speed = 11000.0;
     draw_speed = 3000.0;
-    pen_up_command = "M5";
-    pen_down_command = "M3 S1000";
+    pen_up_command = "G0 Z1.5";
+    pen_down_command = "G0 Z1.5";
     scale = 1.0;
     x_offset = 0.0;
     y_offset = 0.0;
