@@ -195,12 +195,6 @@ and parse_vec_atom p : vec_expr =
   match peek p with
   | LPAREN -> (
       advance p;
-      (* Distinguish between:
-         1. Vector construction: (num_expr, num_expr)
-         2. Grouped vec expression: (vec_expr)
-         Strategy: Try parsing as num_expr. If we see COMMA, it's construction.
-         If we see RPAREN and the result makes sense as a vec, it might be grouping.
-         If we see a vec operator (+, *, -) it's grouping. *)
       let saved = save p in
       try
         let first_num = parse_num_expr p in
@@ -275,7 +269,6 @@ and parse_sketch_atom p : sketch_expr =
       let p0 = parse_vec_expr p in
       expect p TO "to";
       let p1 = parse_vec_expr p in
-      (* Optional via clause *)
       let via = if match_token p VIA then parse_vec_list_bracket p else [] in
       Primitive (Stroke (p0, via, p1))
   | LBRACKET ->
