@@ -2,8 +2,6 @@
 open Compiler
 open Ast
 
-(*** G-code Configuration ***)
-
 type gcode_config = {
   travel_speed : float;
   draw_speed : float;
@@ -33,7 +31,7 @@ let machine_config =
   {
     travel_speed = 11000.0;
     draw_speed = 3000.0;
-    pen_up_command = "G0 Z1.5";
+    pen_up_command = "G0 Z0";
     pen_down_command = "G0 Z1.5";
     scale = 1.0;
     x_offset = 0.0;
