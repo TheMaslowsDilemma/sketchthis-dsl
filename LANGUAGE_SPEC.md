@@ -122,6 +122,7 @@ scribble stroke from origin to center of stroke from heart to (20, 26)
 - Comments are helpful to plan and label sections
 - Coordinates are in mm
 - Newlines separate statements
+- Make an effor not to make duplicate lines and strokes
 - Flow field only affects `dash`, not `stroke` or `dot`
 - `via` points create smooth Catmull-Rom splines
 - Noise magnitude: scribble > draw > trace (none)

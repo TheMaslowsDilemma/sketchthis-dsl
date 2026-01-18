@@ -306,3 +306,37 @@ same with how we allow vector arithmetic with a number on the
 right side but not the left side.
 
 
+-----------------------------------------------------------
+Jan. 17 2026
+-----------------------------------------------------------
+
+--- READINGS ---
+https://en.wikipedia.org/wiki/Biarc
+https://www.ryanjuckett.com/biarc-interpolation/
+https://pure.rug.nl/ws/portalfiles/portal/14477957/05c5.pdf
+https://marlinfw.org/docs/gcode/G002-G003.html
+
+--- OPTIMIZATIONS ---
+the compiler produced sketches that have lines that go back
+and forth between the same points. this can be addressed
+retroactively using the deduplicate_paths method, however
+it may stem from a problem upstream. additionaly our
+intermediate representation only supports line segments atm,
+this will be updated to support arcs and will use some
+biarc fitting algorithm to represent the catmull splines.
+lets consider the gcode for arc, G2 vs G3 is just cw vs ccw.
+
+--- PREP FOR SKETCH STUDIO ---
+the compilers use context is the sketchstudio. it must function
+well for that environment. the executable will take postion
+and size arguments and handle translations and scaling, to
+place correctly on our plot space. the errors and warnings will
+be updated as well. the only output (unless --stats is specified)
+will be warnings or errors.
+
+--- ORGANIZING MODULES ---
+the compiler and gcode files are getting dense, will break them
+into different modules. also ill put in the mli files to follow
+actual practices and not just slop it together with claude one
+shots
+

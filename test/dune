@@ -1,3 +1,0 @@
-(test
- (name test_sketch_dsl)
- (libraries sketch_dsl))

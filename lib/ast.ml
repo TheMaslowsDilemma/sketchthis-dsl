@@ -1,4 +1,5 @@
-type vec = { x : float; y : float }
+open Vector
+
 type type_annotation = TNumber | TVec | TSketch
 
 type num_expr =

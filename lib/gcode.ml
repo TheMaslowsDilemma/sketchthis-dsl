@@ -1,6 +1,12 @@
-(* Sketch DSL G-code Generator *)
+(*
+----------------------------------------------------------- 
+gcode.ml
+----------------------------------------------------------- 
+*)
+
+open Vector
+open Splines
 open Compiler
-open Ast
 
 type gcode_config = {
   travel_speed : float;
@@ -14,12 +20,14 @@ type gcode_config = {
   include_comments : bool;
 }
 
+type placement = { pos_x : float; pos_y : float; width : float; height : float }
+
 let default_config =
   {
     travel_speed = 3000.0;
     draw_speed = 1000.0;
     pen_up_command = "G0 Z0";
-    pen_down_command = "G0 Z1.5";
+    pen_down_command = "G0 Z2.2";
     scale = 1.0;
     x_offset = 0.0;
     y_offset = 0.0;
@@ -32,7 +40,7 @@ let machine_config =
     travel_speed = 11000.0;
     draw_speed = 3000.0;
     pen_up_command = "G0 Z0";
-    pen_down_command = "G0 Z1.5";
+    pen_down_command = "G0 Z2.2";
     scale = 1.0;
     x_offset = 0.0;
     y_offset = 0.0;
@@ -42,119 +50,152 @@ let machine_config =
 
 let machine_bounds = { min_x = 0.0; max_x = 420.0; min_y = 0.0; max_y = 297.0 }
 
-(*** Path Optimization ***)
+(*** Path Operations ***)
 
-let distance a b =
-  let dx = b.x -. a.x in
-  let dy = b.y -. a.y in
-  Float.sqrt ((dx *. dx) +. (dy *. dy))
-
-let path_endpoint (path : path) : vec =
+let path_endpoint path =
   match List.rev path.segments with
   | [] -> path.start
-  | seg :: _ -> ( match seg with MoveTo v | LineTo v -> v)
+  | seg :: _ -> (
+      match seg with MoveTo v | LineTo v -> v | ArcTo arc -> arc.endpoint)
 
-let reverse_path (path : path) : path =
+let reverse_segment prev_end = function
+  | MoveTo v -> (MoveTo prev_end, v)
+  | LineTo v -> (LineTo prev_end, v)
+  | ArcTo arc ->
+      ( ArcTo
+          {
+            endpoint = prev_end;
+            center = arc.center;
+            clockwise = not arc.clockwise;
+          },
+        arc.endpoint )
+
+let reverse_path path =
   let endpoint = path_endpoint path in
-  let rec reverse_segments prev_end acc = function
+  let rec go prev acc = function
     | [] -> acc
     | seg :: rest ->
-        let new_seg, new_end =
-          match seg with
-          | MoveTo v -> (MoveTo prev_end, v)
-          | LineTo v -> (LineTo prev_end, v)
-        in
-        reverse_segments new_end (new_seg :: acc) rest
+        let new_seg, new_end = reverse_segment prev seg in
+        go new_end (new_seg :: acc) rest
   in
-  let reversed_segs = reverse_segments path.start [] (List.rev path.segments) in
-  { start = endpoint; segments = reversed_segs }
+  { start = endpoint; segments = go path.start [] (List.rev path.segments) }
 
-let total_travel_distance paths current_pos =
-  let rec go pos total = function
+let total_travel paths pos =
+  let rec go p total = function
     | [] -> total
     | path :: rest ->
-        let dist_to_start = distance pos path.start in
-        go (path_endpoint path) (total +. dist_to_start) rest
+        go (path_endpoint path) (total +. vec_distance p path.start) rest
   in
-  go current_pos 0.0 paths
+  go pos 0.0 paths
 
-let optimize_paths_greedy (paths : path list) : path list =
+(*** Deduplication ***)
+
+let vec_approx_eq ?(eps = 0.05) a b =
+  Float.abs (a.x -. b.x) < eps && Float.abs (a.y -. b.y) < eps
+
+let seg_approx_eq ?(eps = 0.1) s1 s2 =
+  match (s1, s2) with
+  | MoveTo a, MoveTo b | LineTo a, LineTo b -> vec_approx_eq ~eps a b
+  | ArcTo a, ArcTo b ->
+      vec_approx_eq ~eps a.endpoint b.endpoint
+      && vec_approx_eq ~eps a.center b.center
+      && a.clockwise = b.clockwise
+  | _ -> false
+
+let path_approx_eq ?(eps = 0.1) p1 p2 =
+  vec_approx_eq ~eps p1.start p2.start
+  && List.length p1.segments = List.length p2.segments
+  && List.for_all2 (seg_approx_eq ~eps) p1.segments p2.segments
+
+let path_approx_eq_bidir ?(eps = 0.1) p1 p2 =
+  path_approx_eq ~eps p1 p2 || path_approx_eq ~eps p1 (reverse_path p2)
+
+let deduplicate_paths ?(eps = 0.1) paths =
+  let n_in = List.length paths in
+  let rec go acc = function
+    | [] -> List.rev acc
+    | p :: rest ->
+        if List.exists (path_approx_eq_bidir ~eps p) acc then go acc rest
+        else go (p :: acc) rest
+  in
+  let result = go [] paths in
+  Printf.printf "deduplicated %d paths\n" (n_in - List.length result);
+  result
+
+(*** Greedy Optimization ***)
+
+let optimize_greedy paths =
   if List.length paths <= 1 then paths
   else
-    let rec go current_pos remaining acc =
+    let rec go pos remaining acc =
       match remaining with
       | [] -> List.rev acc
       | _ -> (
-          let find_nearest () =
-            let best = ref None in
-            let best_dist = ref Float.infinity in
-            List.iter
-              (fun path ->
-                let d_start = distance current_pos path.start in
-                if d_start < !best_dist then begin
-                  best := Some (path, false);
-                  best_dist := d_start
-                end;
-                let d_end = distance current_pos (path_endpoint path) in
-                if d_end < !best_dist then begin
-                  best := Some (path, true);
-                  best_dist := d_end
-                end)
-              remaining;
-            !best
-          in
-          match find_nearest () with
+          let best = ref None and best_dist = ref Float.infinity in
+          List.iter
+            (fun p ->
+              let d_start = vec_distance pos p.start in
+              if d_start < !best_dist then (
+                best := Some (p, false);
+                best_dist := d_start);
+              let d_end = vec_distance pos (path_endpoint p) in
+              if d_end < !best_dist then (
+                best := Some (p, true);
+                best_dist := d_end))
+            remaining;
+          match !best with
           | None -> List.rev acc
-          | Some (nearest, reversed) ->
-              let path_to_add =
-                if reversed then reverse_path nearest else nearest
-              in
-              let new_pos = path_endpoint path_to_add in
-              let new_remaining =
-                List.filter (fun p -> p != nearest) remaining
-              in
-              go new_pos new_remaining (path_to_add :: acc))
+          | Some (nearest, rev) ->
+              let p = if rev then reverse_path nearest else nearest in
+              go (path_endpoint p)
+                (List.filter (fun x -> x != nearest) remaining)
+                (p :: acc))
     in
-    go { x = 0.0; y = 0.0 } paths []
+    go (vec 0.0 0.0) paths []
 
-let optimize_2opt (paths : path list) : path list =
-  if List.length paths <= 3 then paths
+(*** 2-opt Optimization ***)
+
+let optimize_2opt ?(max_iters = 100) paths =
+  let n = List.length paths in
+  if n <= 3 then paths
   else
     let arr = Array.of_list paths in
-    let n = Array.length arr in
-    let improved = ref true in
-    while !improved do
+    let starts = Array.map (fun p -> p.start) arr in
+    let ends = Array.map path_endpoint arr in
+    let update i =
+      starts.(i) <- arr.(i).start;
+      ends.(i) <- path_endpoint arr.(i)
+    in
+    let improved = ref true and iters = ref 0 in
+    while !improved && !iters < max_iters do
+      incr iters;
       improved := false;
       for i = 0 to n - 2 do
         for j = i + 2 to n - 1 do
-          let p_i = arr.(i) in
-          let p_i1 = arr.(i + 1) in
-          let p_j = arr.(j) in
-          let p_j1 = if j + 1 < n then Some arr.(j + 1) else None in
-          let end_i = path_endpoint p_i in
-          let end_j = path_endpoint p_j in
-          let current_dist =
-            distance end_i p_i1.start
-            +. match p_j1 with Some p -> distance end_j p.start | None -> 0.0
+          let curr =
+            vec_distance ends.(i) starts.(i + 1)
+            +. if j + 1 < n then vec_distance ends.(j) starts.(j + 1) else 0.0
           in
-          let new_dist =
-            distance end_i p_j.start
+          let next =
+            vec_distance ends.(i) ends.(j)
             +.
-            match p_j1 with
-            | Some p -> distance (path_endpoint p_i1) p.start
-            | None -> 0.0
+            if j + 1 < n then vec_distance starts.(i + 1) starts.(j + 1)
+            else 0.0
           in
-          if new_dist < current_dist -. 0.001 then begin
-            let rec reverse_range lo hi =
-              if lo < hi then begin
-                let tmp = arr.(lo) in
-                arr.(lo) <- reverse_path arr.(hi);
-                arr.(hi) <- reverse_path tmp;
-                reverse_range (lo + 1) (hi - 1)
-              end
-              else if lo = hi then arr.(lo) <- reverse_path arr.(lo)
-            in
-            reverse_range (i + 1) j;
+          if next < curr -. 0.001 then begin
+            let lo = ref (i + 1) and hi = ref j in
+            while !lo < !hi do
+              let tmp = arr.(!lo) in
+              arr.(!lo) <- reverse_path arr.(!hi);
+              arr.(!hi) <- reverse_path tmp;
+              update !lo;
+              update !hi;
+              incr lo;
+              decr hi
+            done;
+            if !lo = !hi then (
+              arr.(!lo) <- reverse_path arr.(!lo);
+              update !lo);
             improved := true
           end
         done
@@ -162,68 +203,13 @@ let optimize_2opt (paths : path list) : path list =
     done;
     Array.to_list arr
 
-let optimize_paths paths = paths |> optimize_paths_greedy |> optimize_2opt
+let optimize_paths paths =
+  paths |> deduplicate_paths |> optimize_greedy |> optimize_2opt
+  |> deduplicate_paths
 
-(*** G-code Generation ***)
+(*** Bounds and Fitting ***)
 
-type gcode_state = {
-  mutable current_pos : vec;
-  mutable pen_down : bool;
-  mutable lines : string list;
-}
-
-let create_state () =
-  { current_pos = { x = 0.0; y = 0.0 }; pen_down = false; lines = [] }
-
-let emit state line = state.lines <- line :: state.lines
-let format_coord config v = Printf.sprintf "%.*f" config.decimal_places v
-
-let format_vec config v =
-  let x = (v.x *. config.scale) +. config.x_offset in
-  let y = (v.y *. config.scale) +. config.y_offset in
-  Printf.sprintf "X%s Y%s" (format_coord config x) (format_coord config y)
-
-let emit_preamble config state =
-  if config.include_comments then emit state "; Generated by Sketch DSL";
-  emit state "G21";
-  emit state "G90";
-  emit state (Printf.sprintf "G0 F%.0f" config.travel_speed);
-  emit state config.pen_up_command;
-  state.pen_down <- false
-
-let emit_postamble config state =
-  if state.pen_down then begin
-    emit state config.pen_up_command;
-    state.pen_down <- false
-  end;
-  emit state "G0 X0 Y0";
-  emit state "M5";
-  if config.include_comments then emit state "; End"
-
-let emit_machine_preamble config state =
-  if config.include_comments then begin
-    emit state "; Generated by Sketch DSL for Machine";
-    emit state "; Work area: 420mm x 297mm (A3)"
-  end;
-  emit state "G21";
-  emit state "G90";
-  emit state "M5";
-  emit state "$H";
-  emit state "G4 P0.5";
-  emit state (Printf.sprintf "G0 F%.0f" config.travel_speed);
-  state.pen_down <- false
-
-let emit_machine_postamble config state =
-  if state.pen_down then begin
-    emit state "M5";
-    state.pen_down <- false
-  end;
-  emit state "G4 P0.2";
-  emit state "G0 X0 Y0";
-  emit state "M5";
-  if config.include_comments then emit state "; End"
-
-let check_machine_bounds (ir : ir) : bool =
+let check_machine_bounds ir =
   if ir = [] then true
   else
     let b = compute_bounds ir in
@@ -232,252 +218,368 @@ let check_machine_bounds (ir : ir) : bool =
     && b.min_y >= machine_bounds.min_y
     && b.max_y <= machine_bounds.max_y
 
-let fit_to_machine ?(margin = 10.0) (ir : ir) : ir =
+let fit_to_machine ?(margin = 10.0) ir =
   if ir = [] then ir
   else
     let b = compute_bounds ir in
-    let data_width = b.max_x -. b.min_x in
-    let data_height = b.max_y -. b.min_y in
-    let available_width = machine_bounds.max_x -. (2.0 *. margin) in
-    let available_height = machine_bounds.max_y -. (2.0 *. margin) in
-    let scale_x =
-      available_width /. if data_width > 0.001 then data_width else 1.0
-    in
-    let scale_y =
-      available_height /. if data_height > 0.001 then data_height else 1.0
-    in
-    let scale = Float.min (Float.min scale_x scale_y) 1.0 in
-    let scaled_width = data_width *. scale in
-    let scaled_height = data_height *. scale in
-    let offset_x =
-      margin +. ((available_width -. scaled_width) /. 2.0) -. (b.min_x *. scale)
-    in
-    let offset_y =
-      margin
-      +. ((available_height -. scaled_height) /. 2.0)
-      -. (b.min_y *. scale)
-    in
-    transform_ir
-      (fun v ->
-        { x = (v.x *. scale) +. offset_x; y = (v.y *. scale) +. offset_y })
-      ir
+    let dw = b.max_x -. b.min_x and dh = b.max_y -. b.min_y in
+    let aw = machine_bounds.max_x -. (2.0 *. margin) in
+    let ah = machine_bounds.max_y -. (2.0 *. margin) in
+    let sx = aw /. if dw > Globals.precision then dw else 1.0 in
+    let sy = ah /. if dh > Globals.precision then dh else 1.0 in
+    let s = Float.min (Float.min sx sy) 1.0 in
+    let ox = margin +. ((aw -. (dw *. s)) /. 2.0) -. (b.min_x *. s) in
+    let oy = margin +. ((ah -. (dh *. s)) /. 2.0) -. (b.min_y *. s) in
+    transform_ir (fun v -> vec ((v.x *. s) +. ox) ((v.y *. s) +. oy)) ir
 
-let pen_up config state =
-  if state.pen_down then begin
-    emit state config.pen_up_command;
-    state.pen_down <- false
-  end
+let fit_to_placement p ir =
+  if ir = [] then ir
+  else
+    let b = compute_bounds ir in
+    let dw = b.max_x -. b.min_x and dh = b.max_y -. b.min_y in
+    let sx = p.width /. if dw > Globals.precision then dw else 1.0 in
+    let sy = p.height /. if dh > Globals.precision then dh else 1.0 in
+    let s = Float.min sx sy in
+    let ox = p.pos_x -. (b.min_x *. s) in
+    let oy = p.pos_y -. (b.min_y *. s) in
+    transform_ir (fun v -> vec ((v.x *. s) +. ox) ((v.y *. s) +. oy)) ir
 
-let pen_down config state =
-  if not state.pen_down then begin
-    emit state config.pen_down_command;
-    emit state (Printf.sprintf "G1 F%.0f" config.draw_speed);
-    state.pen_down <- true
-  end
+let fit_to_machine_with_placement ?(margin = 10.0) ?placement ir =
+  match placement with
+  | Some p -> fit_to_placement p ir
+  | None -> fit_to_machine ~margin ir
 
-let rapid_move config state target =
-  pen_up config state;
-  emit state (Printf.sprintf "G0 %s" (format_vec config target));
-  state.current_pos <- target
+(*** G-code Generation ***)
 
-let linear_move config state target =
-  pen_down config state;
-  emit state (Printf.sprintf "G1 %s" (format_vec config target));
-  state.current_pos <- target
+type state = {
+  mutable pos : vec;
+  mutable pen_down : bool;
+  mutable lines : string list;
+}
 
-let emit_path config state (path : path) =
-  if distance state.current_pos path.start > 0.001 then
-    rapid_move config state path.start;
+let emit s line = s.lines <- line :: s.lines
+let fmt_coord cfg v = Printf.sprintf "%.*f" cfg.decimal_places v
+
+let fmt_vec cfg v =
+  Printf.sprintf "X%s Y%s"
+    (fmt_coord cfg ((v.x *. cfg.scale) +. cfg.x_offset))
+    (fmt_coord cfg ((v.y *. cfg.scale) +. cfg.y_offset))
+
+let fmt_arc_ij cfg pos center =
+  Printf.sprintf "I%s J%s"
+    (fmt_coord cfg ((center.x -. pos.x) *. cfg.scale))
+    (fmt_coord cfg ((center.y -. pos.y) *. cfg.scale))
+
+let pen_up cfg s =
+  if s.pen_down then (
+    emit s cfg.pen_up_command;
+    s.pen_down <- false)
+
+let pen_down cfg s =
+  if not s.pen_down then (
+    emit s cfg.pen_down_command;
+    emit s (Printf.sprintf "G1 F%.0f" cfg.draw_speed);
+    s.pen_down <- true)
+
+let rapid cfg s v =
+  pen_up cfg s;
+  emit s (Printf.sprintf "G0 %s" (fmt_vec cfg v));
+  s.pos <- v
+
+let linear cfg s v =
+  pen_down cfg s;
+  emit s (Printf.sprintf "G1 %s" (fmt_vec cfg v));
+  s.pos <- v
+
+let arc cfg s a =
+  pen_down cfg s;
+  emit s
+    (Printf.sprintf "%s %s %s"
+       (if a.clockwise then "G2" else "G3")
+       (fmt_vec cfg a.endpoint)
+       (fmt_arc_ij cfg s.pos a.center));
+  s.pos <- a.endpoint
+
+let emit_path cfg s path =
+  if vec_distance s.pos path.start > Globals.precision then
+    rapid cfg s path.start;
   List.iter
-    (fun seg ->
-      match seg with
-      | MoveTo v -> rapid_move config state v
-      | LineTo v -> linear_move config state v)
+    (function
+      | MoveTo v -> rapid cfg s v
+      | LineTo v -> linear cfg s v
+      | ArcTo a -> arc cfg s a)
     path.segments
 
-let generate ?(config = default_config) (ir : ir) : string =
-  let state = create_state () in
-  let optimized = optimize_paths ir in
-  emit_preamble config state;
-  if config.include_comments then
-    emit state (Printf.sprintf "; %d paths" (List.length optimized));
-  List.iteri
-    (fun i path ->
-      if config.include_comments then
-        emit state (Printf.sprintf "; Path %d" (i + 1));
-      emit_path config state path)
-    optimized;
-  emit_postamble config state;
-  state.lines |> List.rev |> String.concat "\n"
+let emit_preamble cfg s =
+  if cfg.include_comments then emit s "; Generated by Sketch DSL";
+  emit s "G21";
+  emit s "G90";
+  emit s (Printf.sprintf "G0 F%.0f" cfg.travel_speed);
+  emit s cfg.pen_up_command;
+  s.pen_down <- false
 
-let generate_machine ?(fit = true) ?(margin = 10.0) (ir : ir) : string =
-  let config = machine_config in
-  let state = create_state () in
-  let scaled_ir = if fit then fit_to_machine ~margin ir else ir in
-  if not (check_machine_bounds scaled_ir) then
-    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
-  let optimized = optimize_paths scaled_ir in
-  emit_machine_preamble config state;
+let emit_postamble cfg s =
+  pen_up cfg s;
+  emit s "G4 P0.2";
+  emit s "G0 X0 Y0";
+  if cfg.include_comments then emit s "; End"
+
+let emit_machine_preamble cfg s =
+  if cfg.include_comments then (
+    emit s "; Generated by Sketch DSL for Machine";
+    emit s "; Work area: 420mm x 297mm (A3)");
+  emit s "G21";
+  emit s "G90";
+  emit s "M5";
+  emit s "G4 P0.5";
+  emit s (Printf.sprintf "G0 F%.0f" cfg.travel_speed);
+  s.pen_down <- false
+
+let emit_machine_postamble cfg s =
+  emit s cfg.pen_up_command;
+  emit s "M5";
+  s.pen_down <- false;
+  emit s "G4 P0.3";
+  emit s "G0 X0 Y0";
+  if cfg.include_comments then emit s "; End"
+
+let generate ?(config = default_config) ir =
+  let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
+  let opt = optimize_paths ir in
+  emit_preamble config s;
   if config.include_comments then
-    emit state (Printf.sprintf "; %d paths" (List.length optimized));
+    emit s (Printf.sprintf "; %d paths" (List.length opt));
   List.iteri
-    (fun i path ->
+    (fun i p ->
       if config.include_comments then
-        emit state (Printf.sprintf "; Path %d" (i + 1));
-      emit_path config state path)
-    optimized;
-  emit_machine_postamble config state;
-  state.lines |> List.rev |> String.concat "\n"
+        emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path config s p)
+    opt;
+  emit_postamble config s;
+  s.lines |> List.rev |> String.concat "\n"
+
+let generate_machine ?(fit = true) ?(margin = 10.0) ?placement ir =
+  let cfg = machine_config in
+  let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
+  let scaled =
+    if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
+  in
+  if not (check_machine_bounds scaled) then
+    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
+  let opt = optimize_paths scaled in
+  emit_machine_preamble cfg s;
+  if cfg.include_comments then
+    emit s (Printf.sprintf "; %d paths" (List.length opt));
+  List.iteri
+    (fun i p ->
+      if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path cfg s p)
+    opt;
+  emit_machine_postamble cfg s;
+  s.lines |> List.rev |> String.concat "\n"
 
 (*** Statistics ***)
 
-let calc_draw_distance (paths : path list) : float =
+let arc_length center start_pt end_pt cw =
+  let r = vec_distance center start_pt in
+  let a1 = Float.atan2 (start_pt.y -. center.y) (start_pt.x -. center.x) in
+  let a2 = Float.atan2 (end_pt.y -. center.y) (end_pt.x -. center.x) in
+  let da = ref (a2 -. a1) in
+  if cw then (if !da > 0.0 then da := !da -. (2.0 *. Float.pi))
+  else if !da < 0.0 then da := !da +. (2.0 *. Float.pi);
+  r *. Float.abs !da
+
+let draw_distance paths =
   List.fold_left
-    (fun acc path ->
-      let rec seg_dist prev = function
+    (fun acc p ->
+      let rec go prev = function
         | [] -> 0.0
         | seg :: rest ->
             let d, next =
               match seg with
               | MoveTo v -> (0.0, v)
-              | LineTo v -> (distance prev v, v)
+              | LineTo v -> (vec_distance prev v, v)
+              | ArcTo a ->
+                  (arc_length a.center prev a.endpoint a.clockwise, a.endpoint)
             in
-            d +. seg_dist next rest
+            d +. go next rest
       in
-      acc +. seg_dist path.start path.segments)
+      acc +. go p.start p.segments)
     0.0 paths
 
-let count_segments (paths : path list) : int * int =
+let count_segments paths =
   List.fold_left
-    (fun (moves, lines) path ->
+    (fun (m, l, a) p ->
       List.fold_left
-        (fun (m, l) seg ->
-          match seg with MoveTo _ -> (m + 1, l) | LineTo _ -> (m, l + 1))
-        (moves, lines) path.segments)
-    (0, 0) paths
+        (fun (m, l, a) -> function
+          | MoveTo _ -> (m + 1, l, a)
+          | LineTo _ -> (m, l + 1, a)
+          | ArcTo _ -> (m, l, a + 1))
+        (m, l, a) p.segments)
+    (0, 0, 0) paths
 
-let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) (ir : ir) :
-    string * string =
-  let config = machine_config in
-  let state = create_state () in
-  let scaled_ir = if fit then fit_to_machine ~margin ir else ir in
-  if not (check_machine_bounds scaled_ir) then
-    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
-  let pre_travel = total_travel_distance scaled_ir { x = 0.0; y = 0.0 } in
-  let optimized = optimize_paths scaled_ir in
-  let post_travel = total_travel_distance optimized { x = 0.0; y = 0.0 } in
-  emit_machine_preamble config state;
+let generate_with_stats ?(config = default_config) ir =
+  let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
+  let pre_travel = total_travel ir (vec 0.0 0.0) in
+  let opt = optimize_paths ir in
+  let post_travel = total_travel opt (vec 0.0 0.0) in
+  emit_preamble config s;
   if config.include_comments then
-    emit state (Printf.sprintf "; %d paths" (List.length optimized));
+    emit s (Printf.sprintf "; %d paths" (List.length opt));
   List.iteri
-    (fun i path ->
+    (fun i p ->
       if config.include_comments then
-        emit state (Printf.sprintf "; Path %d" (i + 1));
-      emit_path config state path)
-    optimized;
-  emit_machine_postamble config state;
-  let gcode = state.lines |> List.rev |> String.concat "\n" in
-  let draw_dist = calc_draw_distance optimized in
-  let num_moves, num_lines = count_segments optimized in
-  let draw_time = draw_dist /. config.draw_speed in
-  let travel_time = post_travel /. config.travel_speed in
-  let total_time = draw_time +. travel_time in
-  let bounds = compute_bounds scaled_ir in
+        emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path config s p)
+    opt;
+  emit_postamble config s;
+  let gcode = s.lines |> List.rev |> String.concat "\n" in
+  let draw = draw_distance opt in
+  let moves, lines, arcs = count_segments opt in
+  let stats =
+    Printf.sprintf
+      "Paths: %d\n\
+       Segments: %d (lines: %d, arcs: %d, moves: %d)\n\
+       Draw: %.2f mm\n\
+       Travel: %.2f mm (was %.2f mm, %.1f%% reduction)\n\
+       G-code lines: %d"
+      (List.length opt)
+      (moves + lines + arcs)
+      lines arcs moves (draw *. config.scale)
+      (post_travel *. config.scale)
+      (pre_travel *. config.scale)
+      (if pre_travel > Globals.precision then
+         (1.0 -. (post_travel /. pre_travel)) *. 100.0
+       else 0.0)
+      (List.length s.lines)
+  in
+  (gcode, stats)
+
+let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) ?placement ir =
+  let cfg = machine_config in
+  let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
+  let scaled =
+    if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
+  in
+  if not (check_machine_bounds scaled) then
+    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
+  let pre_opt = List.length scaled in
+  let pre_travel = total_travel scaled (vec 0.0 0.0) in
+  let opt = optimize_paths scaled in
+  let post_travel = total_travel opt (vec 0.0 0.0) in
+  emit_machine_preamble cfg s;
+  if cfg.include_comments then
+    emit s (Printf.sprintf "; %d paths" (List.length opt));
+  List.iteri
+    (fun i p ->
+      if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path cfg s p)
+    opt;
+  emit_machine_postamble cfg s;
+  let gcode = s.lines |> List.rev |> String.concat "\n" in
+  let draw = draw_distance opt in
+  let moves, lines, arcs = count_segments opt in
+  let draw_time = draw /. cfg.draw_speed in
+  let travel_time = post_travel /. cfg.travel_speed in
+  let b = compute_bounds scaled in
+  let removed = pre_opt - List.length opt in
   let stats =
     Printf.sprintf
       "Machine Output\n\
        --------------\n\
-       Paths: %d\n\
-       Segments: %d (lines: %d, moves: %d)\n\
+       Paths: %d%s\n\
+       Segments: %d (lines: %d, arcs: %d, moves: %d)\n\
        Bounds: X[%.1f - %.1f] Y[%.1f - %.1f] mm\n\
        Draw: %.1f mm\n\
        Travel: %.1f mm (was %.1f mm, %.0f%% reduction)\n\
        Time: %.1f min (draw: %.1f, travel: %.1f)\n\
        G-code lines: %d"
-      (List.length optimized) (num_moves + num_lines) num_lines num_moves
-      bounds.min_x bounds.max_x bounds.min_y bounds.max_y draw_dist post_travel
+      (List.length opt)
+      (if removed > 0 then Printf.sprintf " (%d duplicates removed)" removed
+       else "")
+      (moves + lines + arcs)
+      lines arcs moves b.min_x b.max_x b.min_y b.max_y draw post_travel
       pre_travel
-      (if pre_travel > 0.001 then (1.0 -. (post_travel /. pre_travel)) *. 100.0
+      (if pre_travel > Globals.precision then
+         (1.0 -. (post_travel /. pre_travel)) *. 100.0
        else 0.0)
-      total_time draw_time travel_time (List.length state.lines)
-  in
-  (gcode, stats)
-
-let generate_with_stats ?(config = default_config) (ir : ir) : string * string =
-  let state = create_state () in
-  let pre_travel = total_travel_distance ir { x = 0.0; y = 0.0 } in
-  let optimized = optimize_paths ir in
-  let post_travel = total_travel_distance optimized { x = 0.0; y = 0.0 } in
-  emit_preamble config state;
-  if config.include_comments then
-    emit state (Printf.sprintf "; %d paths" (List.length optimized));
-  List.iteri
-    (fun i path ->
-      if config.include_comments then
-        emit state (Printf.sprintf "; Path %d" (i + 1));
-      emit_path config state path)
-    optimized;
-  emit_postamble config state;
-  let gcode = state.lines |> List.rev |> String.concat "\n" in
-  let draw_dist = calc_draw_distance optimized in
-  let num_moves, num_lines = count_segments optimized in
-  let stats =
-    Printf.sprintf
-      "Paths: %d\n\
-       Segments: %d (lines: %d, moves: %d)\n\
-       Draw: %.2f mm\n\
-       Travel: %.2f mm (was %.2f mm, %.1f%% reduction)\n\
-       G-code lines: %d"
-      (List.length optimized) (num_moves + num_lines) num_lines num_moves
-      (draw_dist *. config.scale)
-      (post_travel *. config.scale)
-      (pre_travel *. config.scale)
-      (if pre_travel > 0.001 then (1.0 -. (post_travel /. pre_travel)) *. 100.0
-       else 0.0)
-      (List.length state.lines)
+      (draw_time +. travel_time) draw_time travel_time (List.length s.lines)
   in
   (gcode, stats)
 
 (*** SVG Preview ***)
 
-let generate_svg ?(width = 800) ?(height = 600) (ir : ir) : string =
-  let bounds = compute_bounds ir in
-  let padding = 20.0 in
-  let data_width = bounds.max_x -. bounds.min_x in
-  let data_height = bounds.max_y -. bounds.min_y in
-  let scale_x =
-    (float_of_int width -. (2.0 *. padding))
-    /. if data_width > 0.001 then data_width else 1.0
+let svg_arc start_pt arc =
+  let r = vec_distance arc.center start_pt in
+  let a1 =
+    Float.atan2 (start_pt.y -. arc.center.y) (start_pt.x -. arc.center.x)
   in
-  let scale_y =
-    (float_of_int height -. (2.0 *. padding))
-    /. if data_height > 0.001 then data_height else 1.0
+  let a2 =
+    Float.atan2 (arc.endpoint.y -. arc.center.y) (arc.endpoint.x -. arc.center.x)
   in
-  let scale = Float.min scale_x scale_y in
-  let tx x = padding +. ((x -. bounds.min_x) *. scale) in
-  let ty y = float_of_int height -. padding -. ((y -. bounds.min_y) *. scale) in
-  let path_to_svg path =
+  let da = ref (a2 -. a1) in
+  if arc.clockwise then (if !da > 0.0 then da := !da -. (2.0 *. Float.pi))
+  else if !da < 0.0 then da := !da +. (2.0 *. Float.pi);
+  Printf.sprintf "A %.2f %.2f 0 %d %d" r r
+    (if Float.abs !da > Float.pi then 1 else 0)
+    (if arc.clockwise then 1 else 0)
+
+let generate_svg ?(width = 800) ?(height = 600) ir =
+  let b = compute_bounds ir in
+  let pad = 20.0 in
+  let dw = b.max_x -. b.min_x and dh = b.max_y -. b.min_y in
+  let sx =
+    (float_of_int width -. (2.0 *. pad))
+    /. if dw > Globals.precision then dw else 1.0
+  in
+  let sy =
+    (float_of_int height -. (2.0 *. pad))
+    /. if dh > Globals.precision then dh else 1.0
+  in
+  let s = Float.min sx sy in
+  let tx v =
+    vec
+      (pad +. ((v.x -. b.min_x) *. s))
+      (float_of_int height -. pad -. ((v.y -. b.min_y) *. s))
+  in
+  let path_svg p =
     let buf = Buffer.create 256 in
-    Buffer.add_string buf
-      (Printf.sprintf "M %.2f %.2f" (tx path.start.x) (ty path.start.y));
+    let st = tx p.start in
+    Buffer.add_string buf (Printf.sprintf "M %.2f %.2f" st.x st.y);
+    let cur = ref p.start in
     List.iter
       (fun seg ->
         match seg with
         | MoveTo v ->
-            Buffer.add_string buf
-              (Printf.sprintf " M %.2f %.2f" (tx v.x) (ty v.y))
+            let vt = tx v in
+            Buffer.add_string buf (Printf.sprintf " M %.2f %.2f" vt.x vt.y);
+            cur := v
         | LineTo v ->
+            let vt = tx v in
+            Buffer.add_string buf (Printf.sprintf " L %.2f %.2f" vt.x vt.y);
+            cur := v
+        | ArcTo a ->
+            let cur_t = tx !cur in
+            let a_t =
+              {
+                endpoint = tx a.endpoint;
+                center = tx a.center;
+                clockwise = not a.clockwise;
+              }
+            in
             Buffer.add_string buf
-              (Printf.sprintf " L %.2f %.2f" (tx v.x) (ty v.y)))
-      path.segments;
+              (Printf.sprintf " %s %.2f %.2f" (svg_arc cur_t a_t) a_t.endpoint.x
+                 a_t.endpoint.y);
+            cur := a.endpoint)
+      p.segments;
     Buffer.contents buf
   in
   let paths_svg =
-    ir
-    |> List.map (fun path ->
+    optimize_paths ir
+    |> List.map (fun p ->
         Printf.sprintf
           {|  <path d="%s" fill="none" stroke="black" stroke-width="1"/>|}
-          (path_to_svg path))
+          (path_svg p))
     |> String.concat "\n"
   in
   Printf.sprintf
