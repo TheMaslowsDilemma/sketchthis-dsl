@@ -1,10 +1,10 @@
-(***
+(*
 ----------------------------------------------------------- 
 compiler.mli
 ----------------------------------------------------------- 
 sketch dsl compiler. evaluates programs to intermediate
 representation (paths with line/arc segments).
-***)
+*)
 
 open Vector
 open Splines

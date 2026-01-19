@@ -47,10 +47,7 @@ let sample_flow_field sources p =
    Transformations
    ═══════════════════════════════════════════════════════════════════════════ *)
 
-let transform_segment f = function
-  | MoveTo v -> MoveTo (f v)
-  | LineTo v -> LineTo (f v)
-  | ArcTo arc -> ArcTo { endpoint = f arc.endpoint; center = f arc.center; clockwise = arc.clockwise }
+let transform_segment f s = { p0 = f s.p0; p1 = f s.p1 }
 
 let transform_path f path =
   { start = f path.start; segments = List.map (transform_segment f) path.segments }
@@ -75,9 +72,7 @@ let update_bounds b v = {
   max_y = Float.max b.max_y v.y
 }
 
-let segment_bounds b = function
-  | MoveTo v | LineTo v -> update_bounds b v
-  | ArcTo arc -> update_bounds b arc.endpoint
+let segment_bounds b s = update_bounds (update_bounds b s.p0) s.p1
 
 let path_bounds b p =
   List.fold_left segment_bounds (update_bounds b p.start) p.segments
@@ -110,7 +105,6 @@ let rec eval_num env = function
 
 (* ═══════════════════════════════════════════════════════════════════════════
    Basic Evaluation - cheap, for bounds/center/flow only
-   No spline flattening, just control points as simple polylines
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let rec eval_vec_basic env = function
@@ -136,25 +130,21 @@ and eval_primitive_basic env = function
   | Dot v ->
       let p = eval_vec_basic env v in
       let r = 0.5 in
-      [{ start = vec (p.x +. r) p.y;
-         segments = [
-           LineTo (vec p.x (p.y +. r));
-           LineTo (vec (p.x -. r) p.y);
-           LineTo (vec p.x (p.y -. r));
-           LineTo (vec (p.x +. r) p.y)
-         ] }]
+      let pts = [vec (p.x +. r) p.y; vec p.x (p.y +. r); vec (p.x -. r) p.y; vec p.x (p.y -. r); vec (p.x +. r) p.y] in
+      [{ start = List.hd pts; segments = points_to_segments pts }]
   | Dash v ->
       let p = eval_vec_basic env v in
-      [{ start = vec (p.x -. 1.0) p.y; segments = [LineTo (vec (p.x +. 1.0) p.y)] }]
+      let p0, p1 = vec (p.x -. 1.0) p.y, vec (p.x +. 1.0) p.y in
+      [{ start = p0; segments = [{ p0; p1 }] }]
   | Stroke (v0, via, v1) ->
       let p0 = eval_vec_basic env v0 in
       let p1 = eval_vec_basic env v1 in
       let via_pts = List.map (eval_vec_basic env) via in
-      let segments = List.map (fun p -> LineTo p) (via_pts @ [p1]) in
-      [{ start = p0; segments }]
+      let pts = [p0] @ via_pts @ [p1] in
+      [{ start = p0; segments = points_to_segments pts }]
 
 (* ═══════════════════════════════════════════════════════════════════════════
-   Flow Collection - extract flow sources from strokes
+   Flow Collection
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let rec pairs = function
@@ -170,7 +160,7 @@ let rec collect_flow env = function
   | SketchList sks -> List.concat_map (collect_flow env) sks
 
 (* ═══════════════════════════════════════════════════════════════════════════
-   Full Evaluation - expensive, produces final IR with splines flattened
+   Full Evaluation - produces final IR with splines flattened
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let rec eval_vec env flow = function
@@ -185,40 +175,32 @@ let rec eval_vec env flow = function
   | VecScale (v, n) -> vec_scale (eval_vec env flow v) (eval_num env n)
   | VecFlow v -> sample_flow_field flow (eval_vec env flow v)
 
-let rec eval_sketch env noise flow = function
-  | Primitive prim -> eval_primitive env noise flow prim
-  | SketchVar name -> eval_sketch env noise flow (lookup_sketch name env)
-  | SketchList sks -> List.concat_map (eval_sketch env noise flow) sks
-
-and eval_primitive env noise flow = function
+let eval_primitive env noise flow = function
   | Dot v ->
       let p = jitter_vec noise (eval_vec env flow v) in
       let r = 0.5 in
-      [{ start = vec (p.x +. r) p.y;
-         segments = [
-           LineTo (vec p.x (p.y +. r));
-           LineTo (vec (p.x -. r) p.y);
-           LineTo (vec p.x (p.y -. r));
-           LineTo (vec (p.x +. r) p.y)
-         ] }]
+      let pts = [vec (p.x +. r) p.y; vec p.x (p.y +. r); vec (p.x -. r) p.y; vec p.x (p.y -. r); vec (p.x +. r) p.y] in
+      [{ start = List.hd pts; segments = points_to_segments pts }]
   | Dash v ->
       let p = jitter_vec noise (eval_vec env flow v) in
       let dir = sample_flow_field flow p in
       let p0 = jitter_vec noise (vec (p.x -. dir.x) (p.y -. dir.y)) in
       let p1 = jitter_vec noise (vec (p.x +. dir.x) (p.y +. dir.y)) in
-      [{ start = p0; segments = [LineTo p1] }]
+      [{ start = p0; segments = [{ p0; p1 }] }]
   | Stroke (v0, via, v1) ->
       let p0 = jitter_vec noise (eval_vec env flow v0) in
       let p1 = jitter_vec noise (eval_vec env flow v1) in
       let via_pts = List.map (fun v -> jitter_vec noise (eval_vec env flow v)) via in
       let control_pts = [p0] @ via_pts @ [p1] in
-      let tolerance, min_segs = match noise with
-        | NoiseTrace -> (0.05, 8)
-        | NoiseDraw -> (0.08, 5)
-        | NoiseScribble -> (0.15, 4)
-      in
-      let segments = spline_to_segments_smart ~tolerance ~use_arcs:false ~min_segments:min_segs control_pts in
-      [{ start = p0; segments }]
+      let samples = match noise with NoiseTrace -> 12 | NoiseDraw -> 10 | NoiseScribble -> 8 in
+      let segments = spline_to_segments ~samples_per_span:samples noise control_pts in
+      let start = match segments with [] -> p0 | s :: _ -> s.p0 in
+      [{ start; segments }]
+
+let rec eval_sketch env noise flow = function
+  | Primitive prim -> eval_primitive env noise flow prim
+  | SketchVar name -> eval_sketch env noise flow (lookup_sketch name env)
+  | SketchList sks -> List.concat_map (eval_sketch env noise flow) sks
 
 (* ═══════════════════════════════════════════════════════════════════════════
    Statement Evaluation
@@ -265,13 +247,11 @@ let format_error = function
 
 let vec_str v = Printf.sprintf "(%.3f, %.3f)" v.x v.y
 
-let seg_str = function
-  | MoveTo v -> "M " ^ vec_str v
-  | LineTo v -> "L " ^ vec_str v
-  | ArcTo a -> Printf.sprintf "A %s c=%s %s" (vec_str a.endpoint) (vec_str a.center)
-      (if a.clockwise then "CW" else "CCW")
+let seg_str s = Printf.sprintf "%s -> %s" (vec_str s.p0) (vec_str s.p1)
 
-let path_str p = "M " ^ vec_str p.start ^ " " ^ String.concat " " (List.map seg_str p.segments)
+let path_str p =
+  Printf.sprintf "start: %s\n  %s" (vec_str p.start)
+    (String.concat "\n  " (List.map seg_str p.segments))
 
 let ir_to_string ir = String.concat "\n" (List.map path_str ir)
 
@@ -279,14 +259,6 @@ let bounds_to_string b =
   Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y b.max_y
 
 let ir_stats ir =
-  let arcs, lines =
-    List.fold_left (fun (a, l) p ->
-      List.fold_left (fun (a, l) -> function
-        | ArcTo _ -> (a + 1, l)
-        | LineTo _ -> (a, l + 1)
-        | _ -> (a, l)
-      ) (a, l) p.segments
-    ) (0, 0) ir
-  in
-  Printf.sprintf "Paths: %d, Segments: %d (arcs: %d, lines: %d), %s"
-    (List.length ir) (arcs + lines) arcs lines (bounds_to_string (compute_bounds ir))
+  let seg_count = List.fold_left (fun acc p -> acc + List.length p.segments) 0 ir in
+  Printf.sprintf "Paths: %d, Segments: %d, %s"
+    (List.length ir) seg_count (bounds_to_string (compute_bounds ir))

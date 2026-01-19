@@ -1,28 +1,31 @@
 (*
-  splines.mli - Catmull-Rom spline evaluation and flattening
+----------------------------------------------------------- 
+splines.ml
+-----------------------------------------------------------
+segment definitions, catmull-rom spline logic, noising logic
 *)
-
 open Vector
 
-type arc_data = { endpoint : vec; center : vec; clockwise : bool }
-type segment = MoveTo of vec | LineTo of vec | ArcTo of arc_data
+type segment = { p0 : vec; p1 : vec }
 type noise_level = NoiseTrace | NoiseDraw | NoiseScribble
 
+(* point on catmull-rom curve at parameter t, defined by p0..p3 *)
 val catmull_rom_point : vec -> vec -> vec -> vec -> float -> vec
+
+(* unit tangent on catmull-rom curve at parameter t *)
 val catmull_rom_tangent : vec -> vec -> vec -> vec -> float -> vec
 
-val spline_to_segments : ?segments_per_span:int -> vec list -> segment list
-val spline_to_segments_adaptive : ?tolerance:float -> ?use_arcs:bool -> ?min_segments:int -> vec list -> segment list
-val spline_to_segments_smart : ?tolerance:float -> ?use_arcs:bool -> ?min_segments:int -> vec list -> segment list
-val spline_to_line_segments : ?segments_per_span:int -> vec list -> segment list
-val spline_to_segments_with_jitter : noise_level -> vec list -> int -> segment list
-val spline_to_line_segments_with_jitter : noise_level -> vec list -> int -> segment list
+(* convert point list to segment list *)
+val points_to_segments : vec list -> segment list
 
+(* apply jitter to a point based on noise level *)
 val jitter_vec : noise_level -> vec -> vec
-val sample_spline_with_jitter : noise_level -> vec list -> int -> vec list
-val add_wobble_points : noise_level -> vec -> vec -> vec list
-val add_wobble_points_adaptive : noise_level -> float -> vec -> vec -> vec list
 
-val arc_center_from_tangent : vec -> vec -> vec -> vec option
-val sweep_angle : float -> float -> bool -> float
-val fit_biarc : vec -> vec -> vec -> vec -> max_sweep:float -> segment list
+(* insert jittered points between p0 and p1 based on noise level and distance *)
+val add_noise : noise_level -> vec -> vec -> vec list
+
+(* flatten spline control points to evenly sampled points *)
+val flatten_spline : ?samples_per_span:int -> vec list -> vec list
+
+(* flatten spline and convert to segments with noise applied *)
+val spline_to_segments : ?samples_per_span:int -> noise_level -> vec list -> segment list
