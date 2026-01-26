@@ -25,7 +25,9 @@ type flow_source = { origin : vec; target : vec; dir : vec }
 let make_flow_source p0 p1 =
   let d = vec_sub p1 p0 in
   let len = vec_length d in
-  let dir = if len < Globals.epsilon then vec 1.0 0.0 else vec_scale d (1.0 /. len) in
+  let dir =
+    if len < Globals.epsilon then vec 1.0 0.0 else vec_scale d (1.0 /. len)
+  in
   { origin = p0; target = p1; dir }
 
 let sample_flow_field sources p =
@@ -33,12 +35,13 @@ let sample_flow_field sources p =
   | [] -> vec 1.0 0.0
   | _ ->
       let sx, sy, sw =
-        List.fold_left (fun (ax, ay, aw) src ->
-          let closest, _ = point_to_segment_closest p src.origin src.target in
-          let d = vec_distance p closest in
-          let w = 1.0 /. (Globals.precision +. d *. d) in
-          (ax +. src.dir.x *. w, ay +. src.dir.y *. w, aw +. w)
-        ) (0.0, 0.0, 0.0) sources
+        List.fold_left
+          (fun (ax, ay, aw) src ->
+            let closest, _ = point_to_segment_closest p src.origin src.target in
+            let d = vec_distance p closest in
+            let w = 1.0 /. (Globals.precision +. (d *. d)) in
+            (ax +. (src.dir.x *. w), ay +. (src.dir.y *. w), aw +. w))
+          (0.0, 0.0, 0.0) sources
       in
       if sw < Globals.epsilon then vec 1.0 0.0
       else vec_normalize (vec (sx /. sw) (sy /. sw))
@@ -50,7 +53,10 @@ let sample_flow_field sources p =
 let transform_segment f s = { p0 = f s.p0; p1 = f s.p1 }
 
 let transform_path f path =
-  { start = f path.start; segments = List.map (transform_segment f) path.segments }
+  {
+    start = f path.start;
+    segments = List.map (transform_segment f) path.segments;
+  }
 
 let transform_ir f ir = List.map (transform_path f) ir
 
@@ -58,19 +64,21 @@ let transform_ir f ir = List.map (transform_path f) ir
    Bounds
    ═══════════════════════════════════════════════════════════════════════════ *)
 
-let empty_bounds = {
-  min_x = Float.infinity;
-  max_x = Float.neg_infinity;
-  min_y = Float.infinity;
-  max_y = Float.neg_infinity
-}
+let empty_bounds =
+  {
+    min_x = Float.infinity;
+    max_x = Float.neg_infinity;
+    min_y = Float.infinity;
+    max_y = Float.neg_infinity;
+  }
 
-let update_bounds b v = {
-  min_x = Float.min b.min_x v.x;
-  max_x = Float.max b.max_x v.x;
-  min_y = Float.min b.min_y v.y;
-  max_y = Float.max b.max_y v.y
-}
+let update_bounds b v =
+  {
+    min_x = Float.min b.min_x v.x;
+    max_x = Float.max b.max_x v.x;
+    min_y = Float.min b.min_y v.y;
+    max_y = Float.max b.max_y v.y;
+  }
 
 let segment_bounds b s = update_bounds (update_bounds b s.p0) s.p1
 
@@ -94,13 +102,14 @@ let rec eval_num env = function
   | NumVar name -> (
       try lookup_num name env
       with Environment.UndefinedVariable n -> error (UndefinedVariable n))
-  | NumNeg e -> -. eval_num env e
+  | NumNeg e -> -.eval_num env e
   | NumAdd (a, b) -> eval_num env a +. eval_num env b
   | NumSub (a, b) -> eval_num env a -. eval_num env b
   | NumMul (a, b) -> eval_num env a *. eval_num env b
   | NumDiv (a, b) ->
       let d = eval_num env b in
-      if Float.abs d < Globals.epsilon then error (InvalidOperation "division by zero")
+      if Float.abs d < Globals.epsilon then
+        error (InvalidOperation "division by zero")
       else eval_num env a /. d
 
 (* ═══════════════════════════════════════════════════════════════════════════
@@ -130,18 +139,26 @@ and eval_primitive_basic env = function
   | Dot v ->
       let p = eval_vec_basic env v in
       let r = 0.5 in
-      let pts = [vec (p.x +. r) p.y; vec p.x (p.y +. r); vec (p.x -. r) p.y; vec p.x (p.y -. r); vec (p.x +. r) p.y] in
-      [{ start = List.hd pts; segments = points_to_segments pts }]
+      let pts =
+        [
+          vec (p.x +. r) p.y;
+          vec p.x (p.y +. r);
+          vec (p.x -. r) p.y;
+          vec p.x (p.y -. r);
+          vec (p.x +. r) p.y;
+        ]
+      in
+      [ { start = List.hd pts; segments = points_to_segments pts } ]
   | Dash v ->
       let p = eval_vec_basic env v in
-      let p0, p1 = vec (p.x -. 1.0) p.y, vec (p.x +. 1.0) p.y in
-      [{ start = p0; segments = [{ p0; p1 }] }]
+      let p0, p1 = (vec (p.x -. 1.0) p.y, vec (p.x +. 1.0) p.y) in
+      [ { start = p0; segments = [ { p0; p1 } ] } ]
   | Stroke (v0, via, v1) ->
       let p0 = eval_vec_basic env v0 in
       let p1 = eval_vec_basic env v1 in
       let via_pts = List.map (eval_vec_basic env) via in
-      let pts = [p0] @ via_pts @ [p1] in
-      [{ start = p0; segments = points_to_segments pts }]
+      let pts = [ p0 ] @ via_pts @ [ p1 ] in
+      [ { start = p0; segments = points_to_segments pts } ]
 
 (* ═══════════════════════════════════════════════════════════════════════════
    Flow Collection
@@ -153,10 +170,15 @@ let rec pairs = function
 
 let rec collect_flow env = function
   | Primitive (Stroke (v0, via, v1)) ->
-      let pts = [eval_vec_basic env v0] @ List.map (eval_vec_basic env) via @ [eval_vec_basic env v1] in
+      let pts =
+        [ eval_vec_basic env v0 ]
+        @ List.map (eval_vec_basic env) via
+        @ [ eval_vec_basic env v1 ]
+      in
       List.map (fun (a, b) -> make_flow_source a b) (pairs pts)
   | Primitive _ -> []
-  | SketchVar name -> (try collect_flow env (lookup_sketch name env) with _ -> [])
+  | SketchVar name -> (
+      try collect_flow env (lookup_sketch name env) with _ -> [])
   | SketchList sks -> List.concat_map (collect_flow env) sks
 
 (* ═══════════════════════════════════════════════════════════════════════════
@@ -179,23 +201,40 @@ let eval_primitive env noise flow = function
   | Dot v ->
       let p = jitter_vec noise (eval_vec env flow v) in
       let r = 0.5 in
-      let pts = [vec (p.x +. r) p.y; vec p.x (p.y +. r); vec (p.x -. r) p.y; vec p.x (p.y -. r); vec (p.x +. r) p.y] in
-      [{ start = List.hd pts; segments = points_to_segments pts }]
+      let pts =
+        [
+          vec (p.x +. r) p.y;
+          vec p.x (p.y +. r);
+          vec (p.x -. r) p.y;
+          vec p.x (p.y -. r);
+          vec (p.x +. r) p.y;
+        ]
+      in
+      [ { start = List.hd pts; segments = points_to_segments pts } ]
   | Dash v ->
       let p = jitter_vec noise (eval_vec env flow v) in
       let dir = sample_flow_field flow p in
       let p0 = jitter_vec noise (vec (p.x -. dir.x) (p.y -. dir.y)) in
       let p1 = jitter_vec noise (vec (p.x +. dir.x) (p.y +. dir.y)) in
-      [{ start = p0; segments = [{ p0; p1 }] }]
+      [ { start = p0; segments = [ { p0; p1 } ] } ]
   | Stroke (v0, via, v1) ->
       let p0 = jitter_vec noise (eval_vec env flow v0) in
       let p1 = jitter_vec noise (eval_vec env flow v1) in
-      let via_pts = List.map (fun v -> jitter_vec noise (eval_vec env flow v)) via in
-      let control_pts = [p0] @ via_pts @ [p1] in
-      let samples = match noise with NoiseTrace -> 12 | NoiseDraw -> 10 | NoiseScribble -> 8 in
-      let segments = spline_to_segments ~samples_per_span:samples noise control_pts in
+      let via_pts =
+        List.map (fun v -> jitter_vec noise (eval_vec env flow v)) via
+      in
+      let control_pts = [ p0 ] @ via_pts @ [ p1 ] in
+      let samples =
+        match noise with
+        | NoiseTrace -> 12
+        | NoiseDraw -> 10
+        | NoiseScribble -> 8
+      in
+      let segments =
+        spline_to_segments ~samples_per_span:samples noise control_pts
+      in
       let start = match segments with [] -> p0 | s :: _ -> s.p0 in
-      [{ start; segments }]
+      [ { start; segments } ]
 
 let rec eval_sketch env noise flow = function
   | Primitive prim -> eval_primitive env noise flow prim
@@ -246,7 +285,6 @@ let format_error = function
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let vec_str v = Printf.sprintf "(%.3f, %.3f)" v.x v.y
-
 let seg_str s = Printf.sprintf "%s -> %s" (vec_str s.p0) (vec_str s.p1)
 
 let path_str p =
@@ -259,6 +297,8 @@ let bounds_to_string b =
   Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y b.max_y
 
 let ir_stats ir =
-  let seg_count = List.fold_left (fun acc p -> acc + List.length p.segments) 0 ir in
-  Printf.sprintf "Paths: %d, Segments: %d, %s"
-    (List.length ir) seg_count (bounds_to_string (compute_bounds ir))
+  let seg_count =
+    List.fold_left (fun acc p -> acc + List.length p.segments) 0 ir
+  in
+  Printf.sprintf "Paths: %d, Segments: %d, %s" (List.length ir) seg_count
+    (bounds_to_string (compute_bounds ir))

@@ -20,29 +20,31 @@ type gcode_config = {
 
 type placement = { pos_x : float; pos_y : float; width : float; height : float }
 
-let default_config = {
-  travel_speed = 3000.0;
-  draw_speed = 1000.0;
-  pen_up_command = "G0 Z0";
-  pen_down_command = "G0 Z2.2";
-  scale = 1.0;
-  x_offset = 0.0;
-  y_offset = 0.0;
-  decimal_places = 3;
-  include_comments = true;
-}
+let default_config =
+  {
+    travel_speed = 3000.0;
+    draw_speed = 1000.0;
+    pen_up_command = "G0 Z0";
+    pen_down_command = "G0 Z2.2";
+    scale = 1.0;
+    x_offset = 0.0;
+    y_offset = 0.0;
+    decimal_places = 3;
+    include_comments = true;
+  }
 
-let machine_config = {
-  travel_speed = 11000.0;
-  draw_speed = 3000.0;
-  pen_up_command = "G0 Z0";
-  pen_down_command = "G0 Z2.2";
-  scale = 1.0;
-  x_offset = 0.0;
-  y_offset = 0.0;
-  decimal_places = 3;
-  include_comments = true;
-}
+let machine_config =
+  {
+    travel_speed = 11000.0;
+    draw_speed = 3000.0;
+    pen_up_command = "G0 Z0";
+    pen_down_command = "G0 Z2.2";
+    scale = 1.0;
+    x_offset = 0.0;
+    y_offset = 0.0;
+    decimal_places = 3;
+    include_comments = true;
+  }
 
 let machine_bounds = { min_x = 0.0; max_x = 420.0; min_y = 0.0; max_y = 297.0 }
 
@@ -51,9 +53,7 @@ let machine_bounds = { min_x = 0.0; max_x = 420.0; min_y = 0.0; max_y = 297.0 }
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let path_endpoint path =
-  match List.rev path.segments with
-  | [] -> path.start
-  | seg :: _ -> seg.p1
+  match List.rev path.segments with [] -> path.start | seg :: _ -> seg.p1
 
 let reverse_segment seg = { p0 = seg.p1; p1 = seg.p0 }
 
@@ -65,7 +65,8 @@ let reverse_path path =
 let total_travel paths pos =
   let rec go p total = function
     | [] -> total
-    | path :: rest -> go (path_endpoint path) (total +. vec_distance p path.start) rest
+    | path :: rest ->
+        go (path_endpoint path) (total +. vec_distance p path.start) rest
   in
   go pos 0.0 paths
 
@@ -109,24 +110,27 @@ let optimize_greedy paths =
     let rec go pos remaining acc =
       match remaining with
       | [] -> List.rev acc
-      | _ ->
+      | _ -> (
           let best = ref None in
           let best_dist = ref Float.infinity in
-          List.iter (fun p ->
-            let d_start = vec_distance pos p.start in
-            if d_start < !best_dist then (
-              best := Some (p, false);
-              best_dist := d_start);
-            let d_end = vec_distance pos (path_endpoint p) in
-            if d_end < !best_dist then (
-              best := Some (p, true);
-              best_dist := d_end)
-          ) remaining;
+          List.iter
+            (fun p ->
+              let d_start = vec_distance pos p.start in
+              if d_start < !best_dist then (
+                best := Some (p, false);
+                best_dist := d_start);
+              let d_end = vec_distance pos (path_endpoint p) in
+              if d_end < !best_dist then (
+                best := Some (p, true);
+                best_dist := d_end))
+            remaining;
           match !best with
           | None -> List.rev acc
           | Some (nearest, rev) ->
               let p = if rev then reverse_path nearest else nearest in
-              go (path_endpoint p) (List.filter (fun x -> x != nearest) remaining) (p :: acc)
+              go (path_endpoint p)
+                (List.filter (fun x -> x != nearest) remaining)
+                (p :: acc))
     in
     go (vec 0.0 0.0) paths []
 
@@ -134,6 +138,7 @@ let optimize_greedy paths =
    2-opt Optimization
    ═══════════════════════════════════════════════════════════════════════════ *)
 
+(* 2 do - recursive *)
 let optimize_2opt ?(max_iters = 100) paths =
   let n = List.length paths in
   if n <= 3 then paths
@@ -158,7 +163,9 @@ let optimize_2opt ?(max_iters = 100) paths =
           in
           let next =
             vec_distance ends.(i) ends.(j)
-            +. if j + 1 < n then vec_distance starts.(i + 1) starts.(j + 1) else 0.0
+            +.
+            if j + 1 < n then vec_distance starts.(i + 1) starts.(j + 1)
+            else 0.0
           in
           if next < curr -. 0.001 then begin
             let lo = ref (i + 1) in
@@ -183,7 +190,8 @@ let optimize_2opt ?(max_iters = 100) paths =
     Array.to_list arr
 
 let optimize_paths paths =
-  paths |> deduplicate_paths |> optimize_greedy |> optimize_2opt |> deduplicate_paths
+  paths |> deduplicate_paths |> optimize_greedy |> optimize_2opt
+  |> deduplicate_paths
 
 (* ═══════════════════════════════════════════════════════════════════════════
    Bounds and Fitting
@@ -224,7 +232,8 @@ let fit_to_placement p ir =
     let s = Float.min sx sy in
     let ox = p.pos_x -. (b.min_x *. s) in
     let oy = p.pos_y -. (b.min_y *. s) in
-    transform_ir (fun v -> vec ((v.x *. s) +. ox) ((v.y *. s) +. oy)) ir
+    let transformation v = vec ((v.x *. s) +. ox) ((v.y *. s) +. oy) in
+    transform_ir transformation ir
 
 let fit_to_machine_with_placement ?(margin = 10.0) ?placement ir =
   match placement with
@@ -314,27 +323,32 @@ let generate ?(config = default_config) ir =
   emit_preamble config s;
   if config.include_comments then
     emit s (Printf.sprintf "; %d paths" (List.length opt));
-  List.iteri (fun i p ->
-    if config.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
-    emit_path config s p
-  ) opt;
+  List.iteri
+    (fun i p ->
+      if config.include_comments then
+        emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path config s p)
+    opt;
   emit_postamble config s;
   s.lines |> List.rev |> String.concat "\n"
 
 let generate_machine ?(fit = true) ?(margin = 10.0) ?placement ir =
   let cfg = machine_config in
   let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
-  let scaled = if fit then fit_to_machine_with_placement ~margin ?placement ir else ir in
+  let scaled =
+    if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
+  in
   if not (check_machine_bounds scaled) then
     failwith "Drawing exceeds Machine work area (420mm x 297mm)";
   let opt = optimize_paths scaled in
   emit_machine_preamble cfg s;
   if cfg.include_comments then
     emit s (Printf.sprintf "; %d paths" (List.length opt));
-  List.iteri (fun i p ->
-    if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
-    emit_path cfg s p
-  ) opt;
+  List.iteri
+    (fun i p ->
+      if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path cfg s p)
+    opt;
   emit_machine_postamble cfg s;
   s.lines |> List.rev |> String.concat "\n"
 
@@ -343,9 +357,12 @@ let generate_machine ?(fit = true) ?(margin = 10.0) ?placement ir =
    ═══════════════════════════════════════════════════════════════════════════ *)
 
 let draw_distance paths =
-  List.fold_left (fun acc p ->
-    List.fold_left (fun acc seg -> acc +. vec_distance seg.p0 seg.p1) acc p.segments
-  ) 0.0 paths
+  List.fold_left
+    (fun acc p ->
+      List.fold_left
+        (fun acc seg -> acc +. vec_distance seg.p0 seg.p1)
+        acc p.segments)
+    0.0 paths
 
 let count_segments paths =
   List.fold_left (fun acc p -> acc + List.length p.segments) 0 paths
@@ -358,20 +375,29 @@ let generate_with_stats ?(config = default_config) ir =
   emit_preamble config s;
   if config.include_comments then
     emit s (Printf.sprintf "; %d paths" (List.length opt));
-  List.iteri (fun i p ->
-    if config.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
-    emit_path config s p
-  ) opt;
+  List.iteri
+    (fun i p ->
+      if config.include_comments then
+        emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path config s p)
+    opt;
   emit_postamble config s;
   let gcode = s.lines |> List.rev |> String.concat "\n" in
   let draw = draw_distance opt in
   let seg_count = count_segments opt in
   let stats =
     Printf.sprintf
-      "Paths: %d\nSegments: %d\nDraw: %.2f mm\nTravel: %.2f mm (was %.2f mm, %.1f%% reduction)\nG-code lines: %d"
+      "Paths: %d\n\
+       Segments: %d\n\
+       Draw: %.2f mm\n\
+       Travel: %.2f mm (was %.2f mm, %.1f%% reduction)\n\
+       G-code lines: %d"
       (List.length opt) seg_count (draw *. config.scale)
-      (post_travel *. config.scale) (pre_travel *. config.scale)
-      (if pre_travel > Globals.precision then (1.0 -. (post_travel /. pre_travel)) *. 100.0 else 0.0)
+      (post_travel *. config.scale)
+      (pre_travel *. config.scale)
+      (if pre_travel > Globals.precision then
+         (1.0 -. (post_travel /. pre_travel)) *. 100.0
+       else 0.0)
       (List.length s.lines)
   in
   (gcode, stats)
@@ -379,7 +405,9 @@ let generate_with_stats ?(config = default_config) ir =
 let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) ?placement ir =
   let cfg = machine_config in
   let s = { pos = vec 0.0 0.0; pen_down = false; lines = [] } in
-  let scaled = if fit then fit_to_machine_with_placement ~margin ?placement ir else ir in
+  let scaled =
+    if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
+  in
   if not (check_machine_bounds scaled) then
     failwith "Drawing exceeds Machine work area (420mm x 297mm)";
   let pre_opt = List.length scaled in
@@ -389,10 +417,11 @@ let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) ?placement ir =
   emit_machine_preamble cfg s;
   if cfg.include_comments then
     emit s (Printf.sprintf "; %d paths" (List.length opt));
-  List.iteri (fun i p ->
-    if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
-    emit_path cfg s p
-  ) opt;
+  List.iteri
+    (fun i p ->
+      if cfg.include_comments then emit s (Printf.sprintf "; Path %d" (i + 1));
+      emit_path cfg s p)
+    opt;
   emit_machine_postamble cfg s;
   let gcode = s.lines |> List.rev |> String.concat "\n" in
   let draw = draw_distance opt in
@@ -403,11 +432,22 @@ let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) ?placement ir =
   let removed = pre_opt - List.length opt in
   let stats =
     Printf.sprintf
-      "Machine Output\n--------------\nPaths: %d%s\nSegments: %d\nBounds: X[%.1f - %.1f] Y[%.1f - %.1f] mm\nDraw: %.1f mm\nTravel: %.1f mm (was %.1f mm, %.0f%% reduction)\nTime: %.1f min (draw: %.1f, travel: %.1f)\nG-code lines: %d"
+      "Machine Output\n\
+       --------------\n\
+       Paths: %d%s\n\
+       Segments: %d\n\
+       Bounds: X[%.1f - %.1f] Y[%.1f - %.1f] mm\n\
+       Draw: %.1f mm\n\
+       Travel: %.1f mm (was %.1f mm, %.0f%% reduction)\n\
+       Time: %.1f min (draw: %.1f, travel: %.1f)\n\
+       G-code lines: %d"
       (List.length opt)
-      (if removed > 0 then Printf.sprintf " (%d duplicates removed)" removed else "")
+      (if removed > 0 then Printf.sprintf " (%d duplicates removed)" removed
+       else "")
       seg_count b.min_x b.max_x b.min_y b.max_y draw post_travel pre_travel
-      (if pre_travel > Globals.precision then (1.0 -. (post_travel /. pre_travel)) *. 100.0 else 0.0)
+      (if pre_travel > Globals.precision then
+         (1.0 -. (post_travel /. pre_travel)) *. 100.0
+       else 0.0)
       (draw_time +. travel_time) draw_time travel_time (List.length s.lines)
   in
   (gcode, stats)
@@ -421,8 +461,14 @@ let generate_svg ?(width = 800) ?(height = 600) ir =
   let pad = 20.0 in
   let dw = b.max_x -. b.min_x in
   let dh = b.max_y -. b.min_y in
-  let sx = (float_of_int width -. (2.0 *. pad)) /. if dw > Globals.precision then dw else 1.0 in
-  let sy = (float_of_int height -. (2.0 *. pad)) /. if dh > Globals.precision then dh else 1.0 in
+  let sx =
+    (float_of_int width -. (2.0 *. pad))
+    /. if dw > Globals.precision then dw else 1.0
+  in
+  let sy =
+    (float_of_int height -. (2.0 *. pad))
+    /. if dh > Globals.precision then dh else 1.0
+  in
   let s = Float.min sx sy in
   let tx v =
     vec
@@ -433,16 +479,19 @@ let generate_svg ?(width = 800) ?(height = 600) ir =
     let buf = Buffer.create 256 in
     let st = tx p.start in
     Buffer.add_string buf (Printf.sprintf "M %.2f %.2f" st.x st.y);
-    List.iter (fun seg ->
-      let pt = tx seg.p1 in
-      Buffer.add_string buf (Printf.sprintf " L %.2f %.2f" pt.x pt.y)
-    ) p.segments;
+    List.iter
+      (fun seg ->
+        let pt = tx seg.p1 in
+        Buffer.add_string buf (Printf.sprintf " L %.2f %.2f" pt.x pt.y))
+      p.segments;
     Buffer.contents buf
   in
   let paths_svg =
     optimize_paths ir
     |> List.map (fun p ->
-        Printf.sprintf {|  <path d="%s" fill="none" stroke="black" stroke-width="1"/>|} (path_svg p))
+        Printf.sprintf
+          {|  <path d="%s" fill="none" stroke="black" stroke-width="1"/>|}
+          (path_svg p))
     |> String.concat "\n"
   in
   Printf.sprintf

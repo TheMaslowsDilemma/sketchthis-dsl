@@ -1,258 +1,401 @@
-# Detailed Rose Flower in Sketchlang
-# Center of the rose at (100, 120)
+# Portrait of a Man in Formal Attire
+# Canvas approximately 200mm x 260mm
 
-# ============================================
-# TITLE : ROSE_CENTER
-# ============================================
-let inner1 : sketch = stroke from (100, 122) to (102, 118) via [(104, 120)]
-let inner2 : sketch = stroke from (102, 118) to (98, 116) via [(100, 115)]
-let inner3 : sketch = stroke from (98, 116) to (96, 120) via [(95, 118)]
-let inner4 : sketch = stroke from (96, 120) to (100, 124) via [(97, 124)]
-let inner5 : sketch = stroke from (100, 124) to (104, 120) via [(104, 123)]
+let face_top : vec = (100, 45)
+let face_left_temple : vec = (72, 55)
+let face_left_cheek : vec = (68, 120)
+let face_left_jaw : vec = (75, 170)
+let chin : vec = (100, 195)
+let face_right_jaw : vec = (128, 168)
+let face_right_cheek : vec = (135, 118)
+let face_right_temple : vec = (130, 55)
+let face_outline : sketch = stroke from face_top to face_left_temple via [(85, 48)]
+let face_left_side : sketch = stroke from face_left_temple to face_left_cheek via [(66, 85)]
+let face_left_jaw_line : sketch = stroke from face_left_cheek to face_left_jaw via [(68, 145)]
+let chin_left : sketch = stroke from face_left_jaw to chin via [(85, 188)]
+let chin_right : sketch = stroke from chin to face_right_jaw via [(115, 187)]
+let face_right_jaw_line : sketch = stroke from face_right_jaw to face_right_cheek via [(134, 143)]
+let face_right_side : sketch = stroke from face_right_cheek to face_right_temple via [(136, 85)]
+let face_top_right : sketch = stroke from face_right_temple to face_top via [(118, 47)]
+draw [face_outline, face_left_side, face_left_jaw_line, chin_left, chin_right, face_right_jaw_line, face_right_side, face_top_right]
 
-# Inner spiral shading
-let innerShade1 : sketch = dash at (100, 119)
-let innerShade2 : sketch = dash at (99, 121)
-let innerShade3 : sketch = dash at (101, 120)
+let hair_peak : vec = (100, 18)
+let hair_left_top : vec = (62, 35)
+let hair_right_top : vec = (138, 32)
+let hair_left_side : vec = (58, 65)
+let hair_right_side : vec = (142, 60)
+let hair_top_left : sketch = stroke from hair_peak to hair_left_top via [(78, 15), (65, 22)]
+let hair_top_right : sketch = stroke from hair_peak to hair_right_top via [(118, 14), (130, 20)]
+let hair_side_left : sketch = stroke from hair_left_top to hair_left_side via [(55, 48)]
+let hair_side_right : sketch = stroke from hair_right_top to hair_right_side via [(145, 45)]
+draw [hair_top_left, hair_top_right, hair_side_left, hair_side_right]
 
-let roseCenter : sketch = [inner1, inner2, inner3, inner4, inner5, innerShade1, innerShade2, innerShade3]
+let hair_strand_1 : sketch = stroke from (70, 28) to (95, 35) via [(82, 26)]
+let hair_strand_2 : sketch = stroke from (75, 32) to (100, 38) via [(88, 30)]
+let hair_strand_3 : sketch = stroke from (80, 25) to (108, 32) via [(94, 22)]
+let hair_strand_4 : sketch = stroke from (85, 22) to (115, 28) via [(100, 18)]
+let hair_strand_5 : sketch = stroke from (90, 20) to (125, 26) via [(108, 17)]
+let hair_strand_6 : sketch = stroke from (95, 18) to (130, 25) via [(115, 16)]
+let hair_strand_7 : sketch = stroke from (100, 20) to (135, 30) via [(120, 18)]
+let hair_strand_8 : sketch = stroke from (65, 35) to (88, 42) via [(76, 33)]
+let hair_strand_9 : sketch = stroke from (68, 40) to (92, 48) via [(80, 38)]
+let hair_strand_10 : sketch = stroke from (72, 45) to (95, 52) via [(84, 43)]
+let hair_strand_11 : sketch = stroke from (105, 22) to (138, 35) via [(125, 20)]
+let hair_strand_12 : sketch = stroke from (110, 25) to (140, 40) via [(128, 25)]
+draw [hair_strand_1, hair_strand_2, hair_strand_3, hair_strand_4, hair_strand_5, hair_strand_6]
+draw [hair_strand_7, hair_strand_8, hair_strand_9, hair_strand_10, hair_strand_11, hair_strand_12]
 
-# ============================================
-# TITLE : LAYER PETALS
-# ============================================
-let petal2a : sketch = stroke from (94, 124) to (88, 118) via [(89, 122)]
-let petal2b : sketch = stroke from (88, 118) to (92, 110) via [(88, 113)]
-let petal2c : sketch = stroke from (92, 110) to (100, 112) via [(96, 109)]
+let hair_vol_1 : sketch = stroke from (62, 50) to (72, 55) via [(66, 52)]
+let hair_vol_2 : sketch = stroke from (60, 55) to (70, 62) via [(64, 58)]
+let hair_vol_3 : sketch = stroke from (135, 45) to (142, 55) via [(140, 48)]
+let hair_vol_4 : sketch = stroke from (132, 50) to (140, 60) via [(138, 54)]
+scribble [hair_vol_1, hair_vol_2, hair_vol_3, hair_vol_4]
 
-let petal2d : sketch = stroke from (106, 124) to (112, 118) via [(111, 122)]
-let petal2e : sketch = stroke from (112, 118) to (108, 110) via [(112, 113)]
-let petal2f : sketch = stroke from (108, 110) to (100, 112) via [(104, 109)]
+scribble dash at (65, 45)
+scribble dash at (68, 50)
+scribble dash at (63, 55)
+scribble dash at (138, 48)
+scribble dash at (140, 55)
+scribble dash at (75, 38)
+scribble dash at (130, 38)
 
-let petal2g : sketch = stroke from (94, 116) to (90, 126) via [(90, 120)]
-let petal2h : sketch = stroke from (106, 116) to (110, 126) via [(110, 120)]
+let forehead_line_1 : sketch = stroke from (78, 58) to (122, 58)
+draw forehead_line_1
 
-# Second layer shading
-let shade2a : sketch = dash at (91, 117)
-let shade2b : sketch = dash at (109, 117)
-let shade2c : sketch = dash at (90, 120)
-let shade2d : sketch = dash at (110, 120)
+scribble dash at (80, 62)
+scribble dash at (90, 60)
+scribble dash at (110, 60)
+scribble dash at (120, 62)
 
-let layer2 : sketch = [petal2a, petal2b, petal2c, petal2d, petal2e, petal2f, petal2g, petal2h, shade2a, shade2b, shade2c, shade2d]
+let left_brow_start : vec = (72, 72)
+let left_brow_peak : vec = (82, 68)
+let left_brow_end : vec = (95, 72)
+let right_brow_start : vec = (105, 71)
+let right_brow_peak : vec = (118, 67)
+let right_brow_end : vec = (132, 72)
+let left_eyebrow : sketch = stroke from left_brow_start to left_brow_end via [left_brow_peak]
+let right_eyebrow : sketch = stroke from right_brow_start to right_brow_end via [right_brow_peak]
+draw [left_eyebrow, right_eyebrow]
 
-# ============================================
-# TITLE : THIRD_LAYER_PETALS
-# ============================================
-# Left petal
-let petal3aTop : sketch = stroke from (85, 128) to (78, 120) via [(79, 126)]
-let petal3aSide : sketch = stroke from (78, 120) to (82, 108) via [(76, 113)]
-let petal3aBot : sketch = stroke from (82, 108) to (94, 112) via [(87, 106)]
-let petal3aInner : sketch = stroke from (85, 128) to (92, 118) via [(86, 122)]
+let left_brow_thick_1 : sketch = stroke from (74, 74) to (93, 74) via [(84, 71)]
+let left_brow_thick_2 : sketch = stroke from (76, 75) to (90, 75) via [(83, 73)]
+let right_brow_thick_1 : sketch = stroke from (107, 73) to (130, 74) via [(118, 70)]
+let right_brow_thick_2 : sketch = stroke from (109, 74) to (128, 75) via [(118, 72)]
+draw [left_brow_thick_1, left_brow_thick_2, right_brow_thick_1, right_brow_thick_2]
 
-# Right petal
-let petal3bTop : sketch = stroke from (115, 128) to (122, 120) via [(121, 126)]
-let petal3bSide : sketch = stroke from (122, 120) to (118, 108) via [(124, 113)]
-let petal3bBot : sketch = stroke from (118, 108) to (106, 112) via [(113, 106)]
-let petal3bInner : sketch = stroke from (115, 128) to (108, 118) via [(114, 122)]
 
-# Top petal
-let petal3cLeft : sketch = stroke from (92, 132) to (100, 138) via [(94, 137)]
-let petal3cRight : sketch = stroke from (108, 132) to (100, 138) via [(106, 137)]
-let petal3cInner : sketch = stroke from (100, 138) to (100, 128) via [(100, 133)]
+let left_eye_inner : vec = (76, 82)
+let left_eye_top : vec = (84, 78)
+let left_eye_outer : vec = (94, 82)
+let left_eye_bottom : vec = (84, 85)
+let left_eye_upper : sketch = stroke from left_eye_inner to left_eye_outer via [left_eye_top]
+let left_eye_lower : sketch = stroke from left_eye_inner to left_eye_outer via [left_eye_bottom]
+draw [left_eye_upper, left_eye_lower]
 
-# Third layer shading
-let shade3a : sketch = dash at (80, 118)
-let shade3b : sketch = dash at (120, 118)
-let shade3c : sketch = dash at (82, 114)
-let shade3d : sketch = dash at (118, 114)
-let shade3e : sketch = dash at (100, 134)
-let shade3f : sketch = dash at (98, 132)
-let shade3g : sketch = dash at (102, 132)
+let left_iris_center : vec = (85, 82)
+let left_iris_top : sketch = stroke from (81, 82) to (89, 82) via [(85, 79)]
+let left_iris_bottom : sketch = stroke from (81, 82) to (89, 82) via [(85, 85)]
+draw [left_iris_top, left_iris_bottom]
+let left_pupil : sketch = dot at left_iris_center
+trace left_pupil
+scribble dash at (84, 81)
+scribble dash at (86, 81)
+scribble dash at (85, 83)
 
-let layer3 : sketch = [petal3aTop, petal3aSide, petal3aBot, petal3aInner, petal3bTop, petal3bSide, petal3bBot, petal3bInner, petal3cLeft, petal3cRight, petal3cInner, shade3a, shade3b, shade3c, shade3d, shade3e, shade3f, shade3g]
+let right_eye_inner : vec = (108, 81)
+let right_eye_top : vec = (118, 77)
+let right_eye_outer : vec = (130, 81)
+let right_eye_bottom : vec = (118, 84)
+let right_eye_upper : sketch = stroke from right_eye_inner to right_eye_outer via [right_eye_top]
+let right_eye_lower : sketch = stroke from right_eye_inner to right_eye_outer via [right_eye_bottom]
+draw [right_eye_upper, right_eye_lower]
 
-# ============================================
-# TITLE : FOURTH LAYER PETALS (outermost, most open)
-# ============================================
+let right_iris_center : vec = (118, 81)
+let right_iris_top : sketch = stroke from (114, 81) to (122, 81) via [(118, 78)]
+let right_iris_bottom : sketch = stroke from (114, 81) to (122, 81) via [(118, 84)]
+draw [right_iris_top, right_iris_bottom]
+let right_pupil : sketch = dot at right_iris_center
+trace right_pupil
+scribble dash at (117, 80)
+scribble dash at (119, 80)
+scribble dash at (118, 82)
 
-# Far left petal (curling outward)
-let petal4aOuter : sketch = stroke from (72, 130) to (65, 118) via [(64, 126)]
-let petal4aCurl : sketch = stroke from (65, 118) to (62, 122) via [(62, 119)]
-let petal4aSide : sketch = stroke from (65, 118) to (72, 105) via [(64, 110)]
-let petal4aBot : sketch = stroke from (72, 105) to (85, 110) via [(77, 102)]
-let petal4aTop : sketch = stroke from (72, 130) to (88, 126) via [(80, 132)]
+let left_crease : sketch = stroke from (77, 76) to (93, 76) via [(85, 74)]
+let right_crease : sketch = stroke from (109, 75) to (129, 75) via [(119, 73)]
+draw [left_crease, right_crease]
 
-# Far right petal (curling outward)
-let petal4bOuter : sketch = stroke from (128, 130) to (135, 118) via [(136, 126)]
-let petal4bCurl : sketch = stroke from (135, 118) to (138, 122) via [(138, 119)]
-let petal4bSide : sketch = stroke from (135, 118) to (128, 105) via [(136, 110)]
-let petal4bBot : sketch = stroke from (128, 105) to (115, 110) via [(123, 102)]
-let petal4bTop : sketch = stroke from (128, 130) to (112, 126) via [(120, 132)]
+let left_undereye : sketch = stroke from (77, 88) to (92, 90) via [(84, 89)]
+let right_undereye : sketch = stroke from (110, 87) to (128, 89) via [(119, 88)]
+draw [left_undereye, right_undereye]
 
-# Top left petal
-let petal4cOuter : sketch = stroke from (82, 142) to (90, 148) via [(84, 148)]
-let petal4cCurl : sketch = stroke from (90, 148) to (86, 150) via [(88, 150)]
-let petal4cInner : sketch = stroke from (90, 148) to (96, 136) via [(92, 142)]
-let petal4cSide : sketch = stroke from (82, 142) to (90, 132) via [(84, 136)]
+let nose_bridge_top : vec = (100, 80)
+let nose_bridge_mid : vec = (101, 105)
+let nose_tip : vec = (102, 130)
+let nose_left_nostril : vec = (90, 132)
+let nose_right_nostril : vec = (112, 130)
+let nose_bridge : sketch = stroke from nose_bridge_top to nose_bridge_mid via [(100, 92)]
+let nose_lower : sketch = stroke from nose_bridge_mid to nose_tip via [(102, 118)]
+let nose_left_wing : sketch = stroke from nose_tip to nose_left_nostril via [(94, 132)]
+let nose_right_wing : sketch = stroke from nose_tip to nose_right_nostril via [(108, 131)]
+draw [nose_bridge, nose_lower, nose_left_wing, nose_right_wing]
 
-# Top right petal
-let petal4dOuter : sketch = stroke from (118, 142) to (110, 148) via [(116, 148)]
-let petal4dCurl : sketch = stroke from (110, 148) to (114, 150) via [(112, 150)]
-let petal4dInner : sketch = stroke from (110, 148) to (104, 136) via [(108, 142)]
-let petal4dSide : sketch = stroke from (118, 142) to (110, 132) via [(116, 136)]
+let left_nostril_curve : sketch = stroke from (92, 130) to (96, 134) via [(92, 134)]
+let right_nostril_curve : sketch = stroke from (108, 129) to (112, 132) via [(112, 131)]
+draw [left_nostril_curve, right_nostril_curve]
 
-# Bottom drooping petal
-let petal4eLeft : sketch = stroke from (88, 106) to (95, 98) via [(88, 100)]
-let petal4eBot : sketch = stroke from (95, 98) to (105, 98) via [(100, 94)]
-let petal4eRight : sketch = stroke from (105, 98) to (112, 106) via [(112, 100)]
-let petal4eCurl : sketch = stroke from (100, 94) to (100, 90) via [(100, 92)]
+scribble dash at (95, 110)
+scribble dash at (96, 115)
+scribble dash at (95, 120)
+scribble dash at (94, 125)
+scribble dash at (108, 115)
+scribble dash at (107, 120)
 
-# Fourth layer shading (heavy)
-let shade4a : sketch = dash at (68, 122)
-let shade4b : sketch = dash at (70, 118)
-let shade4c : sketch = dash at (72, 114)
-let shade4d : sketch = dash at (132, 122)
-let shade4e : sketch = dash at (130, 118)
-let shade4f : sketch = dash at (128, 114)
-let shade4g : sketch = dash at (86, 144)
-let shade4h : sketch = dash at (114, 144)
-let shade4i : sketch = dash at (98, 100)
-let shade4j : sketch = dash at (102, 100)
-let shade4k : sketch = dash at (100, 96)
-let shade4l : sketch = dash at (66, 120)
-let shade4m : sketch = dash at (134, 120)
+let left_cheek_contour : sketch = stroke from (70, 95) to (75, 140) via [(68, 118)]
+draw left_cheek_contour
+scribble dash at (72, 100)
+scribble dash at (70, 110)
+scribble dash at (69, 120)
+scribble dash at (70, 130)
+scribble dash at (72, 140)
 
-let layer4 : sketch = [petal4aOuter, petal4aCurl, petal4aSide, petal4aBot, petal4aTop, petal4bOuter, petal4bCurl, petal4bSide, petal4bBot, petal4bTop, petal4cOuter, petal4cCurl, petal4cInner, petal4cSide, petal4dOuter, petal4dCurl, petal4dInner, petal4dSide, petal4eLeft, petal4eBot, petal4eRight, petal4eCurl, shade4a, shade4b, shade4c, shade4d, shade4e, shade4f, shade4g, shade4h, shade4i, shade4j, shade4k, shade4l, shade4m]
+let right_cheek_contour : sketch = stroke from (132, 95) to (130, 138) via [(135, 115)]
+draw right_cheek_contour
+scribble dash at (130, 100)
+scribble dash at (132, 110)
+scribble dash at (133, 120)
+scribble dash at (132, 130)
 
-# ============================================
-# SEPALS (green leaf-like structures under petals)
-# ============================================
-let sepal1Left : sketch = stroke from (88, 98) to (75, 92) via [(80, 98)]
-let sepal1Tip : sketch = stroke from (75, 92) to (78, 88) via [(74, 89)]
-let sepal1Right : sketch = stroke from (78, 88) to (92, 95) via [(84, 88)]
+scribble dash at (80, 105)
+scribble dash at (122, 103)
 
-let sepal2Left : sketch = stroke from (112, 98) to (125, 92) via [(120, 98)]
-let sepal2Tip : sketch = stroke from (125, 92) to (122, 88) via [(126, 89)]
-let sepal2Right : sketch = stroke from (122, 88) to (108, 95) via [(116, 88)]
+let mouth_left : vec = (82, 155)
+let mouth_center : vec = (100, 152)
+let mouth_right : vec = (120, 153)
+let upper_lip_left : sketch = stroke from mouth_left to mouth_center via [(90, 150)]
+let upper_lip_right : sketch = stroke from mouth_center to mouth_right via [(110, 149)]
+let lower_lip : sketch = stroke from mouth_left to mouth_right via [(100, 162)]
+draw [upper_lip_left, upper_lip_right, lower_lip]
 
-let sepal3L : sketch = stroke from (95, 94) to (92, 82) via [(92, 88)]
-let sepal3R : sketch = stroke from (92, 82) to (98, 90) via [(94, 84)]
+let cupid_bow : sketch = stroke from (92, 150) to (108, 149) via [(100, 147)]
+draw cupid_bow
 
-let sepal4L : sketch = stroke from (105, 94) to (108, 82) via [(108, 88)]
-let sepal4R : sketch = stroke from (108, 82) to (102, 90) via [(106, 84)]
+let lower_lip_line : sketch = stroke from (88, 158) to (114, 157) via [(100, 160)]
+draw lower_lip_line
 
-let sepals : sketch = [sepal1Left, sepal1Tip, sepal1Right, sepal2Left, sepal2Tip, sepal2Right, sepal3L, sepal3R, sepal4L, sepal4R]
+let left_corner : sketch = stroke from mouth_left to (80, 157) via [(80, 155)]
+let right_corner : sketch = stroke from mouth_right to (123, 152) via [(122, 151)]
+draw [left_corner, right_corner]
 
-# ============================================
-# STEM
-# ============================================
-let stemMain : sketch = stroke from (100, 90) to (100, 20) via [(98, 55)]
-let stemLeft : sketch = stroke from (99, 88) to (97, 22) via [(95, 55)]
-let stemRight : sketch = stroke from (101, 88) to (103, 22) via [(105, 55)]
+scribble dash at (95, 155)
+scribble dash at (100, 156)
+scribble dash at (105, 155)
+scribble dash at (100, 159)
 
-# Stem thorns
-let thorn1a : sketch = stroke from (97, 70) to (92, 74) via [(94, 73)]
-let thorn1b : sketch = stroke from (92, 74) to (93, 72) via [(92, 72)]
+let chin_cleft_hint : sketch = stroke from (98, 180) to (102, 180) via [(100, 182)]
+draw chin_cleft_hint
 
-let thorn2a : sketch = stroke from (103, 55) to (108, 58) via [(106, 58)]
-let thorn2b : sketch = stroke from (108, 58) to (107, 55) via [(108, 55)]
+scribble dash at (95, 175)
+scribble dash at (100, 178)
+scribble dash at (105, 175)
+scribble dash at (100, 185)
+scribble dash at (95, 188)
+scribble dash at (105, 188)
 
-let thorn3a : sketch = stroke from (97, 40) to (92, 43) via [(94, 43)]
-let thorn3b : sketch = stroke from (92, 43) to (93, 40) via [(92, 40)]
+let jaw_left_def : sketch = stroke from (75, 170) to (85, 180) via [(78, 176)]
+let jaw_right_def : sketch = stroke from (128, 168) to (118, 178) via [(124, 174)]
+draw [jaw_left_def, jaw_right_def]
 
-let stem : sketch = [stemMain, stemLeft, stemRight, thorn1a, thorn1b, thorn2a, thorn2b, thorn3a, thorn3b]
+scribble dash at (80, 165)
+scribble dash at (85, 168)
+scribble dash at (90, 170)
+scribble dash at (110, 168)
+scribble dash at (115, 165)
+scribble dash at (120, 163)
 
-# ============================================
-# LEFT LEAF
-# ============================================
-let leaf1Stem : sketch = stroke from (97, 65) to (65, 55) via [(80, 62)]
-let leaf1Top : sketch = stroke from (65, 55) to (45, 48) via [(55, 54)]
-let leaf1Tip : sketch = stroke from (45, 48) to (42, 45) via [(42, 47)]
-let leaf1Bot : sketch = stroke from (42, 45) to (65, 55) via [(52, 46)]
-let leaf1Edge1 : sketch = stroke from (45, 48) to (65, 55) via [(54, 49)]
 
-# Leaf veins
-let leaf1Vein1 : sketch = stroke from (65, 55) to (50, 50) via [(58, 52)]
-let leaf1Vein2 : sketch = stroke from (60, 54) to (52, 56) via [(56, 56)]
-let leaf1Vein3 : sketch = stroke from (55, 52) to (48, 54) via [(52, 54)]
+let left_ear_top : vec = (62, 75)
+let left_ear_mid : vec = (58, 95)
+let left_ear_bottom : vec = (65, 115)
+let left_ear_outer : sketch = stroke from left_ear_top to left_ear_bottom via [left_ear_mid]
+draw left_ear_outer
+let left_ear_inner : sketch = stroke from (64, 80) to (66, 105) via [(60, 92)]
+draw left_ear_inner
+scribble dash at (60, 88)
+scribble dash at (62, 95)
+scribble dash at (63, 102)
 
-# Serrated edges
-let serr1a : sketch = stroke from (58, 54) to (56, 56) via [(57, 55)]
-let serr1b : sketch = stroke from (52, 52) to (50, 54) via [(51, 53)]
-let serr1c : sketch = stroke from (48, 50) to (46, 52) via [(47, 51)]
-let serr1d : sketch = stroke from (56, 49) to (54, 47) via [(55, 48)]
-let serr1e : sketch = stroke from (50, 48) to (48, 46) via [(49, 47)]
+let right_ear_hint : sketch = stroke from (140, 78) to (142, 100) via [(144, 90)]
+draw right_ear_hint
 
-let leaf1 : sketch = [leaf1Stem, leaf1Top, leaf1Tip, leaf1Bot, leaf1Edge1, leaf1Vein1, leaf1Vein2, leaf1Vein3, serr1a, serr1b, serr1c, serr1d, serr1e]
+let neck_left : vec = (72, 195)
+let neck_left_bottom : vec = (68, 240)
+let neck_right : vec = (130, 193)
+let neck_right_bottom : vec = (135, 238)
+let neck_left_line : sketch = stroke from neck_left to neck_left_bottom via [(68, 218)]
+let neck_right_line : sketch = stroke from neck_right to neck_right_bottom via [(134, 215)]
+draw [neck_left_line, neck_right_line]
 
-# ============================================
-# RIGHT LEAF
-# ============================================
-let leaf2Stem : sketch = stroke from (103, 50) to (135, 42) via [(120, 48)]
-let leaf2Top : sketch = stroke from (135, 42) to (158, 38) via [(148, 42)]
-let leaf2Tip : sketch = stroke from (158, 38) to (162, 35) via [(162, 37)]
-let leaf2Bot : sketch = stroke from (162, 35) to (135, 42) via [(150, 34)]
-let leaf2Edge1 : sketch = stroke from (158, 38) to (135, 42) via [(148, 37)]
+scribble dash at (75, 200)
+scribble dash at (78, 210)
+scribble dash at (80, 220)
+scribble dash at (125, 200)
+scribble dash at (128, 210)
+scribble dash at (130, 220)
 
-# Leaf veins
-let leaf2Vein1 : sketch = stroke from (135, 42) to (152, 38) via [(144, 39)]
-let leaf2Vein2 : sketch = stroke from (140, 43) to (150, 44) via [(145, 44)]
-let leaf2Vein3 : sketch = stroke from (148, 40) to (156, 42) via [(152, 42)]
+let adams_apple : sketch = stroke from (98, 210) to (104, 210) via [(101, 208)]
+draw adams_apple
 
-# Serrated edges
-let serr2a : sketch = stroke from (142, 43) to (144, 45) via [(143, 44)]
-let serr2b : sketch = stroke from (150, 42) to (152, 44) via [(151, 43)]
-let serr2c : sketch = stroke from (156, 40) to (158, 42) via [(157, 41)]
-let serr2d : sketch = stroke from (144, 37) to (146, 35) via [(145, 36)]
-let serr2e : sketch = stroke from (152, 36) to (154, 34) via [(153, 35)]
+let collar_left_outer : vec = (55, 220)
+let collar_left_inner : vec = (85, 195)
+let collar_left_point : vec = (78, 225)
+let collar_right_outer : vec = (148, 218)
+let collar_right_inner : vec = (118, 193)
+let collar_right_point : vec = (125, 223)
+let collar_left_1 : sketch = stroke from collar_left_outer to collar_left_inner via [(68, 205)]
+let collar_left_2 : sketch = stroke from collar_left_inner to collar_left_point via [(80, 210)]
+let collar_left_3 : sketch = stroke from collar_left_point to collar_left_outer via [(65, 225)]
+let collar_right_1 : sketch = stroke from collar_right_outer to collar_right_inner via [(135, 203)]
+let collar_right_2 : sketch = stroke from collar_right_inner to collar_right_point via [(122, 208)]
+let collar_right_3 : sketch = stroke from collar_right_point to collar_right_outer via [(138, 223)]
+draw [collar_left_1, collar_left_2, collar_left_3]
+draw [collar_right_1, collar_right_2, collar_right_3]
 
-let leaf2 : sketch = [leaf2Stem, leaf2Top, leaf2Tip, leaf2Bot, leaf2Edge1, leaf2Vein1, leaf2Vein2, leaf2Vein3, serr2a, serr2b, serr2c, serr2d, serr2e]
+scribble dash at (70, 212)
+scribble dash at (75, 218)
+scribble dash at (130, 210)
+scribble dash at (135, 216)
 
-# ============================================
-# ADDITIONAL PETAL DETAIL AND TEXTURE
-# ============================================
-# Vein lines on petals
-let petalVein1 : sketch = stroke from (78, 120) to (88, 116) via [(83, 119)]
-let petalVein2 : sketch = stroke from (122, 120) to (112, 116) via [(117, 119)]
-let petalVein3 : sketch = stroke from (86, 144) to (92, 136) via [(88, 140)]
-let petalVein4 : sketch = stroke from (114, 144) to (108, 136) via [(112, 140)]
-let petalVein5 : sketch = stroke from (100, 148) to (100, 138) via [(100, 143)]
+let tie_knot_top : vec = (100, 200)
+let tie_knot_left : vec = (94, 210)
+let tie_knot_right : vec = (108, 208)
+let tie_knot_bottom : vec = (100, 218)
+let tie_knot_1 : sketch = stroke from tie_knot_top to tie_knot_left via [(95, 204)]
+let tie_knot_2 : sketch = stroke from tie_knot_top to tie_knot_right via [(106, 203)]
+let tie_knot_3 : sketch = stroke from tie_knot_left to tie_knot_bottom via [(96, 215)]
+let tie_knot_4 : sketch = stroke from tie_knot_right to tie_knot_bottom via [(105, 214)]
+draw [tie_knot_1, tie_knot_2, tie_knot_3, tie_knot_4]
 
-# Additional shading dots for depth
-let depthDot1 : sketch = dot at (100, 120)
-let depthDot2 : sketch = dot at (95, 115)
-let depthDot3 : sketch = dot at (105, 115)
-let depthDot4 : sketch = dot at (85, 120)
-let depthDot5 : sketch = dot at (115, 120)
+let tie_body_left : sketch = stroke from tie_knot_bottom to (92, 260) via [(94, 240)]
+let tie_body_right : sketch = stroke from tie_knot_bottom to (110, 260) via [(108, 240)]
+let tie_center : sketch = stroke from tie_knot_bottom to (100, 260)
+draw [tie_body_left, tie_body_right, tie_center]
 
-let petalDetails : sketch = [petalVein1, petalVein2, petalVein3, petalVein4, petalVein5, depthDot1, depthDot2, depthDot3, depthDot4, depthDot5]
+let tie_stripe_1 : sketch = stroke from (94, 225) to (106, 222)
+let tie_stripe_2 : sketch = stroke from (93, 232) to (107, 229)
+let tie_stripe_3 : sketch = stroke from (92, 240) to (108, 237)
+let tie_stripe_4 : sketch = stroke from (92, 248) to (109, 245)
+let tie_stripe_5 : sketch = stroke from (92, 256) to (110, 253)
+draw [tie_stripe_1, tie_stripe_2, tie_stripe_3, tie_stripe_4, tie_stripe_5]
 
-# ============================================
-# EXTRA SHADING FOR DEPTH
-# ============================================
-let extraShade1 : sketch = dash at (93, 118)
-let extraShade2 : sketch = dash at (107, 118)
-let extraShade3 : sketch = dash at (88, 122)
-let extraShade4 : sketch = dash at (112, 122)
-let extraShade5 : sketch = dash at (100, 126)
-let extraShade6 : sketch = dash at (96, 124)
-let extraShade7 : sketch = dash at (104, 124)
-let extraShade8 : sketch = dash at (74, 115)
-let extraShade9 : sketch = dash at (126, 115)
-let extraShade10 : sketch = dash at (100, 140)
+scribble dash at (96, 228)
+scribble dash at (104, 235)
+scribble dash at (97, 245)
+scribble dash at (103, 252)
 
-let extraShading : sketch = [extraShade1, extraShade2, extraShade3, extraShade4, extraShade5, extraShade6, extraShade7, extraShade8, extraShade9, extraShade10]
 
-# ============================================
-# RENDER THE COMPLETE ROSE
-# ============================================
-# Draw with hand-drawn feel for organic look
-draw roseCenter
-draw layer2
-draw layer3
-draw layer4
-draw sepals
-draw stem
-draw leaf1
-draw leaf2
-draw petalDetails
-draw extraShading
+let lapel_left_outer_top : vec = (40, 200)
+let lapel_left_inner_top : vec = (78, 225)
+let lapel_left_outer_bottom : vec = (20, 260)
+let lapel_left_inner_bottom : vec = (75, 260)
+let lapel_left_outer : sketch = stroke from lapel_left_outer_top to lapel_left_outer_bottom via [(28, 230)]
+let lapel_left_inner : sketch = stroke from lapel_left_inner_top to lapel_left_inner_bottom via [(76, 242)]
+let lapel_left_top : sketch = stroke from lapel_left_outer_top to lapel_left_inner_top via [(58, 210)]
+draw [lapel_left_outer, lapel_left_inner, lapel_left_top]
+
+
+let lapel_right_outer_top : vec = (162, 198)
+let lapel_right_inner_top : vec = (125, 223)
+let lapel_right_outer_bottom : vec = (182, 260)
+let lapel_right_inner_bottom : vec = (128, 260)
+let lapel_right_outer : sketch = stroke from lapel_right_outer_top to lapel_right_outer_bottom via [(175, 228)]
+let lapel_right_inner : sketch = stroke from lapel_right_inner_top to lapel_right_inner_bottom via [(126, 240)]
+let lapel_right_top : sketch = stroke from lapel_right_outer_top to lapel_right_inner_top via [(145, 208)]
+draw [lapel_right_outer, lapel_right_inner, lapel_right_top]
+
+let shoulder_left : sketch = stroke from (40, 200) to (0, 220) via [(18, 205)]
+let shoulder_right : sketch = stroke from (162, 198) to (200, 218) via [(182, 203)]
+draw [shoulder_left, shoulder_right]
+
+let jacket_left_side : sketch = stroke from (0, 220) to (0, 260) via [(-2, 240)]
+let jacket_right_side : sketch = stroke from (200, 218) to (200, 260) via [(202, 238)]
+draw [jacket_left_side, jacket_right_side]
+
+scribble dash at (25, 215)
+scribble dash at (20, 225)
+scribble dash at (15, 235)
+scribble dash at (10, 245)
+scribble dash at (8, 255)
+scribble dash at (30, 240)
+scribble dash at (35, 250)
+scribble dash at (50, 230)
+scribble dash at (55, 245)
+scribble dash at (60, 255)
+
+scribble dash at (175, 213)
+scribble dash at (180, 223)
+scribble dash at (185, 233)
+scribble dash at (190, 245)
+scribble dash at (192, 255)
+scribble dash at (165, 235)
+scribble dash at (160, 250)
+scribble dash at (150, 240)
+scribble dash at (145, 255)
+
+scribble dash at (45, 220)
+scribble dash at (48, 235)
+scribble dash at (52, 250)
+scribble dash at (155, 218)
+scribble dash at (152, 232)
+scribble dash at (148, 248)
+
+scribble dash at (10, 30)
+scribble dash at (25, 45)
+scribble dash at (15, 60)
+scribble dash at (5, 80)
+scribble dash at (20, 100)
+scribble dash at (10, 120)
+scribble dash at (25, 140)
+scribble dash at (15, 160)
+scribble dash at (5, 180)
+scribble dash at (180, 25)
+scribble dash at (190, 50)
+scribble dash at (185, 75)
+scribble dash at (195, 95)
+scribble dash at (180, 115)
+scribble dash at (190, 140)
+scribble dash at (185, 165)
+scribble dash at (195, 185)
+scribble dash at (30, 15)
+scribble dash at (50, 10)
+scribble dash at (150, 8)
+scribble dash at (170, 15)
+
+scribble dash at (95, 30)
+scribble dash at (105, 28)
+scribble dash at (100, 35)
+
+
+scribble dash at (35, 85)
+scribble dash at (40, 130)
+scribble dash at (45, 175)
+scribble dash at (165, 82)
+scribble dash at (160, 128)
+scribble dash at (155, 172)
+
+
+scribble dash at (100, 95)
+scribble dash at (101, 100)
+
+let left_catch_light : sketch = dot at (83, 80)
+let right_catch_light : sketch = dot at (116, 79)
+trace [left_catch_light, right_catch_light]
+
+scribble dash at (85, 55)
+scribble dash at (95, 52)
+scribble dash at (105, 53)
+scribble dash at (115, 55)
+
+scribble dash at (68, 65)
+scribble dash at (70, 70)
+scribble dash at (132, 62)
+scribble dash at (134, 68)

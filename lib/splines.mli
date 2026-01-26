@@ -28,4 +28,5 @@ val add_noise : noise_level -> vec -> vec -> vec list
 val flatten_spline : ?samples_per_span:int -> vec list -> vec list
 
 (* flatten spline and convert to segments with noise applied *)
-val spline_to_segments : ?samples_per_span:int -> noise_level -> vec list -> segment list
+val spline_to_segments :
+  ?samples_per_span:int -> noise_level -> vec list -> segment list

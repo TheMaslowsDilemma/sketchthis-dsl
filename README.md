@@ -1,2 +1,37 @@
-# sketchthis lang
-Domain Specific Language for translating natural-ish language to g code. Aims to improve LLMs ability to describe art in a way for Grbl machines to produce. This language, aims to power our [@sketchthis](https://x.com/sketchthis) project. The [language specification](https://github.com/TheMaslowsDilemma/sketchthis-dsl/blob/main/LANGUAGE_SPEC.md) is a work in progress, we intend to hand craft examples and abstractions for Claude and our local LLMs to take advantage of. The compiler can produce both SVG and g code output. There is a REPL as well as a way to pass in files directly. Open to feedback and contributions, looking forward to enhancing LLMs ability to draw.
+# sketchthis-lang
+
+A domain-specific language for generating G-code from natural-ish drawing commands. Built in OCaml, outputs both G-code and SVG.
+
+Powers [@sketchthis](https://x.com/sketchthis)
+See the [language spec](https://github.com/TheMaslowsDilemma/sketchthis-dsl/blob/main/LANGUAGE_SPEC.md) for more details.
+
+## Build
+
+```bash
+opam install dune
+dune build
+```
+
+## Install to PATH
+
+```bash
+sudo cp _build/default/bin/main.exe /usr/local/bin/sketchlang
+```
+
+Or symlink:
+
+```bash
+sudo ln -s $(pwd)/_build/default/bin/main.exe /usr/local/bin/sketchlang
+```
+
+## Usage
+
+```bash
+sketchlang drawing.sketch              # → drawing.txt (G-code)
+sketchlang drawing.sketch --svg        # → drawing.svg
+sketchlang drawing.sketch --gcode --svg  # → both
+sketchlang drawing.sketch -scale 0.5   # half size, centered
+sketchlang drawing.sketch -pos 10,10 -size 100,100  # position and constrain
+```
+
+Run `sketchlang --help` for all options.
