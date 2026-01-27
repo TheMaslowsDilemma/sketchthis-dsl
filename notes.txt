@@ -340,3 +340,20 @@ into different modules. also ill put in the mli files to follow
 actual practices and not just slop it together with claude one
 shots
 
+-----------------------------------------------------------
+Jan. 27 2026
+-----------------------------------------------------------
+
+--- INCREMENTAL IMPROVEMENTS ---
+after using the language for a week with llms it has become
+obvious that the language lacks some efficiency. we need many
+tokens to describe similar structures, even if they are just
+translations, rotations, and scaling of others. to make many
+dashes we need to say exactly where each dash should go. to
+draw many lines we need to duplicate those points and offset them.
+there should be an easy way to make those symmetric
+transfomrations { scale, move, rotate, mirror } and a way to
+describe many strokes or dashes over an area, and a way to
+describe line thickness.
+these are all potential future improvements. the most usefull
+are the symmetric transformations. lets address those first.
