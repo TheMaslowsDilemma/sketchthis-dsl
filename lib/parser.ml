@@ -38,7 +38,8 @@ let match_tok p t =
     true)
   else false
 
-let expect p t = if check p t then advance p else expected (current p) (token_to_string t)
+let expect p t =
+  if check p t then advance p else expected (current p) (token_to_string t)
 
 let rec skip_nl p =
   if check p NEWLINE then (
@@ -180,10 +181,6 @@ and parse_vec_atom p =
       advance p;
       expect p OF;
       VecCenter (parse_sketch_atom p)
-  | FLOW ->
-      advance p;
-      expect p AT;
-      VecFlow (parse_vec_atom p)
   | ORIGIN ->
       advance p;
       VecLit (0.0, 0.0)
@@ -194,11 +191,11 @@ and parse_vec_atom p =
       advance p;
       VecVar "y_max"
   | X_AXIS ->
-    advance p;
-    VecLit (1.0, 0.0)
+      advance p;
+      VecLit (1.0, 0.0)
   | Y_AXIS ->
-    advance p;
-    VecLit (0.0, 1.0)
+      advance p;
+      VecLit (0.0, 1.0)
   | IDENT s ->
       advance p;
       VecVar s
@@ -233,11 +230,11 @@ and parse_sketch_atom p =
       advance p;
       SketchVar s
   | MIRROR ->
-    advance p;
-    let sk = parse_sketch_atom p in
-    expect p ABOUT;
-    let axis = parse_vec_atom p in
-    MirrorSketch (sk, axis)
+      advance p;
+      let sk = parse_sketch_atom p in
+      expect p ABOUT;
+      let axis = parse_vec_atom p in
+      MirrorSketch (sk, axis)
   | _ -> expected (current p) "sketch expression"
 
 and parse_vec_list_bracket p =

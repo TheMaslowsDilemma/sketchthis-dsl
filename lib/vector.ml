@@ -40,6 +40,3 @@ let point_to_segment_closest p a b =
     in
     let closest = vec_add a (vec_scale ab t) in
     (closest, vec_distance p closest)
-
-
-

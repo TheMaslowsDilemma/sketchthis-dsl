@@ -13,14 +13,13 @@ type token =
   | SKETCH_TYPE
   | DOT
   | DASH
+  | AT
   | STROKE
   | FROM
   | TO
   | VIA
   | CENTER
   | OF
-  | FLOW
-  | AT
   | MIRROR
   | ABOUT
   | SCRIBBLE

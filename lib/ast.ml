@@ -19,7 +19,6 @@ type vec_expr =
   | VecAdd of vec_expr * vec_expr
   | VecSub of vec_expr * vec_expr
   | VecScale of vec_expr * num_expr
-  | VecFlow of vec_expr
 
 and primitive =
   | Dot of vec_expr
@@ -84,7 +83,6 @@ let rec vec_expr_to_string = function
       Printf.sprintf "(%s - %s)" (vec_expr_to_string a) (vec_expr_to_string b)
   | VecScale (v, n) ->
       Printf.sprintf "(%s * %s)" (vec_expr_to_string v) (num_expr_to_string n)
-  | VecFlow v -> Printf.sprintf "flow at %s" (vec_expr_to_string v)
 
 and primitive_to_string = function
   | Dot v -> Printf.sprintf "dot at %s" (vec_expr_to_string v)
@@ -106,7 +104,9 @@ and sketch_expr_to_string = function
   | SketchList sks ->
       Printf.sprintf "[%s]"
         (sks |> List.map sketch_expr_to_string |> String.concat ", ")
-  | MirrorSketch (sk, axis) -> Printf.sprintf "mirror %s about %s" (sketch_expr_to_string sk) (vec_expr_to_string axis)
+  | MirrorSketch (sk, axis) ->
+      Printf.sprintf "mirror %s about %s" (sketch_expr_to_string sk)
+        (vec_expr_to_string axis)
 
 let statement_to_string = function
   | LetNum (name, expr) ->

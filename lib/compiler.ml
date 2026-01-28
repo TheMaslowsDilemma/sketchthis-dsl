@@ -89,9 +89,7 @@ let transform_path f path =
   }
 
 let transform_ir f ir = List.map (transform_path f) ir
-
 let mirror_ir axis ir = transform_ir (vec_mirror axis) ir
-
 let translate_ir dir ir = transform_ir (vec_add dir) ir
 
 (* Expression Evaluation *)
@@ -123,7 +121,6 @@ let rec eval_vec_basic env = function
   | VecAdd (a, b) -> vec_add (eval_vec_basic env a) (eval_vec_basic env b)
   | VecSub (a, b) -> vec_sub (eval_vec_basic env a) (eval_vec_basic env b)
   | VecScale (v, n) -> vec_scale (eval_vec_basic env v) (eval_num env n)
-  | VecFlow _ -> vec 1.0 0.0
 
 and eval_sketch_basic env = function
   | Primitive prim -> eval_primitive_basic env prim
@@ -132,13 +129,14 @@ and eval_sketch_basic env = function
       with Environment.UndefinedVariable n -> error (UndefinedVariable n))
   | SketchList sks -> List.concat_map (eval_sketch_basic env) sks
   | MirrorSketch (sk, axis) ->
-    let axis_vec = eval_vec_basic env axis in
-    let sk_basic_ir = eval_sketch_basic env sk in
-    let sk_center = compute_center sk_basic_ir in
-    let sk_normalized = translate_ir (vec_scale sk_center (-1.0)) sk_basic_ir in
-    let sk_mirrored = mirror_ir axis_vec sk_normalized in
-    translate_ir sk_center sk_mirrored
-
+      let axis_vec = eval_vec_basic env axis in
+      let sk_basic_ir = eval_sketch_basic env sk in
+      let sk_center = compute_center sk_basic_ir in
+      let sk_normalized =
+        translate_ir (vec_scale sk_center (-1.0)) sk_basic_ir
+      in
+      let sk_mirrored = mirror_ir axis_vec sk_normalized in
+      translate_ir sk_center sk_mirrored
 
 and eval_primitive_basic env = function
   | Dot v ->
@@ -189,10 +187,7 @@ let rec collect_flow env = function
   | SketchList sks -> List.concat_map (collect_flow env) sks
   | MirrorSketch _ -> [] (* todo: evaluate *)
 
-(* Full Evaluation - produces final IR with splines flattened
-  TODO: consider carrying an accumulated inter repr. this would
-  allow it all in a single pass?
-*)
+(* Full Evaluation - produces final IR with splines flattened *)
 
 let rec eval_vec env flow = function
   | VecLit (x, y) -> vec x y
@@ -204,7 +199,6 @@ let rec eval_vec env flow = function
   | VecAdd (a, b) -> vec_add (eval_vec env flow a) (eval_vec env flow b)
   | VecSub (a, b) -> vec_sub (eval_vec env flow a) (eval_vec env flow b)
   | VecScale (v, n) -> vec_scale (eval_vec env flow v) (eval_num env n)
-  | VecFlow v -> sample_flow_field flow (eval_vec env flow v)
 
 let eval_primitive env noise flow = function
   | Dot v ->
@@ -245,18 +239,17 @@ let eval_primitive env noise flow = function
       let start = match segments with [] -> p0 | s :: _ -> s.p0 in
       [ { start; segments } ]
 
-
 let rec eval_sketch env noise flow = function
-| Primitive prim -> eval_primitive env noise flow prim
-| SketchVar name -> eval_sketch env noise flow (lookup_sketch name env)
-| SketchList sks -> List.concat_map (eval_sketch env noise flow) sks
-| MirrorSketch (sk, axis) ->
-    let axis_vec = eval_vec env flow axis in
-    let sk_ir = eval_sketch env noise flow sk in
-    let sk_center = compute_center sk_ir in
-    let sk_normalized = translate_ir (vec_scale sk_center (-1.0)) sk_ir in
-    let sk_mirrored = mirror_ir axis_vec sk_normalized in
-    translate_ir sk_center sk_mirrored
+  | Primitive prim -> eval_primitive env noise flow prim
+  | SketchVar name -> eval_sketch env noise flow (lookup_sketch name env)
+  | SketchList sks -> List.concat_map (eval_sketch env noise flow) sks
+  | MirrorSketch (sk, axis) ->
+      let axis_vec = eval_vec env flow axis in
+      let sk_ir = eval_sketch env noise flow sk in
+      let sk_center = compute_center sk_ir in
+      let sk_normalized = translate_ir (vec_scale sk_center (-1.0)) sk_ir in
+      let sk_mirrored = mirror_ir axis_vec sk_normalized in
+      translate_ir sk_center sk_mirrored
 
 (* Statement Evaluation *)
 

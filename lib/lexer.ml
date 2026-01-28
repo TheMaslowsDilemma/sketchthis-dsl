@@ -12,14 +12,13 @@ type token =
   | SKETCH_TYPE
   | DOT
   | DASH
+  | AT
   | STROKE
   | FROM
   | TO
   | VIA
   | CENTER
   | OF
-  | FLOW
-  | AT
   | MIRROR
   | ABOUT
   | SCRIBBLE
@@ -61,14 +60,13 @@ let token_to_string = function
   | SKETCH_TYPE -> "sketch"
   | DOT -> "dot"
   | DASH -> "dash"
+  | AT -> "at"
   | STROKE -> "stroke"
   | FROM -> "from"
   | TO -> "to"
   | VIA -> "via"
   | CENTER -> "center"
   | OF -> "of"
-  | FLOW -> "flow"
-  | AT -> "at"
   | MIRROR -> "mirror"
   | ABOUT -> "about"
   | SCRIBBLE -> "scribble"
@@ -101,14 +99,13 @@ let keywords =
     ("sketch", SKETCH_TYPE);
     ("dot", DOT);
     ("dash", DASH);
+    ("at", AT);
     ("stroke", STROKE);
     ("from", FROM);
     ("to", TO);
     ("via", VIA);
     ("center", CENTER);
     ("of", OF);
-    ("flow", FLOW);
-    ("at", AT);
     ("mirror", MIRROR);
     ("about", ABOUT);
     ("scribble", SCRIBBLE);
