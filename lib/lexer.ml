@@ -8,7 +8,7 @@ type token =
   | NUMBER of float
   | IDENT of string
   | NUMBER_TYPE
-  | VEC2_TYPE
+  | VEC_TYPE
   | SKETCH_TYPE
   | DOT
   | DASH
@@ -20,6 +20,8 @@ type token =
   | OF
   | FLOW
   | AT
+  | MIRROR
+  | ABOUT
   | SCRIBBLE
   | DRAW
   | TRACE
@@ -52,48 +54,50 @@ exception LexerError of lexer_error
 type lexer = { input : string; pos : int; line : int; col : int }
 
 let token_to_string = function
-  | NUMBER f -> Printf.sprintf "NUMBER(%g)" f
-  | IDENT s -> Printf.sprintf "IDENT(%s)" s
-  | NUMBER_TYPE -> "NUMBER_TYPE"
-  | VEC2_TYPE -> "VEC2_TYPE"
-  | SKETCH_TYPE -> "SKETCH_TYPE"
-  | DOT -> "DOT"
-  | DASH -> "DASH"
-  | STROKE -> "STROKE"
-  | FROM -> "FROM"
-  | TO -> "TO"
-  | VIA -> "VIA"
-  | CENTER -> "CENTER"
-  | OF -> "OF"
-  | FLOW -> "FLOW"
-  | AT -> "AT"
-  | SCRIBBLE -> "SCRIBBLE"
-  | DRAW -> "DRAW"
-  | TRACE -> "TRACE"
-  | LET -> "LET"
-  | X_AXIS -> "X_AXIS"
-  | Y_AXIS -> "Y_AXIS"
-  | X_MAX -> "X_MAX"
-  | Y_MAX -> "Y_MAX"
-  | ORIGIN -> "ORIGIN"
-  | COLON -> "COLON"
-  | EQUALS -> "EQUALS"
-  | LPAREN -> "LPAREN"
-  | RPAREN -> "RPAREN"
-  | COMMA -> "COMMA"
-  | LBRACKET -> "LBRACKET"
-  | RBRACKET -> "RBRACKET"
-  | PLUS -> "PLUS"
-  | MINUS -> "MINUS"
-  | STAR -> "STAR"
-  | SLASH -> "SLASH"
+  | NUMBER f -> Printf.sprintf "number(%g)" f
+  | IDENT s -> Printf.sprintf "ident(%s)" s
+  | NUMBER_TYPE -> "number_type"
+  | VEC_TYPE -> "vec"
+  | SKETCH_TYPE -> "sketch"
+  | DOT -> "dot"
+  | DASH -> "dash"
+  | STROKE -> "stroke"
+  | FROM -> "from"
+  | TO -> "to"
+  | VIA -> "via"
+  | CENTER -> "center"
+  | OF -> "of"
+  | FLOW -> "flow"
+  | AT -> "at"
+  | MIRROR -> "mirror"
+  | ABOUT -> "about"
+  | SCRIBBLE -> "scribble"
+  | DRAW -> "draw"
+  | TRACE -> "trace"
+  | LET -> "let"
+  | X_AXIS -> "x_axis"
+  | Y_AXIS -> "y_axis"
+  | X_MAX -> "x_max"
+  | Y_MAX -> "y_max"
+  | ORIGIN -> "origin"
+  | COLON -> ";"
+  | EQUALS -> "="
+  | LPAREN -> "("
+  | RPAREN -> ")"
+  | COMMA -> ","
+  | LBRACKET -> "["
+  | RBRACKET -> "]"
+  | PLUS -> "+"
+  | MINUS -> "-"
+  | STAR -> "*"
+  | SLASH -> "/"
   | NEWLINE -> "NEWLINE"
   | EOF -> "EOF"
 
 let keywords =
   [
     ("number", NUMBER_TYPE);
-    ("vec", VEC2_TYPE);
+    ("vec", VEC_TYPE);
     ("sketch", SKETCH_TYPE);
     ("dot", DOT);
     ("dash", DASH);
@@ -105,6 +109,8 @@ let keywords =
     ("of", OF);
     ("flow", FLOW);
     ("at", AT);
+    ("mirror", MIRROR);
+    ("about", ABOUT);
     ("scribble", SCRIBBLE);
     ("draw", DRAW);
     ("trace", TRACE);

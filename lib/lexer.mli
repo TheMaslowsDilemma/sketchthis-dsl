@@ -9,7 +9,7 @@ type token =
   | NUMBER of float
   | IDENT of string
   | NUMBER_TYPE
-  | VEC2_TYPE
+  | VEC_TYPE
   | SKETCH_TYPE
   | DOT
   | DASH
@@ -21,6 +21,8 @@ type token =
   | OF
   | FLOW
   | AT
+  | MIRROR
+  | ABOUT
   | SCRIBBLE
   | DRAW
   | TRACE
