@@ -30,6 +30,7 @@ and sketch_expr =
   | Primitive of primitive
   | SketchVar of string
   | SketchList of sketch_expr list
+  | MirrorSketch of sketch_expr * vec_expr
 
 type expr =
   | ExprNum of num_expr
@@ -105,6 +106,7 @@ and sketch_expr_to_string = function
   | SketchList sks ->
       Printf.sprintf "[%s]"
         (sks |> List.map sketch_expr_to_string |> String.concat ", ")
+  | MirrorSketch (sk, axis) -> Printf.sprintf "mirror %s about %s" (sketch_expr_to_string sk) (vec_expr_to_string axis)
 
 let statement_to_string = function
   | LetNum (name, expr) ->

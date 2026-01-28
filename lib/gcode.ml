@@ -338,8 +338,6 @@ let generate_machine ?(fit = true) ?(margin = 10.0) ?placement ir =
   let scaled =
     if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
   in
-  if not (check_machine_bounds scaled) then
-    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
   let opt = optimize_paths scaled in
   emit_machine_preamble cfg s;
   if cfg.include_comments then
@@ -408,8 +406,6 @@ let generate_machine_with_stats ?(fit = true) ?(margin = 10.0) ?placement ir =
   let scaled =
     if fit then fit_to_machine_with_placement ~margin ?placement ir else ir
   in
-  if not (check_machine_bounds scaled) then
-    failwith "Drawing exceeds Machine work area (420mm x 297mm)";
   let pre_opt = List.length scaled in
   let pre_travel = total_travel scaled (vec 0.0 0.0) in
   let opt = optimize_paths scaled in

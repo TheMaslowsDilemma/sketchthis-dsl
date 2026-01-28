@@ -38,7 +38,7 @@ let match_tok p t =
     true)
   else false
 
-let expect p t msg = if check p t then advance p else expected (current p) msg
+let expect p t = if check p t then advance p else expected (current p) (token_to_string t)
 
 let rec skip_nl p =
   if check p NEWLINE then (
@@ -57,7 +57,7 @@ let parse_type p =
   | NUMBER_TYPE ->
       advance p;
       TNumber
-  | VEC2_TYPE ->
+  | VEC_TYPE ->
       advance p;
       TVec
   | SKETCH_TYPE ->
@@ -107,7 +107,7 @@ and parse_num_atom p =
   | LPAREN ->
       advance p;
       let e = parse_num_expr p in
-      expect p RPAREN ")";
+      expect p RPAREN;
       e
   | _ -> expected (current p) "numeric expression"
 
@@ -161,28 +161,28 @@ and parse_vec_atom p =
         | COMMA -> (
             advance p;
             let second = parse_num_expr p in
-            expect p RPAREN ")";
+            expect p RPAREN;
             match (first, second) with
             | NumLit x, NumLit y -> VecLit (x, y)
             | _ -> VecConstruct (first, second))
         | RPAREN | PLUS | MINUS ->
             restore p saved;
             let inner = parse_vec_expr p in
-            expect p RPAREN ")";
+            expect p RPAREN;
             inner
         | _ -> expected (current p) ", or ) or vector operator"
       with ParseError _ ->
         restore p saved;
         let inner = parse_vec_expr p in
-        expect p RPAREN ")";
+        expect p RPAREN;
         inner)
   | CENTER ->
       advance p;
-      expect p OF "of";
+      expect p OF;
       VecCenter (parse_sketch_atom p)
   | FLOW ->
       advance p;
-      expect p AT "at";
+      expect p AT;
       VecFlow (parse_vec_atom p)
   | ORIGIN ->
       advance p;
@@ -193,6 +193,12 @@ and parse_vec_atom p =
   | Y_MAX ->
       advance p;
       VecVar "y_max"
+  | X_AXIS ->
+    advance p;
+    VecLit (1.0, 0.0)
+  | Y_AXIS ->
+    advance p;
+    VecLit (0.0, 1.0)
   | IDENT s ->
       advance p;
       VecVar s
@@ -202,17 +208,17 @@ and parse_sketch_atom p =
   match peek p with
   | DOT ->
       advance p;
-      expect p AT "at";
+      expect p AT;
       Primitive (Dot (parse_vec_expr p))
   | DASH ->
       advance p;
-      expect p AT "at";
+      expect p AT;
       Primitive (Dash (parse_vec_expr p))
   | STROKE ->
       advance p;
-      expect p FROM "from";
+      expect p FROM;
       let p0 = parse_vec_expr p in
-      expect p TO "to";
+      expect p TO;
       let p1 = parse_vec_expr p in
       let via = if match_tok p VIA then parse_vec_list_bracket p else [] in
       Primitive (Stroke (p0, via, p1))
@@ -221,15 +227,21 @@ and parse_sketch_atom p =
       skip_nl p;
       let sks = parse_sketch_list p in
       skip_nl p;
-      expect p RBRACKET "]";
+      expect p RBRACKET;
       SketchList sks
   | IDENT s ->
       advance p;
       SketchVar s
+  | MIRROR ->
+    advance p;
+    let sk = parse_sketch_atom p in
+    expect p ABOUT;
+    let axis = parse_vec_atom p in
+    MirrorSketch (sk, axis)
   | _ -> expected (current p) "sketch expression"
 
 and parse_vec_list_bracket p =
-  expect p LBRACKET "[";
+  expect p LBRACKET;
   skip_nl p;
   if check p RBRACKET then (
     advance p;
@@ -243,7 +255,7 @@ and parse_vec_list_bracket p =
     in
     let result = go [ parse_vec_expr p ] in
     skip_nl p;
-    expect p RBRACKET "]";
+    expect p RBRACKET;
     result
 
 and parse_sketch_list p =
@@ -261,11 +273,11 @@ and parse_sketch_list p =
 and parse_sketch_expr p = parse_sketch_atom p
 
 let parse_let p =
-  expect p LET "let";
+  expect p LET;
   let name = parse_ident p in
-  expect p COLON ":";
+  expect p COLON;
   let typ = parse_type p in
-  expect p EQUALS "=";
+  expect p EQUALS;
   match typ with
   | TNumber -> LetNum (name, parse_num_expr p)
   | TVec -> LetVec (name, parse_vec_expr p)

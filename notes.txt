@@ -344,6 +344,10 @@ shots
 Jan. 27 2026
 -----------------------------------------------------------
 
+--- READINGS ---
+https://blog.janestreet.com/let-syntax-and-why-you-should-use-it/
+https://willkempartschool.com/how-to-shade-a-drawing-light-shadow-part-2/
+
 --- INCREMENTAL IMPROVEMENTS ---
 after using the language for a week with llms it has become
 obvious that the language lacks some efficiency. we need many
@@ -357,3 +361,58 @@ describe many strokes or dashes over an area, and a way to
 describe line thickness.
 these are all potential future improvements. the most usefull
 are the symmetric transformations. lets address those first.
+
+--- SYMMETRIC TRANSFORMATIONS ---
+first lets consider the mirror syntax. we can take any sketch,
+find its center, then move that to origin, call that normalized.
+we can than mirror that normalized sketch about some axis defined
+by a vec2, [1, 0] for x_axis [0, 1] for y_axis and anything.
+after mirroring we can then translate the position back to the
+original pre-normalized. 
+(open question: should we consider that
+the center of the mirrored will be different than the original?
+-> not now )
+let k : sketch = stroke from a to b via [c, d, e]
+let k_about_y = mirror k about y_axis
+
+--- SHADING ---
+currently shading is difficult to describe succinctly. we need
+lots of tokens for each dash. instead we should describe an area
+about which to shade, then fill in that with some random dashes
+an idea is that applying shade can be applied multiple times to
+get more shade in areas.
+the best move here is to introduce a "region" type that defines
+a closed area. we can use this in a "shade" expression that is
+evaluated to a sketch expression?
+
+--- OTHER TODOS ---
+ast still needs an mli, and there are still recursive defns in
+the expression to string. the parser also is not using immutable
+state, i.e we are still using the advance p; statement in the
+parse functions plus there are recursive definitions i.e
+let ... and ... statments. these are a bit ugly imo, maybe i just
+need to get used to that style. it is nice for these sort of
+web of defns.
+
+--- PARSER BLOAT ---
+the parser has bloat. the expect and expected take in a token and
+a message. the message is just the string of the token. dont need
+to pass in the msg string, just derive it from the token. note
+that the current lexers token_to_string uses capitalized keywords
+this should change that to lowercase if we plan on using that. I
+dont think there is any dependencies requiring that be uppercase...
+
+
+-----------------------------------------------------------
+Jan. 28 2026
+-----------------------------------------------------------
+
+--- MIRROR ---
+this function is now basically implmented. while implementing
+it pointed out the complexity introduced by the "flow at <vec>"
+statement that evaluates to a vec. the evaluate_sketch_basic
+function does not resolve the value of a "flow at" and will
+cause issues with the mirror if we use that as an axis to mirror
+about. i.e "mirror <sketch> about flow at <vec>" will always
+mirror about [1,0] because that is how we default this value.
+therefore we should remove that expression!
