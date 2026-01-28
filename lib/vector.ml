@@ -2,6 +2,7 @@
 ----------------------------------------------------------- 
 vector.ml
 -----------------------------------------------------------
+vector logic and definitions
 *)
 
 type vec = { x : float; y : float }
@@ -24,6 +25,11 @@ let vec_normalize v =
 let vec_distance a b = vec_length (vec_sub b a)
 let vec_lerp a b t = vec_add a (vec_scale (vec_sub b a) t)
 
+let vec_mirror axis point =
+  let axis = vec_normalize axis in
+  let dot = vec_dot point axis in
+  vec_sub (vec_scale axis (2.0 *. dot)) point
+
 let point_to_segment_closest p a b =
   let ab = vec_sub b a in
   let len_sq = vec_len_sq ab in
@@ -34,3 +40,6 @@ let point_to_segment_closest p a b =
     in
     let closest = vec_add a (vec_scale ab t) in
     (closest, vec_distance p closest)
+
+
+
