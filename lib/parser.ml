@@ -232,6 +232,23 @@ and parse_sketch_atom p =
       expect p ABOUT;
       let axis = parse_vec_atom p in
       MirrorSketch (sk, axis)
+  | TRANSLATE ->
+    advance p;
+    let sk = parse_sketch_atom p in
+    expect p BY;
+    let translation = parse_vec_atom p in
+    TranslateSketch (sk, translation)
+  | SCALE ->
+    advance p;
+    let sk = parse_sketch_atom p in
+    expect p BY;
+    let scale = parse_num_atom p in
+    ScaleSketch (sk, scale)
+  | LPAREN ->
+      advance p;
+      let sk = parse_sketch_expr p in
+      expect p RPAREN;
+      sk
   | _ -> expected (current p) "sketch expression"
 
 and parse_vec_list_bracket p =

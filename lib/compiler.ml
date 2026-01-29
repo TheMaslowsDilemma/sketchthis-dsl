@@ -89,9 +89,7 @@ let transform_path f path =
   }
 
 let transform_ir f ir = List.map (transform_path f) ir
-let mirror_ir axis ir = transform_ir (vec_mirror axis) ir
 let translate_ir dir ir = transform_ir (vec_add dir) ir
-let scale_ir scale ir = transform_ir (vec_scale scale) ir
 
 let transform_centered_ir f ir =
   let c = compute_center ir in
@@ -137,21 +135,16 @@ and eval_sketch_basic env = function
   | SketchList sks -> List.concat_map (eval_sketch_basic env) sks
   | MirrorSketch (sk, axis) ->
       let axis_vec = eval_vec_basic env axis in
-      let sk_basic_ir = eval_sketch_basic env sk in
-      let sk_center = compute_center sk_basic_ir in
-      let sk_normalized =
-        translate_ir (vec_scale (-1.0) sk_center) sk_basic_ir
-      in
-      let sk_mirrored = mirror_ir axis_vec sk_normalized in
-      translate_ir sk_center sk_mirrored
+      let sk_ir = eval_sketch_basic env sk in
+      transform_centered_ir (vec_mirror axis_vec) sk_ir
   | TranslateSketch (sk, translation) ->
-      let trns_vec = eval_vec_basic env translation in
-      let sk_basic_ir = eval_sketch_basic env sk in
-      translate_ir trns_vec sk_basic_ir
+      let tvec = eval_vec_basic env translation in
+      let sk_ir = eval_sketch_basic env sk in
+      translate_ir tvec sk_ir
   | ScaleSketch (sk, scale) ->
       let scl_num = eval_num env scale in
-      let sk_basic_ir = eval_sketch_basic env sk in
-      scale_ir scl_num sk_basic_ir
+      let sk_ir = eval_sketch_basic env sk in
+      transform_centered_ir (vec_scale scl_num) sk_ir
 
 and eval_primitive_basic env = function
   | Dot v ->
@@ -263,10 +256,7 @@ let rec eval_sketch env noise flow = function
   | MirrorSketch (sk, axis) ->
       let axis_vec = eval_vec env flow axis in
       let sk_ir = eval_sketch env noise flow sk in
-      let sk_center = compute_center sk_ir in
-      let sk_normalized = translate_ir (vec_scale (-1.0) sk_center) sk_ir in
-      let sk_mirrored = mirror_ir axis_vec sk_normalized in
-      translate_ir sk_center sk_mirrored
+      transform_centered_ir (vec_mirror axis_vec) sk_ir
   | TranslateSketch (sk, translation) ->
       let trns_vec = eval_vec env flow translation in
       let sk_ir = eval_sketch env noise flow sk in
@@ -274,7 +264,7 @@ let rec eval_sketch env noise flow = function
   | ScaleSketch (sk, scale) ->
       let scl_num = eval_num env scale in
       let sk_ir = eval_sketch env noise flow sk in
-      scale_ir scl_num sk_ir
+      transform_centered_ir (vec_scale scl_num) sk_ir
 
 (* Statement Evaluation *)
 

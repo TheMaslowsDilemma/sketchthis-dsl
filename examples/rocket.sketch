@@ -1,0 +1,176 @@
+# === REUSABLE PRIMITIVES ===
+
+# Unit circle (radius 1 at origin)
+let uc1 : sketch = stroke (1, 0) to (0, 1) via [(0.7, 0.7)]
+let uc2 : sketch = stroke (0, 1) to (0 - 1, 0) via [(0 - 0.7, 0.7)]
+let uc3 : sketch = stroke (0 - 1, 0) to (0, 0 - 1) via [(0 - 0.7, 0 - 0.7)]
+let uc4 : sketch = stroke (0, 0 - 1) to (1, 0) via [(0.7, 0 - 0.7)]
+let circle : sketch = [uc1, uc2, uc3, uc4]
+
+# Small crater dent
+let dent : sketch = [
+  stroke (0, 0) to (3, 2) via [(0 - 1, 1)],
+  stroke (3, 2) to (0, 0) via [(4, 0)]
+]
+
+# Smoke puff
+let puff : sketch = [
+  stroke (0, 0) to (10, 5) via [(3, 8)],
+  stroke (10, 5) to (5, 15) via [(15, 12)]
+]
+
+# Single fin pointing left
+let fin : sketch = [
+  stroke (0, 0) to (0 - 25, 40),
+  stroke (0 - 25, 40) to (0, 30),
+  stroke (0, 30) to (0, 0)
+]
+
+# Flame tendril
+let tendril : sketch = stroke (0, 0) to (0, 50) via [(0 - 10, 25), (8, 40)]
+
+# Motion line
+let mline : sketch = stroke (0, 0) to (25, 0 - 15)
+
+# === MOON ===
+let moon : sketch = translate (scale circle by 35) by (280, 60)
+
+# Craters using translated/scaled dents
+let cr1 : sketch = translate dent by (268, 53)
+let cr2 : sketch = translate (scale dent by 0.8) by (288, 68)
+let cr3 : sketch = translate (scale dent by 0.6) by (280, 43)
+let craters : sketch = [cr1, cr2, cr3]
+
+# Moon shading
+let msh : sketch = [
+  dash (265, 60), dash (267, 65), dash (263, 70),
+  dash (268, 75), dash (260, 55), dash (258, 63)
+]
+
+# === STARS (one pattern, translated) ===
+let star3 : sketch = [dot (0, 0), dot (12, 8), dot (5, 20)]
+let stars : sketch = [
+  translate star3 by (20, 15),
+  translate star3 by (150, 30),
+  translate star3 by (300, 25),
+  translate star3 by (40, 130),
+  translate star3 by (180, 70),
+  translate star3 by (250, 100),
+  translate star3 by (320, 60)
+]
+
+# === ROCKET CONSTANTS ===
+let rx : number = 100
+let bot : number = 280
+let hw : number = 18
+
+# === ROCKET BODY ===
+let lside : sketch = stroke (rx - hw, bot) to (rx - hw, 140)
+let rside : sketch = stroke (rx + hw, bot) to (rx + hw, 140)
+let tip : vec = (rx, 95)
+let nose : sketch = [
+  stroke (rx - hw, 140) to tip via [(rx - hw + 3, 115)],
+  stroke tip to (rx + hw, 140) via [(rx + hw - 3, 115)]
+]
+
+# Panel lines
+let panel : sketch = stroke (0, bot - 10) to (0, 150)
+let panels : sketch = [
+  translate panel by (rx - 10, 0),
+  translate panel by (rx, 0),
+  translate panel by (rx + 10, 0)
+]
+
+# Horizontal bands (one band, translated)
+let band : sketch = stroke (rx - hw, 0) to (rx + hw, 0)
+let bands : sketch = [
+  translate band by (0, 170),
+  translate band by (0, 210),
+  translate band by (0, 250)
+]
+
+# === WINDOW (scaled circles) ===
+let wc : vec = (rx, 185)
+let window : sketch = translate (scale circle by 10) by wc
+let winn : sketch = translate (scale circle by 7) by wc
+let glare : sketch = stroke (wc + (0 - 3, 0 - 4)) to (wc + (0 - 1, 0 - 2))
+
+# === FINS (using base fin + mirror) ===
+let lfin : sketch = translate fin by (rx - hw, bot)
+let rfin : sketch = mirror lfin about (1, 0)
+let lfshade : sketch = [dash (rx - hw - 12, bot + 20), dash (rx - hw - 8, bot + 25)]
+let rfshade : sketch = mirror lfshade about (1, 0)
+
+# Center fin
+let cfin : sketch = [
+  stroke (rx - 6, bot + 5) to (rx, bot + 30),
+  stroke (rx, bot + 30) to (rx + 6, bot + 5)
+]
+
+# === ENGINE NOZZLE ===
+let nozzle : sketch = [
+  stroke (rx - 12, bot) to (rx - 15, bot + 15),
+  stroke (rx - 15, bot + 15) to (rx + 15, bot + 15),
+  stroke (rx + 15, bot + 15) to (rx + 12, bot)
+]
+
+# === EXHAUST (translated/scaled tendrils) ===
+let ey : number = bot + 15
+let flm1 : sketch = translate tendril by (rx, ey)
+let flm2 : sketch = translate (scale tendril by 0.8) by (rx - 8, ey)
+let flm3 : sketch = translate (mirror (scale tendril by 0.8) about (1, 0)) by (rx + 8, ey)
+let flm4 : sketch = translate (scale tendril by 0.6) by (rx - 4, ey)
+let flm5 : sketch = translate (scale tendril by 0.6) by (rx + 4, ey)
+let flames : sketch = [flm1, flm2, flm3, flm4, flm5]
+
+# Inner core (smaller tendrils)
+let core : sketch = [
+  translate (scale tendril by 0.5) by (rx, ey + 3),
+  translate (scale tendril by 0.4) by (rx - 3, ey + 5),
+  translate (scale tendril by 0.4) by (rx + 3, ey + 5)
+]
+
+# Smoke (translated puffs)
+let smoke : sketch = [
+  translate puff by (rx - 25, ey + 50),
+  translate (mirror puff about (1, 0)) by (rx + 25, ey + 50),
+  translate (scale puff by 0.8) by (rx - 20, ey + 65),
+  translate (mirror (scale puff by 0.8) about (1, 0)) by (rx + 20, ey + 65)
+]
+
+let skd : sketch = [
+  dash (rx - 28, ey + 60), dash (rx - 38, ey + 68),
+  dash (rx + 28, ey + 60), dash (rx + 38, ey + 68)
+]
+
+# === DETAILS ===
+# Rivets (one pair, translated vertically)
+let rpair : sketch = [dot (rx - hw + 2, 0), dot (rx + hw - 2, 0)]
+let rivets : sketch = [
+  translate rpair by (0, 160),
+  translate rpair by (0, 200),
+  translate rpair by (0, 240),
+  translate rpair by (0, 270)
+]
+
+# Antenna
+let ant : sketch = [stroke tip to (rx, 80), stroke (rx - 3, 85) to (rx + 3, 85)]
+
+# Body shading
+let bshade : sketch = translate [dash (4, 0), dash (5, 30), dash (4, 70), dash (5, 110)] by (rx - hw, 150)
+
+# Motion lines (translated)
+let motion : sketch = [
+  translate mline by (rx + 45, 120),
+  translate mline by (rx + 50, 150),
+  translate mline by (rx + 48, 180),
+  translate (mirror mline about (1, 0)) by (rx - 45, 130),
+  translate (mirror mline about (1, 0)) by (rx - 50, 165)
+]
+
+# === RENDER ===
+let body : sketch = [lside, rside, nose, panels, bands, window, winn, glare, lfin, rfin, cfin, lfshade, rfshade, nozzle, rivets, ant, bshade]
+
+trace [moon, craters]
+draw [msh, stars, body, motion]
+scribble [flames, core, smoke, skd]
