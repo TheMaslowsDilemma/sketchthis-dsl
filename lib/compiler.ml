@@ -93,6 +93,12 @@ let mirror_ir axis ir = transform_ir (vec_mirror axis) ir
 let translate_ir dir ir = transform_ir (vec_add dir) ir
 let scale_ir scale ir = transform_ir (vec_scale scale) ir
 
+let transform_centered_ir f ir =
+  let c = compute_center ir in
+  let centered_ir = translate_ir (vec_scale (-1.0) c) ir in
+  let f_ir = transform_ir f centered_ir in
+  translate_ir c f_ir
+
 (* Expression Evaluation *)
 
 let rec eval_num env = function
@@ -121,7 +127,7 @@ let rec eval_vec_basic env = function
   | VecCenter sk -> compute_center (eval_sketch_basic env sk)
   | VecAdd (a, b) -> vec_add (eval_vec_basic env a) (eval_vec_basic env b)
   | VecSub (a, b) -> vec_sub (eval_vec_basic env a) (eval_vec_basic env b)
-  | VecScale (v, n) -> vec_scale (eval_num env n) (eval_vec_basic env v) 
+  | VecScale (v, n) -> vec_scale (eval_num env n) (eval_vec_basic env v)
 
 and eval_sketch_basic env = function
   | Primitive prim -> eval_primitive_basic env prim

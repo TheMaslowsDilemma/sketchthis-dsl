@@ -445,6 +445,7 @@ let expression. this should happen next.
 
 --- AUTOMATIC TYPING ---
 we only have three types so this shouldn't be hard.
+todo.
 
 --- ADDING REGIONS ---
 todo.
