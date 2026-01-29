@@ -201,7 +201,7 @@ let rec collect_flow env = function
       try collect_flow env (lookup_sketch name env) with _ -> [])
   | SketchList sks -> List.concat_map (collect_flow env) sks
   | MirrorSketch _ -> [] (* todo: evaluate *)
-  | TranslateSketch _ -> [] (* todo: eval, but also reconsider this func *)
+  | TranslateSketch _ -> [] (* todo: eval *)
   | ScaleSketch _ -> [] (* todo: eval *)
 
 (* Full Evaluation - produces final IR with splines flattened *)
