@@ -438,5 +438,13 @@ Jan. 28 2026
 --- REMOVING PREPOSITIONS ---
 looking at the code, some of the prepositions
 are verbose. "stroke from <vec> to <vec> via <vec list>"
-doesn't need "from" it is obvious with out it.\
-same with dot "at" and dash "at"
+doesn't need "from" it is obvious with out it.
+same with dot "at" and dash "at". we could further lean
+out the language with type inference and removal of the
+let expression. this should happen next.
+
+--- AUTOMATIC TYPING ---
+we only have three types so this shouldn't be hard.
+
+--- ADDING REGIONS ---
+todo.
