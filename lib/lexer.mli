@@ -15,7 +15,6 @@ type token =
   | DASH
   | AT
   | STROKE
-  | FROM
   | TO
   | VIA
   | CENTER

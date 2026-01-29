@@ -87,17 +87,17 @@ let rec vec_expr_to_string = function
       Printf.sprintf "(%s * %s)" (vec_expr_to_string v) (num_expr_to_string n)
 
 and primitive_to_string = function
-  | Dot v -> Printf.sprintf "dot at %s" (vec_expr_to_string v)
-  | Dash v -> Printf.sprintf "dash at %s" (vec_expr_to_string v)
+  | Dot v -> Printf.sprintf "dot %s" (vec_expr_to_string v)
+  | Dash v -> Printf.sprintf "dash %s" (vec_expr_to_string v)
   | Stroke (p0, via, p1) ->
       if List.length via = 0 then
-        Printf.sprintf "stroke from %s to %s" (vec_expr_to_string p0)
+        Printf.sprintf "stroke %s to %s" (vec_expr_to_string p0)
           (vec_expr_to_string p1)
       else
         let via_str =
           via |> List.map vec_expr_to_string |> String.concat ", "
         in
-        Printf.sprintf "stroke from %s to %s via [%s]" (vec_expr_to_string p0)
+        Printf.sprintf "stroke %s to %s via [%s]" (vec_expr_to_string p0)
           (vec_expr_to_string p1) via_str
 
 and sketch_expr_to_string = function

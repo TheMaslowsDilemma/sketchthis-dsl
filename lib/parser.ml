@@ -205,15 +205,12 @@ and parse_sketch_atom p =
   match peek p with
   | DOT ->
       advance p;
-      expect p AT;
       Primitive (Dot (parse_vec_expr p))
   | DASH ->
       advance p;
-      expect p AT;
       Primitive (Dash (parse_vec_expr p))
   | STROKE ->
       advance p;
-      expect p FROM;
       let p0 = parse_vec_expr p in
       expect p TO;
       let p1 = parse_vec_expr p in

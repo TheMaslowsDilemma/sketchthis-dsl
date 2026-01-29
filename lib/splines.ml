@@ -9,9 +9,7 @@ open Vector
 type segment = { p0 : vec; p1 : vec }
 type noise_level = NoiseTrace | NoiseDraw | NoiseScribble
 
-(* ═══════════════════════════════════════════════════════════════════════════
-   Catmull-Rom Evaluation
-   ═══════════════════════════════════════════════════════════════════════════ *)
+(* Catmull-Rom Evaluation *)
 
 let catmull_rom_point p0 p1 p2 p3 t =
   let t2 = t *. t in

@@ -14,7 +14,6 @@ type token =
   | DASH
   | AT
   | STROKE
-  | FROM
   | TO
   | VIA
   | CENTER
@@ -65,7 +64,6 @@ let token_to_string = function
   | DASH -> "dash"
   | AT -> "at"
   | STROKE -> "stroke"
-  | FROM -> "from"
   | TO -> "to"
   | VIA -> "via"
   | CENTER -> "center"
@@ -107,7 +105,6 @@ let keywords =
     ("dash", DASH);
     ("at", AT);
     ("stroke", STROKE);
-    ("from", FROM);
     ("to", TO);
     ("via", VIA);
     ("center", CENTER);

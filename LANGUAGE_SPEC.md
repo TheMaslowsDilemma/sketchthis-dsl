@@ -43,9 +43,9 @@ vec_expr := "(" num_expr "," num_expr ")"  -- construct
 sketch_expr := primitive | IDENT | "[" sketch_list "]"
 sketch_list := sketch_expr ("," sketch_expr)*
 
-primitive := "dot" "at" vec_expr
-           | "dash" "at" vec_expr
-           | "stroke" "from" vec_expr "to" vec_expr ["via" vec_list]
+primitive := "dot" vec_expr
+           | "dash" vec_expr
+           | "stroke" vec_expr "to" vec_expr ["via" vec_list]
 
 vec_list := "[" vec_expr ("," vec_expr)* "]"
 ```
@@ -79,16 +79,16 @@ let p2 : vec = (90, 100) + offset
 
 let line : sketch = stroke from p1 to p2
 let some_dashes : sketch = [
-  dash at offset * 3,
-  dash at offset * 4,
-  dash at offset * 5
+  dash offset * 3,
+  dash offset * 4,
+  dash offset * 5
 ]
-draw [ line, 
+draw some_dashes
 ```
 
 ### Curves with control points
 ```
-let curve : sketch = stroke from (0, 50) to (100, 50) via [(50, 0)]
+let curve : sketch = stroke (0, 50) to (100, 50) via [(50, 0)]
 trace curve
 ```
 
@@ -96,33 +96,29 @@ trace curve
 ```
 # Build outward from a shape's own centroid
 let triangle : sketch = [
-  stroke from (50, 10) to (10, 90),
-  stroke from (10, 90) to (90, 90),
-  stroke from (90, 90) to (50, 10)
+  stroke (50, 10) to (10, 90),
+  stroke (10, 90) to (90, 90),
+  stroke (90, 90) to (50, 10)
 ]
 let heart : vec = center of triangle
 let spokes : sketch = [
-  stroke from heart to (50, 10),
-  stroke from heart to (10, 90),
-  stroke from heart to (90, 90)
+  stroke heart to (50, 10),
+  stroke heart to (10, 90),
+  stroke heart to (90, 90)
 ]
 trace [triangle, spokes]
 
 # A little Haiku
-scribble stroke from origin to center of stroke from heart to (20, 26)
+scribble stroke origin to center of stroke heart to (20, 26)
 ```
 
 
 ## Important Notes
 
-- dot notation is such as vec1.x or vec1.y is NOT SUPPORTED
-- variable re-assignment is NOT SUPPORTED
-- Dashes can be helpful with shading
-- Comments start with `#`
-- Comments are helpful to plan and label sections
+- dot notation and vairable re-assignment are NOT SUPPORTED
+- Comments start with `#` can help label but should be minimal
 - Coordinates are in mm
 - Newlines separate statements
 - Make an effor not to make duplicate lines and strokes
-- Flow field only affects `dash`, not `stroke` or `dot`
 - `via` points create smooth Catmull-Rom splines
 - Noise magnitude: scribble > draw > trace (none)

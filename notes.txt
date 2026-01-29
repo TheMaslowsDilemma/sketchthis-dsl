@@ -429,3 +429,14 @@ define sketches that both affect the flow field and need
 it to be created. the work around there could be just eval
 the flow fields at the time of sketch, honestly optimal
 solution.
+
+
+-----------------------------------------------------------
+Jan. 28 2026
+-----------------------------------------------------------
+
+--- REMOVING PREPOSITIONS ---
+looking at the code, some of the prepositions
+are verbose. "stroke from <vec> to <vec> via <vec list>"
+doesn't need "from" it is obvious with out it.\
+same with dot "at" and dash "at"
