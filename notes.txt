@@ -456,3 +456,7 @@ asking for transformations too much actually makes the output
 worse. it is possible that the best way to do this is through
 using as much of what it was trained on. the closest thing is
 SVGs and Code. need todo some thinking.
+
+--- CHAINING & AT ---
+we should figure out ordering of operations and introduce
+chaining using the pipe | char.
