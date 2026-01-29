@@ -10,7 +10,7 @@ type vec = { x : float; y : float }
 let vec x y : vec = { x; y }
 let vec_add a b = { x = a.x +. b.x; y = a.y +. b.y }
 let vec_sub a b = { x = a.x -. b.x; y = a.y -. b.y }
-let vec_scale v s = { x = v.x *. s; y = v.y *. s }
+let vec_scale s v = { x = v.x *. s; y = v.y *. s }
 let vec_len_sq v = (v.x *. v.x) +. (v.y *. v.y)
 let vec_length v = Float.sqrt (vec_len_sq v)
 let vec_dot a b = (a.x *. b.x) +. (a.y *. b.y)
@@ -20,15 +20,15 @@ let vec_perp v = { x = -.v.y; y = v.x }
 let vec_normalize v =
   let len = vec_length v in
   if len < Globals.epsilon then { x = 1.0; y = 0.0 }
-  else vec_scale v (1.0 /. len)
+  else vec_scale (1.0 /. len) v
 
 let vec_distance a b = vec_length (vec_sub b a)
-let vec_lerp a b t = vec_add a (vec_scale (vec_sub b a) t)
+let vec_lerp a b t = vec_add a (vec_scale t (vec_sub b a))
 
 let vec_mirror axis point =
   let axis = vec_normalize axis in
   let dot = vec_dot point axis in
-  vec_sub (vec_scale axis (2.0 *. dot)) point
+  vec_sub (vec_scale (2.0 *. dot) axis) point
 
 let point_to_segment_closest p a b =
   let ab = vec_sub b a in
@@ -38,5 +38,5 @@ let point_to_segment_closest p a b =
     let t =
       Float.max 0.0 (Float.min 1.0 (vec_dot (vec_sub p a) ab /. len_sq))
     in
-    let closest = vec_add a (vec_scale ab t) in
+    let closest = vec_add a (vec_scale t ab) in
     (closest, vec_distance p closest)

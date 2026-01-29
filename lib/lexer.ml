@@ -21,6 +21,9 @@ type token =
   | OF
   | MIRROR
   | ABOUT
+  | TRANSLATE
+  | SCALE
+  | BY
   | SCRIBBLE
   | DRAW
   | TRACE
@@ -69,6 +72,9 @@ let token_to_string = function
   | OF -> "of"
   | MIRROR -> "mirror"
   | ABOUT -> "about"
+  | TRANSLATE -> "translate"
+  | SCALE -> "scale"
+  | BY -> "by"
   | SCRIBBLE -> "scribble"
   | DRAW -> "draw"
   | TRACE -> "trace"
@@ -108,6 +114,9 @@ let keywords =
     ("of", OF);
     ("mirror", MIRROR);
     ("about", ABOUT);
+    ("translate", TRANSLATE);
+    ("scale", SCALE);
+    ("by", BY);
     ("scribble", SCRIBBLE);
     ("draw", DRAW);
     ("trace", TRACE);

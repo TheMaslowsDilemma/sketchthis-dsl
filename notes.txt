@@ -415,4 +415,17 @@ function does not resolve the value of a "flow at" and will
 cause issues with the mirror if we use that as an axis to mirror
 about. i.e "mirror <sketch> about flow at <vec>" will always
 mirror about [1,0] because that is how we default this value.
-therefore we should remove that expression!
+therefore we should remove that expression. additionaly im
+adding "scale" and "translate" "by" expressions.
+
+--- COLLECT FLOW ---
+this function needs to be addressed. it is not collecting
+the evaluated splines, afaict. maybe we should instead
+collect flows for a "primitive intermediate representation"
+one thats only made of elements contributing to flow and
+can not affect flow, this is reason for removing "flow at"
+vector expression, because if that were allowed we could
+define sketches that both affect the flow field and need
+it to be created. the work around there could be just eval
+the flow fields at the time of sketch, honestly optimal
+solution.

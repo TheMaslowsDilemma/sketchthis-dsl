@@ -30,6 +30,8 @@ and sketch_expr =
   | SketchVar of string
   | SketchList of sketch_expr list
   | MirrorSketch of sketch_expr * vec_expr
+  | TranslateSketch of sketch_expr * vec_expr
+  | ScaleSketch of sketch_expr * num_expr
 
 type expr =
   | ExprNum of num_expr
@@ -107,6 +109,12 @@ and sketch_expr_to_string = function
   | MirrorSketch (sk, axis) ->
       Printf.sprintf "mirror %s about %s" (sketch_expr_to_string sk)
         (vec_expr_to_string axis)
+  | TranslateSketch (sk, translation) ->
+      Printf.sprintf "translate %s by %s" (sketch_expr_to_string sk)
+        (vec_expr_to_string translation)
+  | ScaleSketch (sk, scale) ->
+      Printf.sprintf "scale %s by %s" (sketch_expr_to_string sk)
+        (num_expr_to_string scale)
 
 let statement_to_string = function
   | LetNum (name, expr) ->

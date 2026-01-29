@@ -35,7 +35,7 @@ let catmull_rom_tangent p0 p1 p2 p3 t =
   in
   let tangent = vec (eval p0.x p1.x p2.x p3.x) (eval p0.y p1.y p2.y p3.y) in
   let len = vec_length tangent in
-  if len < Globals.epsilon then vec 1.0 0.0 else vec_scale tangent (1.0 /. len)
+  if len < Globals.epsilon then vec 1.0 0.0 else vec_scale (1.0 /. len) tangent
 
 (* ═══════════════════════════════════════════════════════════════════════════
    Segment Conversion

@@ -16,8 +16,8 @@ val vec_add : vec -> vec -> vec
 (* a - b *)
 val vec_sub : vec -> vec -> vec
 
-(* v * scalar *)
-val vec_scale : vec -> float -> vec
+(* scalar * v *)
+val vec_scale : float -> vec -> vec
 
 (* squared length *)
 val vec_len_sq : vec -> float

@@ -27,7 +27,7 @@ let make_flow_source p0 p1 =
   let d = vec_sub p1 p0 in
   let len = vec_length d in
   let dir =
-    if len < Globals.epsilon then vec 1.0 0.0 else vec_scale d (1.0 /. len)
+    if len < Globals.epsilon then vec 1.0 0.0 else vec_scale (1.0 /. len) d
   in
   { origin = p0; target = p1; dir }
 
@@ -91,6 +91,7 @@ let transform_path f path =
 let transform_ir f ir = List.map (transform_path f) ir
 let mirror_ir axis ir = transform_ir (vec_mirror axis) ir
 let translate_ir dir ir = transform_ir (vec_add dir) ir
+let scale_ir scale ir = transform_ir (vec_scale scale) ir
 
 (* Expression Evaluation *)
 
@@ -120,7 +121,7 @@ let rec eval_vec_basic env = function
   | VecCenter sk -> compute_center (eval_sketch_basic env sk)
   | VecAdd (a, b) -> vec_add (eval_vec_basic env a) (eval_vec_basic env b)
   | VecSub (a, b) -> vec_sub (eval_vec_basic env a) (eval_vec_basic env b)
-  | VecScale (v, n) -> vec_scale (eval_vec_basic env v) (eval_num env n)
+  | VecScale (v, n) -> vec_scale (eval_num env n) (eval_vec_basic env v) 
 
 and eval_sketch_basic env = function
   | Primitive prim -> eval_primitive_basic env prim
@@ -133,10 +134,18 @@ and eval_sketch_basic env = function
       let sk_basic_ir = eval_sketch_basic env sk in
       let sk_center = compute_center sk_basic_ir in
       let sk_normalized =
-        translate_ir (vec_scale sk_center (-1.0)) sk_basic_ir
+        translate_ir (vec_scale (-1.0) sk_center) sk_basic_ir
       in
       let sk_mirrored = mirror_ir axis_vec sk_normalized in
       translate_ir sk_center sk_mirrored
+  | TranslateSketch (sk, translation) ->
+      let trns_vec = eval_vec_basic env translation in
+      let sk_basic_ir = eval_sketch_basic env sk in
+      translate_ir trns_vec sk_basic_ir
+  | ScaleSketch (sk, scale) ->
+      let scl_num = eval_num env scale in
+      let sk_basic_ir = eval_sketch_basic env sk in
+      scale_ir scl_num sk_basic_ir
 
 and eval_primitive_basic env = function
   | Dot v ->
@@ -186,6 +195,8 @@ let rec collect_flow env = function
       try collect_flow env (lookup_sketch name env) with _ -> [])
   | SketchList sks -> List.concat_map (collect_flow env) sks
   | MirrorSketch _ -> [] (* todo: evaluate *)
+  | TranslateSketch _ -> [] (* todo: eval, but also reconsider this func *)
+  | ScaleSketch _ -> [] (* todo: eval *)
 
 (* Full Evaluation - produces final IR with splines flattened *)
 
@@ -198,7 +209,7 @@ let rec eval_vec env flow = function
   | VecCenter sk -> compute_center (eval_sketch_basic env sk)
   | VecAdd (a, b) -> vec_add (eval_vec env flow a) (eval_vec env flow b)
   | VecSub (a, b) -> vec_sub (eval_vec env flow a) (eval_vec env flow b)
-  | VecScale (v, n) -> vec_scale (eval_vec env flow v) (eval_num env n)
+  | VecScale (v, n) -> vec_scale (eval_num env n) (eval_vec env flow v)
 
 let eval_primitive env noise flow = function
   | Dot v ->
@@ -247,9 +258,17 @@ let rec eval_sketch env noise flow = function
       let axis_vec = eval_vec env flow axis in
       let sk_ir = eval_sketch env noise flow sk in
       let sk_center = compute_center sk_ir in
-      let sk_normalized = translate_ir (vec_scale sk_center (-1.0)) sk_ir in
+      let sk_normalized = translate_ir (vec_scale (-1.0) sk_center) sk_ir in
       let sk_mirrored = mirror_ir axis_vec sk_normalized in
       translate_ir sk_center sk_mirrored
+  | TranslateSketch (sk, translation) ->
+      let trns_vec = eval_vec env flow translation in
+      let sk_ir = eval_sketch env noise flow sk in
+      translate_ir trns_vec sk_ir
+  | ScaleSketch (sk, scale) ->
+      let scl_num = eval_num env scale in
+      let sk_ir = eval_sketch env noise flow sk in
+      scale_ir scl_num sk_ir
 
 (* Statement Evaluation *)
 

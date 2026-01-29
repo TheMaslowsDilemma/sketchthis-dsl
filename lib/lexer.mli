@@ -22,6 +22,9 @@ type token =
   | OF
   | MIRROR
   | ABOUT
+  | TRANSLATE
+  | SCALE
+  | BY
   | SCRIBBLE
   | DRAW
   | TRACE
