@@ -449,3 +449,10 @@ todo.
 
 --- ADDING REGIONS ---
 todo.
+
+
+--- TRANSFORMATION MAXXING ---
+asking for transformations too much actually makes the output
+worse. it is possible that the best way to do this is through
+using as much of what it was trained on. the closest thing is
+SVGs and Code. need todo some thinking.
