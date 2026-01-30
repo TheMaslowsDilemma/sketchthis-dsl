@@ -234,7 +234,8 @@ let tokenize input =
     let l, tok = next_token l in
     match tok.token with EOF -> List.rev (tok :: acc) | _ -> go l (tok :: acc)
   in
-  go { input; len = String.length input; pos = { offset = 0; line = 1; column = 1 } } []
+  let pos = { offset = 0; line = 1; column = 1 } in
+  go { input; len = String.length input; pos } []
 
 let tokenize_simple input = tokenize input |> List.map (fun lt -> lt.token)
 
