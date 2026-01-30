@@ -460,3 +460,19 @@ SVGs and Code. need todo some thinking.
 --- CHAINING & AT ---
 we should figure out ordering of operations and introduce
 chaining using the pipe | char.
+
+
+-----------------------------------------------------------
+Jan. 30 2026
+-----------------------------------------------------------
+
+--- COMPILER ERRORS ---
+the compiler needs errors to specify the line and column.
+
+--- SO MUCH BLOAT ---
+looking anywhere for more then 45 seconds reveals a lot of
+bloat. klaude is ahhh. lexer for example is checking the
+input string length every time peek is called. it doesn't
+use generic wrapper for positions and uses different names
+for positions.
+

@@ -53,7 +53,7 @@ type lexer_error = { message : string; position : position }
 
 exception LexerError of lexer_error
 
-type lexer = { input : string; len : int; pos : int; line : int; col : int }
+type lexer = { input : string; len : int; pos : position }
 
 let token_to_string = function
   | NUMBER f -> Printf.sprintf "number(%g)" f
@@ -130,20 +130,19 @@ let is_digit = function '0' .. '9' -> true | _ -> false
 let is_alpha = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
 let is_ident_start c = is_alpha c || c = '_'
 let is_ident_char c = is_alpha c || is_digit c || c = '_'
-let pos l = { line = l.line; column = l.col; offset = l.pos }
-let eof l = l.pos >= l.len
-let peek l = if eof l then None else Some l.input.[l.pos]
+let eof l = l.pos.offset >= l.len
+let peek l = if eof l then None else Some l.input.[l.pos.offset]
 
 let peek_n l n =
-  let i = l.pos + n in
+  let i = l.pos.offset + n in
   if i >= l.len then None else Some l.input.[i]
 
 let advance l =
   if eof l then l
   else
-    match l.input.[l.pos] with
-    | '\n' -> { l with pos = l.pos + 1; line = l.line + 1; col = 1 }
-    | _ -> { l with pos = l.pos + 1; col = l.col + 1 }
+    match l.input.[l.pos.offset] with
+    | '\n' -> { l with pos = { offset = l.pos.offset + 1; line = l.pos.line + 1; column = 1 } }
+    | _ -> { l with pos = { l.pos with offset = l.pos.offset + 1; column = l.pos.column + 1 } }
 
 let rec skip_ws l =
   match peek l with Some (' ' | '\t' | '\r') -> skip_ws (advance l) | _ -> l
@@ -160,7 +159,7 @@ let rec skip_comments l =
 
 let rec skip l =
   let l' = skip_comments (skip_ws l) in
-  if l'.pos > l.pos then skip l' else l'
+  if l'.pos.offset > l.pos.offset then skip l' else l'
 
 let rec read_digits l acc =
   match peek l with
@@ -168,7 +167,7 @@ let rec read_digits l acc =
   | _ -> (l, acc)
 
 let read_number l =
-  let start = pos l in
+  let start = l.pos in
   let l, acc =
     match peek l with Some '-' -> (advance l, "-") | _ -> (l, "")
   in
@@ -199,7 +198,7 @@ let read_identifier l =
 
 let next_token l =
   let l = skip l in
-  let start = pos l in
+  let start = l.pos in
   if eof l then (l, { token = EOF; start_pos = start; end_pos = start })
   else
     let c = Option.get (peek l) in
@@ -228,14 +227,14 @@ let next_token l =
                  position = start;
                })
     in
-    (l, { token = tok; start_pos = start; end_pos = pos l })
+    (l, { token = tok; start_pos = start; end_pos = l.pos })
 
 let tokenize input =
   let rec go l acc =
     let l, tok = next_token l in
     match tok.token with EOF -> List.rev (tok :: acc) | _ -> go l (tok :: acc)
   in
-  go { input; len = String.length input; pos = 0; line = 1; col = 1 } []
+  go { input; len = String.length input; pos = { offset = 0; line = 1; column = 1 } } []
 
 let tokenize_simple input = tokenize input |> List.map (fun lt -> lt.token)
 

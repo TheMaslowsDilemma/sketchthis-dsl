@@ -13,7 +13,9 @@ open Environment
 type path = { start : vec; segments : segment list }
 type ir = path list
 type bounds = { min_x : float; max_x : float; min_y : float; max_y : float }
-type compile_error = UndefinedVariable of string | InvalidOperation of string
+type compile_error = 
+  | UndefinedVariable of string
+  | InvalidOperation of string
 
 exception CompileError of compile_error
 

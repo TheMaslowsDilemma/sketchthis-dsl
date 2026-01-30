@@ -335,5 +335,5 @@ let parse_vec_expr_string input =
   parse_vec_expr p
 
 let format_error e =
-  Printf.sprintf "Parse error at line %d, column %d: %s" e.position.line
-    e.position.column e.message
+   Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message e.position.line
+    e.position.column
