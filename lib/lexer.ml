@@ -4,6 +4,7 @@ lexer.ml
 ----------------------------------------------------------- 
 *)
 
+
 type token =
   | NUMBER of float
   | IDENT of string
@@ -52,7 +53,7 @@ type lexer_error = { message : string; position : position }
 
 exception LexerError of lexer_error
 
-type lexer = { input : string; pos : int; line : int; col : int }
+type lexer = { input : string; len : int; pos : int; line : int; col : int }
 
 let token_to_string = function
   | NUMBER f -> Printf.sprintf "number(%g)" f
@@ -130,12 +131,12 @@ let is_alpha = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
 let is_ident_start c = is_alpha c || c = '_'
 let is_ident_char c = is_alpha c || is_digit c || c = '_'
 let pos l = { line = l.line; column = l.col; offset = l.pos }
-let eof l = l.pos >= String.length l.input
+let eof l = l.pos >= l.len
 let peek l = if eof l then None else Some l.input.[l.pos]
 
 let peek_n l n =
   let i = l.pos + n in
-  if i >= String.length l.input then None else Some l.input.[i]
+  if i >= l.len then None else Some l.input.[i]
 
 let advance l =
   if eof l then l
@@ -234,7 +235,7 @@ let tokenize input =
     let l, tok = next_token l in
     match tok.token with EOF -> List.rev (tok :: acc) | _ -> go l (tok :: acc)
   in
-  go { input; pos = 0; line = 1; col = 1 } []
+  go { input; len = String.length input; pos = 0; line = 1; col = 1 } []
 
 let tokenize_simple input = tokenize input |> List.map (fun lt -> lt.token)
 
