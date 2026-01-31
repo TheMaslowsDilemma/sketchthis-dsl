@@ -52,6 +52,10 @@ type lexer_error = { message : string; position : position }
 
 exception LexerError of lexer_error
 
+let format_error e =
+  Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message
+    e.position.line e.position.column
+
 type lexer = { input : string; len : int; pos : position }
 
 let token_to_string = function
