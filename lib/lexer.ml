@@ -4,7 +4,6 @@ lexer.ml
 ----------------------------------------------------------- 
 *)
 
-
 type token =
   | NUMBER of float
   | IDENT of string
@@ -141,8 +140,17 @@ let advance l =
   if eof l then l
   else
     match l.input.[l.pos.offset] with
-    | '\n' -> { l with pos = { offset = l.pos.offset + 1; line = l.pos.line + 1; column = 1 } }
-    | _ -> { l with pos = { l.pos with offset = l.pos.offset + 1; column = l.pos.column + 1 } }
+    | '\n' ->
+        {
+          l with
+          pos = { offset = l.pos.offset + 1; line = l.pos.line + 1; column = 1 };
+        }
+    | _ ->
+        {
+          l with
+          pos =
+            { l.pos with offset = l.pos.offset + 1; column = l.pos.column + 1 };
+        }
 
 let rec skip_ws l =
   match peek l with Some (' ' | '\t' | '\r') -> skip_ws (advance l) | _ -> l

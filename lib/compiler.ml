@@ -13,13 +13,16 @@ open Environment
 type path = { start : vec; segments : segment list }
 type ir = path list
 type bounds = { min_x : float; max_x : float; min_y : float; max_y : float }
-type compile_error = 
-  | UndefinedVariable of string
-  | InvalidOperation of string
+type compile_error = { message : string; position : Lexer.position }
 
 exception CompileError of compile_error
 
-let error e = raise (CompileError e)
+let error pos msg = raise (CompileError { message = msg; position = pos })
+
+let error_undefined pos name =
+  error pos (Printf.sprintf "Undefined variable: %s" name)
+
+let error_div_zero pos = error pos "Division by zero"
 
 (* Flow Field Logic *)
 
@@ -101,39 +104,44 @@ let transform_centered_ir f ir =
 
 (* Expression Evaluation *)
 
-let rec eval_num env = function
+let rec eval_num env (e : num_expr) =
+  let pos = e.loc.start_loc in
+  match e.txt with
   | NumLit f -> f
   | NumVar name -> (
       try lookup_num name env
-      with Environment.UndefinedVariable n -> error (UndefinedVariable n))
+      with Environment.UndefinedVariable n -> error_undefined pos n)
   | NumNeg e -> -.eval_num env e
   | NumAdd (a, b) -> eval_num env a +. eval_num env b
   | NumSub (a, b) -> eval_num env a -. eval_num env b
   | NumMul (a, b) -> eval_num env a *. eval_num env b
   | NumDiv (a, b) ->
       let d = eval_num env b in
-      if Float.abs d < Globals.epsilon then
-        error (InvalidOperation "division by zero")
+      if Float.abs d < Globals.epsilon then error_div_zero b.loc.start_loc
       else eval_num env a /. d
 
 (* Basic Evaluation - cheap, for bounds/center/flow only *)
 
-let rec eval_vec_basic env = function
+let rec eval_vec_basic env (e : vec_expr) =
+  let pos = e.loc.start_loc in
+  match e.txt with
   | VecLit (x, y) -> vec x y
   | VecConstruct (x, y) -> vec (eval_num env x) (eval_num env y)
   | VecVar name -> (
       try lookup_vec name env
-      with Environment.UndefinedVariable n -> error (UndefinedVariable n))
+      with Environment.UndefinedVariable n -> error_undefined pos n)
   | VecCenter sk -> compute_center (eval_sketch_basic env sk)
   | VecAdd (a, b) -> vec_add (eval_vec_basic env a) (eval_vec_basic env b)
   | VecSub (a, b) -> vec_sub (eval_vec_basic env a) (eval_vec_basic env b)
   | VecScale (v, n) -> vec_scale (eval_num env n) (eval_vec_basic env v)
 
-and eval_sketch_basic env = function
+and eval_sketch_basic env (e : sketch_expr) =
+  let pos = e.loc.start_loc in
+  match e.txt with
   | Primitive prim -> eval_primitive_basic env prim
   | SketchVar name -> (
       try eval_sketch_basic env (lookup_sketch name env)
-      with Environment.UndefinedVariable n -> error (UndefinedVariable n))
+      with Environment.UndefinedVariable n -> error_undefined pos n)
   | SketchList sks -> List.concat_map (eval_sketch_basic env) sks
   | MirrorSketch (sk, axis) ->
       let axis_vec = eval_vec_basic env axis in
@@ -173,17 +181,14 @@ and eval_primitive_basic env = function
       let pts = [ p0 ] @ via_pts @ [ p1 ] in
       [ { start = p0; segments = points_to_segments pts } ]
 
-(* Flow Collection
-   TODO: this seems innefficient. why are we collecting flows
-   of statments and not just the final-non-flow-segments?
-   currently we are evaluating strokes and 
- *)
+(* Flow Collection *)
 
 let rec pairs = function
   | a :: (b :: _ as rest) -> (a, b) :: pairs rest
   | _ -> []
 
-let rec collect_flow env = function
+let rec collect_flow env (e : sketch_expr) =
+  match e.txt with
   | Primitive (Stroke (v0, via, v1)) ->
       let pts =
         [ eval_vec_basic env v0 ]
@@ -195,18 +200,20 @@ let rec collect_flow env = function
   | SketchVar name -> (
       try collect_flow env (lookup_sketch name env) with _ -> [])
   | SketchList sks -> List.concat_map (collect_flow env) sks
-  | MirrorSketch _ -> [] (* todo: evaluate *)
-  | TranslateSketch _ -> [] (* todo: eval *)
-  | ScaleSketch _ -> [] (* todo: eval *)
+  | MirrorSketch _ -> []
+  | TranslateSketch _ -> []
+  | ScaleSketch _ -> []
 
 (* Full Evaluation - produces final IR with splines flattened *)
 
-let rec eval_vec env flow = function
+let rec eval_vec env flow (e : vec_expr) =
+  let pos = e.loc.start_loc in
+  match e.txt with
   | VecLit (x, y) -> vec x y
   | VecConstruct (x, y) -> vec (eval_num env x) (eval_num env y)
   | VecVar name -> (
       try lookup_vec name env
-      with Environment.UndefinedVariable n -> error (UndefinedVariable n))
+      with Environment.UndefinedVariable n -> error_undefined pos n)
   | VecCenter sk -> compute_center (eval_sketch_basic env sk)
   | VecAdd (a, b) -> vec_add (eval_vec env flow a) (eval_vec env flow b)
   | VecSub (a, b) -> vec_sub (eval_vec env flow a) (eval_vec env flow b)
@@ -251,9 +258,13 @@ let eval_primitive env noise flow = function
       let start = match segments with [] -> p0 | s :: _ -> s.p0 in
       [ { start; segments } ]
 
-let rec eval_sketch env noise flow = function
+let rec eval_sketch env noise flow (e : sketch_expr) =
+  let pos = e.loc.start_loc in
+  match e.txt with
   | Primitive prim -> eval_primitive env noise flow prim
-  | SketchVar name -> eval_sketch env noise flow (lookup_sketch name env)
+  | SketchVar name -> (
+      try eval_sketch env noise flow (lookup_sketch name env)
+      with Environment.UndefinedVariable n -> error_undefined pos n)
   | SketchList sks -> List.concat_map (eval_sketch env noise flow) sks
   | MirrorSketch (sk, axis) ->
       let axis_vec = eval_vec env flow axis in
@@ -270,7 +281,8 @@ let rec eval_sketch env noise flow = function
 
 (* Statement Evaluation *)
 
-let eval_stmt env flow = function
+let eval_stmt env flow (s : statement) =
+  match s.txt with
   | LetNum (name, e) -> (bind name (VNum (eval_num env e)) env, flow, None)
   | LetVec (name, e) -> (bind name (VVec (eval_vec_basic env e)) env, flow, None)
   | LetSketch (name, e) -> (bind name (VSketch e) env, flow, None)
@@ -299,9 +311,9 @@ let compile program =
 let compile_safe program =
   try Ok (compile program) with CompileError e -> Error e
 
-let format_error = function
-  | UndefinedVariable name -> Printf.sprintf "Undefined variable: %s" name
-  | InvalidOperation msg -> Printf.sprintf "Invalid operation: %s" msg
+let format_error e =
+  Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message
+    e.position.line e.position.column
 
 (* Debug / Pretty Printing *)
 

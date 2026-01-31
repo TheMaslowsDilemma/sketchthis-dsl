@@ -165,6 +165,6 @@ let () =
       | Parser.ParseError e ->
           Printf.eprintf "%s\n%!" (Parser.format_error e); exit 1
       | Compiler.CompileError e ->
-          Printf.eprintf "Compile error: %s\n%!" (Compiler.format_error e); exit 1
+          Printf.eprintf "%s\n%!" (Compiler.format_error e); exit 1
       | Sys_error msg ->
           Printf.eprintf "Error: %s\n%!" msg; exit 1

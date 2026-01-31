@@ -46,6 +46,21 @@ let rec skip_nl p =
     advance p;
     skip_nl p)
 
+(* Location helpers *)
+let start_pos p = (current p).start_pos
+
+let end_pos p =
+  if p.pos > 0 then p.tokens.(p.pos - 1).end_pos else (current p).start_pos
+
+let loc start_loc end_loc txt : 'a Location.loc =
+  { txt; loc = { start_loc; end_loc } }
+
+let loc_to p start txt = loc start (end_pos p) txt
+
+let with_span (a : _ Location.loc) (b : _ Location.loc) txt : _ Location.loc =
+  loc a.loc.start_loc b.loc.end_loc txt
+
+(* Parsing helpers *)
 let parse_ident p =
   match peek p with
   | IDENT s ->
@@ -66,73 +81,84 @@ let parse_type p =
       TSketch
   | _ -> expected (current p) "type (number, vec, or sketch)"
 
+(* Expression parsing *)
 let rec parse_num_expr p = parse_num_add p
 
 and parse_num_add p =
-  let rec go left =
+  let rec go (left : num_expr) =
     match peek p with
     | PLUS ->
         advance p;
-        go (NumAdd (left, parse_num_mul p))
+        let right = parse_num_mul p in
+        go (with_span left right (NumAdd (left, right)))
     | MINUS ->
         advance p;
-        go (NumSub (left, parse_num_mul p))
+        let right = parse_num_mul p in
+        go (with_span left right (NumSub (left, right)))
     | _ -> left
   in
   go (parse_num_mul p)
 
 and parse_num_mul p =
-  let rec go left =
+  let rec go (left : num_expr) =
     match peek p with
     | STAR ->
         advance p;
-        go (NumMul (left, parse_num_atom p))
+        let right = parse_num_atom p in
+        go (with_span left right (NumMul (left, right)))
     | SLASH ->
         advance p;
-        go (NumDiv (left, parse_num_atom p))
+        let right = parse_num_atom p in
+        go (with_span left right (NumDiv (left, right)))
     | _ -> left
   in
   go (parse_num_atom p)
 
 and parse_num_atom p =
+  let start = start_pos p in
   match peek p with
   | NUMBER f ->
       advance p;
-      NumLit f
+      loc_to p start (NumLit f)
   | IDENT s ->
       advance p;
-      NumVar s
+      loc_to p start (NumVar s)
   | MINUS ->
       advance p;
-      NumNeg (parse_num_atom p)
+      let e = parse_num_atom p in
+      loc start e.loc.end_loc (NumNeg e)
   | LPAREN ->
       advance p;
       let e = parse_num_expr p in
       expect p RPAREN;
-      e
+      loc_to p start e.txt
   | _ -> expected (current p) "numeric expression"
 
 and parse_vec_expr p = parse_vec_add p
 
 and parse_vec_add p =
-  let rec go left =
+  let rec go (left : vec_expr) =
     match peek p with
     | PLUS ->
         advance p;
-        go (VecAdd (left, parse_vec_mul p))
+        let right = parse_vec_mul p in
+        go (with_span left right (VecAdd (left, right)))
     | MINUS ->
         advance p;
-        go (VecSub (left, parse_vec_mul p))
+        let right = parse_vec_mul p in
+        go (with_span left right (VecSub (left, right)))
     | _ -> left
   in
   go (parse_vec_mul p)
 
 and parse_vec_mul p =
-  let rec go_mul left =
+  let start = start_pos p in
+  let rec go (left : vec_expr) =
     match peek p with
     | STAR ->
         advance p;
-        go_mul (VecScale (left, parse_num_atom p))
+        let right = parse_num_atom p in
+        go (with_span left right (VecScale (left, right)))
     | _ -> left
   in
   match peek p with
@@ -142,16 +168,18 @@ and parse_vec_mul p =
         let n = parse_num_atom p in
         if check p STAR then (
           advance p;
-          go_mul (VecScale (parse_vec_mul p, n)))
+          let v = parse_vec_mul p in
+          go (loc start v.loc.end_loc (VecScale (v, n))))
         else (
           restore p saved;
           expected (current p) "* after number in vector context")
       with ParseError _ ->
         restore p saved;
         expected (current p) "vector expression")
-  | _ -> go_mul (parse_vec_atom p)
+  | _ -> go (parse_vec_atom p)
 
 and parse_vec_atom p =
+  let start = start_pos p in
   match peek p with
   | LPAREN -> (
       advance p;
@@ -159,96 +187,105 @@ and parse_vec_atom p =
       try
         let first = parse_num_expr p in
         match peek p with
-        | COMMA -> (
+        | COMMA ->
             advance p;
             let second = parse_num_expr p in
             expect p RPAREN;
-            match (first, second) with
-            | NumLit x, NumLit y -> VecLit (x, y)
-            | _ -> VecConstruct (first, second))
+            let desc =
+              match (first.txt, second.txt) with
+              | NumLit x, NumLit y -> VecLit (x, y)
+              | _ -> VecConstruct (first, second)
+            in
+            loc_to p start desc
         | RPAREN | PLUS | MINUS ->
             restore p saved;
             let inner = parse_vec_expr p in
             expect p RPAREN;
-            inner
+            loc_to p start inner.txt
         | _ -> expected (current p) ", or ) or vector operator"
       with ParseError _ ->
         restore p saved;
         let inner = parse_vec_expr p in
         expect p RPAREN;
-        inner)
+        loc_to p start inner.txt)
   | CENTER ->
       advance p;
       expect p OF;
-      VecCenter (parse_sketch_atom p)
+      let (sk : sketch_expr) = parse_sketch_atom p in
+      loc start sk.loc.end_loc (VecCenter sk)
   | ORIGIN ->
       advance p;
-      VecLit (0.0, 0.0)
+      loc_to p start (VecLit (0.0, 0.0))
   | X_MAX ->
       advance p;
-      VecVar "x_max"
+      loc_to p start (VecVar "x_max")
   | Y_MAX ->
       advance p;
-      VecVar "y_max"
+      loc_to p start (VecVar "y_max")
   | X_AXIS ->
       advance p;
-      VecLit (1.0, 0.0)
+      loc_to p start (VecLit (1.0, 0.0))
   | Y_AXIS ->
       advance p;
-      VecLit (0.0, 1.0)
+      loc_to p start (VecLit (0.0, 1.0))
   | IDENT s ->
       advance p;
-      VecVar s
+      loc_to p start (VecVar s)
   | _ -> expected (current p) "vector expression"
 
 and parse_sketch_atom p =
+  let start = start_pos p in
   match peek p with
   | DOT ->
       advance p;
-      Primitive (Dot (parse_vec_expr p))
+      let v = parse_vec_expr p in
+      loc start v.loc.end_loc (Primitive (Dot v))
   | DASH ->
       advance p;
-      Primitive (Dash (parse_vec_expr p))
+      let v = parse_vec_expr p in
+      loc start v.loc.end_loc (Primitive (Dash v))
   | STROKE ->
       advance p;
       let p0 = parse_vec_expr p in
       expect p TO;
       let p1 = parse_vec_expr p in
-      let via = if match_tok p VIA then parse_vec_list_bracket p else [] in
-      Primitive (Stroke (p0, via, p1))
+      if match_tok p VIA then
+        let via = parse_vec_list_bracket p in
+        loc_to p start (Primitive (Stroke (p0, via, p1)))
+      else loc start p1.loc.end_loc (Primitive (Stroke (p0, [], p1)))
   | LBRACKET ->
       advance p;
       skip_nl p;
       let sks = parse_sketch_list p in
       skip_nl p;
       expect p RBRACKET;
-      SketchList sks
+      loc_to p start (SketchList sks)
   | IDENT s ->
       advance p;
-      SketchVar s
+      loc_to p start (SketchVar s)
   | MIRROR ->
       advance p;
-      let sk = parse_sketch_atom p in
+      let (sk : sketch_expr) = parse_sketch_atom p in
       expect p ABOUT;
       let axis = parse_vec_atom p in
-      MirrorSketch (sk, axis)
+      loc start axis.loc.end_loc (MirrorSketch (sk, axis))
   | TRANSLATE ->
-    advance p;
-    let sk = parse_sketch_atom p in
-    expect p BY;
-    let translation = parse_vec_atom p in
-    TranslateSketch (sk, translation)
+      advance p;
+      let (sk : sketch_expr) = parse_sketch_atom p in
+      expect p BY;
+      let v = parse_vec_atom p in
+      loc start v.loc.end_loc (TranslateSketch (sk, v))
   | SCALE ->
-    advance p;
-    let sk = parse_sketch_atom p in
-    expect p BY;
-    let scale = parse_num_atom p in
-    ScaleSketch (sk, scale)
+      advance p;
+      let (sk : sketch_expr) = parse_sketch_atom p in
+      expect p BY;
+      let n = parse_num_atom p in
+      loc start n.loc.end_loc (ScaleSketch (sk, n))
   | LPAREN ->
       advance p;
-      let sk = parse_sketch_expr p in
+      let (sk : sketch_expr) = parse_sketch_expr p in
       expect p RPAREN;
-      sk
+      loc_to p start sk.txt
   | _ -> expected (current p) "sketch expression"
 
 and parse_vec_list_bracket p =
@@ -284,29 +321,37 @@ and parse_sketch_list p =
 and parse_sketch_expr p = parse_sketch_atom p
 
 let parse_let p =
+  let start = start_pos p in
   expect p LET;
   let name = parse_ident p in
   expect p COLON;
   let typ = parse_type p in
   expect p EQUALS;
-  match typ with
-  | TNumber -> LetNum (name, parse_num_expr p)
-  | TVec -> LetVec (name, parse_vec_expr p)
-  | TSketch -> LetSketch (name, parse_sketch_expr p)
+  let desc =
+    match typ with
+    | TNumber -> LetNum (name, parse_num_expr p)
+    | TVec -> LetVec (name, parse_vec_expr p)
+    | TSketch -> LetSketch (name, parse_sketch_expr p)
+  in
+  loc_to p start desc
 
 let parse_stmt p =
   skip_nl p;
+  let start = start_pos p in
   match peek p with
   | LET -> parse_let p
   | DRAW ->
       advance p;
-      Draw (parse_sketch_expr p)
+      let sk = parse_sketch_expr p in
+      loc start sk.loc.end_loc (Draw sk)
   | SCRIBBLE ->
       advance p;
-      Scribble (parse_sketch_expr p)
+      let sk = parse_sketch_expr p in
+      loc start sk.loc.end_loc (Scribble sk)
   | TRACE ->
       advance p;
-      Trace (parse_sketch_expr p)
+      let sk = parse_sketch_expr p in
+      loc start sk.loc.end_loc (Trace sk)
   | _ -> expected (current p) "statement (let, draw, scribble, or trace)"
 
 let parse_program p =
@@ -320,20 +365,14 @@ let parse_program p =
   in
   go []
 
-let parse input =
-  let p = create (Lexer.tokenize input) in
-  parse_program p
-
+let parse input = parse_program (create (Lexer.tokenize input))
 let parse_safe input = try Ok (parse input) with ParseError e -> Error e
 
 let parse_sketch_expr_string input =
-  let p = create (Lexer.tokenize input) in
-  parse_sketch_expr p
+  parse_sketch_expr (create (Lexer.tokenize input))
 
-let parse_vec_expr_string input =
-  let p = create (Lexer.tokenize input) in
-  parse_vec_expr p
+let parse_vec_expr_string input = parse_vec_expr (create (Lexer.tokenize input))
 
 let format_error e =
-   Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message e.position.line
-    e.position.column
+  Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message
+    e.position.line e.position.column
