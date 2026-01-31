@@ -161,7 +161,7 @@ let () =
           ~emit_gcode:cfg.emit_gcode ~emit_svg:cfg.emit_svg ~output_base ~show_stats:cfg.show_stats
       with
       | Lexer.LexerError e ->
-          Printf.eprintf "Lexer error at line %d, column %d: %s\n%!" e.position.line e.position.column e.message; exit 1
+          Printf.eprintf "%s\n%!" (Lexer.format_error e); exit 1
       | Parser.ParseError e ->
           Printf.eprintf "%s\n%!" (Parser.format_error e); exit 1
       | Compiler.CompileError e ->

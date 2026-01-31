@@ -476,3 +476,11 @@ input string length every time peek is called. it doesn't
 use generic wrapper for positions and uses different names
 for positions.
 
+-----------------------------------------------------------
+Jan. 31 2026
+-----------------------------------------------------------
+
+--- ERRORS FORMAT ---
+compiler and parsing errors now follow the same format:
+{ msg, line, col }
+
