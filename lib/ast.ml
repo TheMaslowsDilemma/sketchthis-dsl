@@ -42,6 +42,7 @@ and sketch_expr_desc =
   | SketchList of sketch_expr list
   | MirrorSketch of sketch_expr * vec_expr
   | TranslateSketch of sketch_expr * vec_expr
+  | RotateSketch of sketch_expr * num_expr
   | ScaleSketch of sketch_expr * num_expr
 
 type expr =
@@ -128,6 +129,9 @@ and sketch_expr_to_string (e : sketch_expr) =
   | TranslateSketch (sk, translation) ->
       Printf.sprintf "translate %s by %s" (sketch_expr_to_string sk)
         (vec_expr_to_string translation)
+  | RotateSketch (sk, degree) ->
+      Printf.sprintf "rotate %s by %s" (sketch_expr_to_string sk)
+        (num_expr_to_string degree)
   | ScaleSketch (sk, scale) ->
       Printf.sprintf "scale %s by %s" (sketch_expr_to_string sk)
         (num_expr_to_string scale)

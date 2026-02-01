@@ -269,6 +269,12 @@ and parse_sketch_atom p =
       expect p ABOUT;
       let axis = parse_vec_atom p in
       loc start axis.loc.end_loc (MirrorSketch (sk, axis))
+  | ROTATE ->
+    advance p;
+    let (sk : sketch_expr) = parse_sketch_atom p in
+    expect p BY;
+    let degree = parse_num_atom p in
+    loc start degree.loc.end_loc (RotateSketch (sk, degree))
   | TRANSLATE ->
       advance p;
       let (sk : sketch_expr) = parse_sketch_atom p in

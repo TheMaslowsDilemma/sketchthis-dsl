@@ -18,6 +18,7 @@ type token =
   | VIA
   | CENTER
   | OF
+  | ROTATE
   | MIRROR
   | ABOUT
   | TRANSLATE
@@ -72,6 +73,7 @@ let token_to_string = function
   | VIA -> "via"
   | CENTER -> "center"
   | OF -> "of"
+  | ROTATE -> "rotate"
   | MIRROR -> "mirror"
   | ABOUT -> "about"
   | TRANSLATE -> "translate"
@@ -113,6 +115,7 @@ let keywords =
     ("via", VIA);
     ("center", CENTER);
     ("of", OF);
+    ("rotate", ROTATE);
     ("mirror", MIRROR);
     ("about", ABOUT);
     ("translate", TRANSLATE);

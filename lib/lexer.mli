@@ -19,6 +19,7 @@ type token =
   | VIA
   | CENTER
   | OF
+  | ROTATE
   | MIRROR
   | ABOUT
   | TRANSLATE

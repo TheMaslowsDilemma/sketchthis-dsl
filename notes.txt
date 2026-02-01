@@ -484,3 +484,14 @@ Jan. 31 2026
 compiler and parsing errors now follow the same format:
 { msg, line, col }
 
+--- ADDING ROTATE ---
+the smaller language models fall into the trap of using a
+rotate function when it doesn't exist. ill add and see
+if output improves.
+
+--- ADDING "AT" ---
+adding this means we would need to look ahead after any
+sketch expression to see
+
+--- REMOVING OLD EXAMPLES ---
+there are many old examples that need to be removed.

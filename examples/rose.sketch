@@ -1,2 +1,0 @@
-let x : vec = (10, 10)
-let y : vec = x + z

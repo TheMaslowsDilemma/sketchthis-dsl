@@ -102,6 +102,13 @@ let transform_centered_ir f ir =
   let f_ir = transform_ir f centered_ir in
   translate_ir c f_ir
 
+let rotate_ir angle_deg ir =
+  let angle = angle_deg *. Float.pi /. 180.0 in
+  let cos_a = Float.cos angle in
+  let sin_a = Float.sin angle in
+  let rotate v = vec (v.x *. cos_a -. v.y *. sin_a) (v.x *. sin_a +. v.y *. cos_a) in
+  transform_centered_ir rotate ir
+
 (* Expression Evaluation *)
 
 let rec eval_num env (e : num_expr) =
@@ -151,6 +158,10 @@ and eval_sketch_basic env (e : sketch_expr) =
       let tvec = eval_vec_basic env translation in
       let sk_ir = eval_sketch_basic env sk in
       translate_ir tvec sk_ir
+  | RotateSketch (sk, degree) ->
+      let degnum = eval_num env degree in
+      let sk_ir = eval_sketch_basic env sk in
+      rotate_ir degnum sk_ir
   | ScaleSketch (sk, scale) ->
       let scl_num = eval_num env scale in
       let sk_ir = eval_sketch_basic env sk in
@@ -203,6 +214,7 @@ let rec collect_flow env (e : sketch_expr) =
   | MirrorSketch _ -> []
   | TranslateSketch _ -> []
   | ScaleSketch _ -> []
+  | RotateSketch _ -> []
 
 (* Full Evaluation - produces final IR with splines flattened *)
 
@@ -278,6 +290,10 @@ let rec eval_sketch env noise flow (e : sketch_expr) =
       let scl_num = eval_num env scale in
       let sk_ir = eval_sketch env noise flow sk in
       transform_centered_ir (vec_scale scl_num) sk_ir
+  | RotateSketch (sk, degree) ->
+      let degnum = eval_num env degree in
+      let sk_ir = eval_sketch env noise flow sk in
+      rotate_ir degnum sk_ir
 
 (* Statement Evaluation *)
 
