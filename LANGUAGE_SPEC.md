@@ -9,7 +9,6 @@ A minimal language for generating pen plotter artwork via G-code.
 - `sketch` - drawable primitive or list of sketches
 
 ## Syntax
-
 ```
 statement := let_binding | render_command
 let_binding := "let" IDENT ":" type "=" expr
@@ -41,6 +40,7 @@ vec_expr := "(" num_expr "," num_expr ")"  -- construct
 ### Sketches
 ```
 sketch_expr := primitive | IDENT | "[" sketch_list "]"
+             | "rotate" sketch_expr "by" num_expr
 sketch_list := sketch_expr ("," sketch_expr)*
 
 primitive := "dot" vec_expr
@@ -49,6 +49,12 @@ primitive := "dot" vec_expr
 
 vec_list := "[" vec_expr ("," vec_expr)* "]"
 ```
+
+## Transformations
+
+| Transform | Syntax | Effect |
+|-----------|--------|--------|
+| `rotate` | `rotate <sketch> by <degrees>` | Rotate CCW around sketch center |
 
 ## Render Commands
 
@@ -92,6 +98,18 @@ let curve : sketch = stroke (0, 50) to (100, 50) via [(50, 0)]
 trace curve
 ```
 
+### Rotation
+```
+let arrow : sketch = [
+  stroke (0, 0) to (20, 0),
+  stroke (20, 0) to (15, 5),
+  stroke (20, 0) to (15, -5)
+]
+draw arrow
+# Rotate 45 degrees counter-clockwise around its center
+trace rotate arrow by 45
+```
+
 ### Using Center in a minimal Poem
 ```
 # Build outward from a shape's own centroid
@@ -122,3 +140,4 @@ scribble stroke origin to center of stroke heart to (20, 26)
 - Make an effor not to make duplicate lines and strokes
 - `via` points create smooth Catmull-Rom splines
 - Noise magnitude: scribble > draw > trace (none)
+- Rotation is counter-clockwise (CCW), in degrees, around the sketch's centroid

@@ -1,0 +1,19 @@
+let arrow : sketch = [
+  stroke (0, 0) to (20, 0),
+  stroke (20, 0) to (15, 5),
+  stroke (20, 0) to (15, -5)
+]
+
+let arrows : sketch = [
+  arrow,
+  rotate arrow by 45,
+  rotate arrow by 90
+]
+
+let as1 : sketch = scale arrows by 0.4
+let as2 : sketch = translate as1 by (20, 20)
+let as3 : sketch = translate as2 by (20, 0)
+
+draw as1
+trace as2
+scribble rotate as3 by 90
