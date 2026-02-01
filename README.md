@@ -3,7 +3,7 @@
 A domain specific language aims to help language models create sketch art leveraging their understanding of natural language and programming. Built in OCaml, outputs both G-code and SVG.
 
 Powers [@sketchthis](https://x.com/sketchthis)
-See the [language spec](https://github.com/TheMaslowsDilemma/sketchthis-dsl/blob/main/LANGUAGE_SPEC.md) for more details.
+See the [language spec](https://github.com/TheMaslowsDilemma/sketchthis-dsl/blob/main/LANGUAGE_SPEC.md) for more details. Syntax highlighting file for sublime text editor in repo.
 
 ## Build
 

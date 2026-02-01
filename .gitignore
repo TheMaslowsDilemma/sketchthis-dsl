@@ -16,6 +16,7 @@
 *.cmt
 *.cmti
 
+examples/
 # ocamlbuild and Dune default working directory
 _build/
 

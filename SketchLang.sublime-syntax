@@ -1,0 +1,77 @@
+%YAML 1.2
+---
+name: SketchLang
+file_extensions:
+  - sketch
+  - skl
+scope: source.sketchlang
+
+contexts:
+  main:
+    # Comments
+    - match: '#.*$'
+      scope: comment.line.sketchlang
+
+    # Keywords - declarations
+    - match: '\b(let)\b'
+      scope: keyword.declaration.sketchlang
+
+    # Keywords - render commands
+    - match: '\b(trace|draw|scribble)\b'
+      scope: keyword.control.sketchlang
+
+    # Keywords - sketch primitives
+    - match: '\b(stroke|dot|dash)\b'
+      scope: support.function.sketchlang
+
+    # Keywords - transformations
+    - match: '\b(mirror|translate|scale|rotate)\b'
+      scope: support.function.transform.sketchlang
+
+    # Keywords - connectors
+    - match: '\b(to|via|by|about|of)\b'
+      scope: keyword.operator.word.sketchlang
+
+    # Types
+    - match: '\b(number|vec|sketch)\b'
+      scope: storage.type.sketchlang
+
+    # Built-in constants
+    - match: '\b(origin|x_axis|y_axis|center)\b'
+      scope: constant.language.sketchlang
+
+    # Numbers (int and float)
+    - match: '-?\b\d+(\.\d+)?\b'
+      scope: constant.numeric.sketchlang
+
+    # Operators
+    - match: '[\+\-\*\/]'
+      scope: keyword.operator.arithmetic.sketchlang
+
+    # Type annotation colon
+    - match: ':'
+      scope: punctuation.separator.type.sketchlang
+
+    # Assignment
+    - match: '='
+      scope: keyword.operator.assignment.sketchlang
+
+    # Parentheses (vectors)
+    - match: '\('
+      scope: punctuation.section.parens.begin.sketchlang
+    - match: '\)'
+      scope: punctuation.section.parens.end.sketchlang
+
+    # Brackets (lists)
+    - match: '\['
+      scope: punctuation.section.brackets.begin.sketchlang
+    - match: '\]'
+      scope: punctuation.section.brackets.end.sketchlang
+
+    # Commas
+    - match: ','
+      scope: punctuation.separator.sketchlang
+
+    # Identifiers (variable names)
+    - match: '\b[a-zA-Z_][a-zA-Z0-9_]*\b'
+      scope: variable.other.sketchlang
