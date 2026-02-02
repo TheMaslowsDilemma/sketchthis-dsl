@@ -466,10 +466,10 @@ chaining using the pipe | char.
 Jan. 30 2026
 -----------------------------------------------------------
 
---- COMPILER ERRORS ---
+--- COMPILER ERRORS --- [done]
 the compiler needs errors to specify the line and column.
 
---- SO MUCH BLOAT ---
+--- SO MUCH BLOAT --- [done]
 looking anywhere for more then 45 seconds reveals a lot of
 bloat. klaude is ahhh. lexer for example is checking the
 input string length every time peek is called. it doesn't
@@ -480,20 +480,20 @@ for positions.
 Jan. 31 2026
 -----------------------------------------------------------
 
---- ERRORS FORMAT ---
+--- ERRORS FORMAT --- [done]
 compiler and parsing errors now follow the same format:
 { msg, line, col }
 
---- ADDING ROTATE ---
+--- ADDING ROTATE --- [done]
 the smaller language models fall into the trap of using a
 rotate function when it doesn't exist. ill add and see
 if output improves.
 
---- ADDING "AT" ---
+--- ADDING "AT" --- [not done]
 adding this means we would need to look ahead after any
 sketch expression to see
 
---- REMOVING OLD EXAMPLES ---
+--- REMOVING OLD EXAMPLES --- [done]
 there are many old examples that need to be removed.
 
 
@@ -503,3 +503,13 @@ Feb. 1 2026
 
 --- SYNTAX HIGHLIGHTER ---
 this is a light lift for claude.
+
+--- MUST COMPLETE ---
+there are a few remaining changes that will likely improve
+leaning out the language and improving the output in general.
+I will introduce the pipes as a way to chain modifications to
+sketches. it maybe useful to allow naming these pipes so they
+can be applied to different sketches?
+I will remove the prepositions from the current transformations
+I will fix the compiler to properly calculate the flows based
+on the currently built IR at that point.

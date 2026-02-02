@@ -1,5 +1,12 @@
 %YAML 1.2
 ---
+
+####
+# Place this file in
+# mac:  ~/Library/Application Support/Sublime Text/Packages/SketchLang/
+# linux: ~/.config/sublime-text/Packages/SketchLang/
+####
+
 name: SketchLang
 file_extensions:
   - sketch
