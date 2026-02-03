@@ -23,6 +23,7 @@ let type_name = function
   | VNum _ -> "number"
   | VVec _ -> "vec"
   | VSketch _ -> "sketch"
+  | VRegion _ -> "region"
 
 let as_num pos = function
   | VNum f -> f
@@ -61,7 +62,9 @@ let sample_flow_field sources p =
       let sx, sy, sw =
         List.fold_left
           (fun (ax, ay, aw) src ->
-            let closest, _ = point_to_segment_closest p src.origin src.target in
+            let closest, _ =
+              point_to_segment_closest p src.origin src.target
+            in
             let d = vec_distance p closest in
             let w = 1.0 /. (Globals.precision +. (d *. d)) in
             (ax +. (src.dir.x *. w), ay +. (src.dir.y *. w), aw +. w))
@@ -113,14 +116,30 @@ let translate_ir d ir = transform_ir (vec_add d) ir
 
 let transform_centered_ir f ir =
   let c = compute_center ir in
-  ir |> translate_ir (vec_scale (-1.0) c) |> transform_ir f |> translate_ir c
+  ir
+  |> translate_ir (vec_scale (-1.0) c)
+  |> transform_ir f
+  |> translate_ir c
 
 let rotate_ir deg ir =
   let a = deg *. Float.pi /. 180.0 in
   let cos_a = Float.cos a and sin_a = Float.sin a in
   transform_centered_ir
     (fun v ->
-      vec ((v.x *. cos_a) -. (v.y *. sin_a)) ((v.x *. sin_a) +. (v.y *. cos_a)))
+      vec
+        ((v.x *. cos_a) -. (v.y *. sin_a))
+        ((v.x *. sin_a) +. (v.y *. cos_a)))
+    ir
+
+(* Collect all points from IR *)
+
+let ir_points ir =
+  List.concat_map
+    (fun (p : path) ->
+      p.start
+      :: List.concat_map
+           (fun (s : segment) -> [ s.p0; s.p1 ])
+           p.segments)
     ir
 
 (* Evaluation *)
@@ -131,7 +150,8 @@ let rec eval env noise acc (e : expr) =
   | Lit f -> VNum f
   | Var name -> (
       try lookup name env
-      with UndefinedVariable n -> error pos (Printf.sprintf "undefined: %s" n))
+      with UndefinedVariable n ->
+        error pos (Printf.sprintf "undefined: %s" n))
   | Vec (a, b) ->
       VVec
         (vec
@@ -243,6 +263,20 @@ let rec eval env noise acc (e : expr) =
       let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
       let t = as_vec target.loc.start_loc (eval env noise acc target) in
       VSketch (translate_ir (vec_sub t (compute_center sk_ir)) sk_ir)
+  | RegionOf sk ->
+      let ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
+      VRegion (Regions.convex_hull (ir_points ir))
+  | Shade e1 ->
+      let pos1 = e1.loc.start_loc in
+      let v = eval env noise acc e1 in
+      (match v with
+       | VRegion poly -> VSketch (Regions.shade_region poly noise)
+       | VSketch sk_ir ->
+           VSketch
+             (Regions.shade_region (Regions.convex_hull (ir_points sk_ir)) noise)
+       | _ ->
+           error pos1
+             (Printf.sprintf "expected region or sketch, got %s" (type_name v)))
 
 (* Statement evaluation *)
 
@@ -284,9 +318,12 @@ let path_str p =
 let ir_to_string ir = String.concat "\n" (List.map path_str ir)
 
 let bounds_to_string b =
-  Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y b.max_y
+  Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y
+    b.max_y
 
 let ir_stats ir =
-  let n = List.fold_left (fun a p -> a + List.length p.segments) 0 ir in
+  let n =
+    List.fold_left (fun a p -> a + List.length p.segments) 0 ir
+  in
   Printf.sprintf "Paths: %d, Segments: %d, %s" (List.length ir) n
     (bounds_to_string (compute_bounds ir))

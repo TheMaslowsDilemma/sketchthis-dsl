@@ -13,10 +13,12 @@ type token =
   | DOT
   | DASH
   | STROKE
+  | SHADE
   | ARROW
   | TILDE_ARROW
   | TILDE
   | CENTEROF
+  | REGIONOF
   | AT
   | ROTATE
   | MIRROR
@@ -67,10 +69,12 @@ let token_to_string = function
   | DOT -> "dot"
   | DASH -> "dash"
   | STROKE -> "stroke"
+  | SHADE -> "shade"
   | ARROW -> "->"
   | TILDE_ARROW -> "~>"
   | TILDE -> "~"
   | CENTEROF -> "centerof"
+  | REGIONOF -> "regionof"
   | AT -> "at"
   | ROTATE -> "rotate"
   | MIRROR -> "mirror"
@@ -86,8 +90,7 @@ let token_to_string = function
   | X_MAX -> "x_max"
   | Y_MAX -> "y_max"
   | ORIGIN -> "origin"
-  | COLON ->
-      ":" (* maybe remove this, but it could be helpful with suggestions *)
+  | COLON -> ":" (* remove ? or use in sgstns *)
   | EQUALS -> "="
   | LPAREN -> "("
   | RPAREN -> ")"
@@ -109,7 +112,9 @@ let keywords =
     ("dot", DOT);
     ("dash", DASH);
     ("stroke", STROKE);
+    ("shade", SHADE);
     ("centerof", CENTEROF);
+    ("regionof", REGIONOF);
     ("at", AT);
     ("rotate", ROTATE);
     ("mirror", MIRROR);

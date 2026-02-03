@@ -17,6 +17,8 @@ and expr_desc =
   | Mul of expr * expr
   | Div of expr * expr
   | CenterOf of expr
+  | RegionOf of expr
+  | Shade of expr
   | Dot of expr
   | Dash of expr
   | Segments of expr list

@@ -188,34 +188,48 @@ and parse_atom p =
       advance p;
       let e = parse_atom p in
       loc start e.loc.end_loc (CenterOf e)
-  | DOT ->
+  | REGIONOF ->
+    advance p;
+    let e = parse_atom p in
+    loc start e.loc.end_loc (RegionOf e)
+  | SHADE ->
+    advance p;
+    let e = parse_atom p in
+    loc start e.loc.end_loc (Shade e)
+  | DOT -> (
       advance p;
-      (match peek p with
-        | LBRACKET ->
+      match peek p with
+      | LBRACKET ->
           let pts = parse_bracket_list p in
           let dotmaker (v : expr) = loc v.loc.start_loc v.loc.end_loc (Dot v) in
           loc_to p start (SketchList (List.map dotmaker pts))
-        | _ -> let v = parse_atom p in loc start v.loc.end_loc (Dot v))
-  | DASH ->
+      | _ ->
+          let v = parse_atom p in
+          loc start v.loc.end_loc (Dot v))
+  | DASH -> (
       advance p;
-      (match peek p with
-        | LBRACKET ->
+      match peek p with
+      | LBRACKET ->
           let pts = parse_bracket_list p in
-          let dashmaker (v : expr) = loc v.loc.start_loc v.loc.end_loc (Dash v) in
+          let dashmaker (v : expr) =
+            loc v.loc.start_loc v.loc.end_loc (Dash v)
+          in
           loc_to p start (SketchList (List.map dashmaker pts))
-        | _ -> let v = parse_atom p in loc start v.loc.end_loc (Dash v))
-  | STROKE ->
+      | _ ->
+          let v = parse_atom p in
+          loc start v.loc.end_loc (Dash v))
+  | STROKE -> (
       advance p;
-      (match peek p with
-        | ARROW ->
+      match peek p with
+      | ARROW ->
           advance p;
           let pts = parse_bracket_list p in
           loc_to p start (Segments pts)
-        | TILDE_ARROW ->
+      | TILDE_ARROW ->
           advance p;
           let pts = parse_bracket_list p in
           loc_to p start (Splines pts)
-        | _ -> expected (current p) "'~>' or '->'")
+      | _ -> expected (current p) "'~>' or '->'")
   | LBRACKET ->
       advance p;
       skip_nl p;

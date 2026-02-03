@@ -14,10 +14,12 @@ type token =
   | DOT
   | DASH
   | STROKE
+  | SHADE
   | ARROW
   | TILDE_ARROW
   | TILDE
   | CENTEROF (* center of <sketch> -> <vec> *)
+  | REGIONOF (* regionof <sketch> -> <vec list *)
   | AT (* sketch |> at vec *)
   | ROTATE
   | MIRROR

@@ -1,40 +1,35 @@
-# A cat sitting
+# Shading demo
 
-# Head — smooth curve
-let head = stroke ~> [(20,80), (10,90), (15,100), (25,105), (35,100), (40,90), (30,80)]
+# Shade a simple shape
+let box = [
+  stroke -> [(0,0), (40,0), (40,30), (0,30), (0,0)]
+]
+draw box
+scribble shade box
 
-# Ears — straight segments
-let left_ear = stroke -> [(15, 100), (10, 112), (20, 105)]
-let right_ear = stroke -> [(30, 105), (40, 112), (35, 100)]
+# Shade a region, layer it for density
+let hill = stroke ~> [(0,0), (20,15), (40,20), (60,15), (80,0)]
+let ground = stroke -> [(0,0), (80,0)]
+let mountain = [hill, ground]
+draw mountain
+scribble shade mountain
+scribble shade mountain
 
-# Eyes and nose
-let eyes = dot [(18, 93), (32, 93)]
-let nose = dot (25, 88)
+# Shade reused across transforms
+let leaf = stroke ~> [(0,0), (5,8), (3,15), (0,20), (-3,15), (-5,8)]
+let shaded_leaf = [leaf, shade leaf]
 
-# Whiskers
-let whiskers = [
-  stroke -> [(18, 88), (5, 90)],
-  stroke -> [(18, 86), (4, 84)],
-  stroke -> [(32, 88), (45, 90)],
-  stroke -> [(32, 86), (46, 84)]
+draw [
+  shaded_leaf |> at (50, 100),
+  shaded_leaf |> scale 0.7 |> rotate 30 |> at (80, 110),
+  shaded_leaf |> scale 0.8 |> rotate (-20) |> at (30, 95)
 ]
 
-# Body — smooth curve
-let body = stroke ~> [(20, 80), (15, 60), (18, 40), (32, 40), (35, 60), (30, 80)]
-
-# Tail — smooth swoosh
-let tail = stroke ~> [(32, 42), (40, 35), (50, 38), (48, 48)]
-
-# Paws
-let paws = dash [(20, 40), (30, 40)]
-
-# Stripes on body
-let stripes = [
-  stroke -> [(20, 70), (30, 70)],
-  stroke -> [(19, 60), (31, 60)],
-  stroke -> [(19, 50), (31, 50)]
+# Use regionof to store and reuse
+let circle = stroke ~> [
+  (10,0), (7,7), (0,10), (-7,7),
+  (-10,0), (-7,-7), (0,-10), (7,-7)
 ]
-
-trace [head, left_ear, right_ear, body, tail]
-draw [eyes, nose, whiskers, paws]
-scribble stripes
+let area = regionof circle
+draw circle |> at (200, 150)
+scribble shade area |> at (200, 150)
