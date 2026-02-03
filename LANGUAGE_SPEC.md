@@ -4,140 +4,124 @@ A minimal language for generating pen plotter artwork via G-code.
 
 ## Types
 
-- `number` - floating point value
-- `vec` - 2D point `(x, y)`
-- `sketch` - drawable primitive or list of sketches
+Types are inferred. There are three value types:
 
-## Syntax
+- `number` — floating point
+- `vec` — 2D point `(x, y)`
+- `sketch` — drawable primitive or composition of sketches
+
+## Statements
+
 ```
-statement := let_binding | render_command
-let_binding := "let" IDENT ":" type "=" expr
-render_command := ("trace" | "draw" | "scribble") sketch_expr
-
-type := "number" | "vec" | "sketch"
+statement   := let_binding | render_command
+let_binding := "let" IDENT "=" expr
+render       := ("trace" | "draw" | "scribble") expr
 ```
 
 ## Expressions
 
-### Numbers
-```
-num_expr := NUMBER | IDENT | "-" num_expr
-          | num_expr ("+" | "-" | "*" | "/") num_expr
-          | "(" num_expr ")"
-```
+### Precedence (lowest to highest)
 
-### Vectors
 ```
-vec_expr := "(" num_expr "," num_expr ")"  -- construct
-          | IDENT                           -- variable
-          | "origin"                        -- (0, 0)
-          | "center" "of" sketch_expr       -- centroid
-          | "flow" "at" vec_expr            -- flow field direction
-          | vec_expr ("+" | "-") vec_expr   -- arithmetic
-          | vec_expr "*" num_expr           -- scale
+pipe    := add ("|>" transform)*
+add     := mul (("+"|"-") mul)*
+mul     := unary (("*"|"/") unary)*
+unary   := "-" unary | atom
 ```
 
-### Sketches
+### Atoms
+
 ```
-sketch_expr := primitive | IDENT | "[" sketch_list "]"
-             | "rotate" sketch_expr "by" num_expr
-sketch_list := sketch_expr ("," sketch_expr)*
-
-primitive := "dot" vec_expr
-           | "dash" vec_expr
-           | "stroke" vec_expr "to" vec_expr ["via" vec_list]
-
-vec_list := "[" vec_expr ("," vec_expr)* "]"
+atom := NUMBER | IDENT
+      | "(" expr "," expr ")"         -- vec
+      | "(" expr ")"                  -- grouping
+      | "origin"                      -- (0, 0)
+      | "x_axis"                      -- (1, 0)
+      | "y_axis"                      -- (0, 1)
+      | "center" "of" atom
+      | "dot" atom
+      | "dash" atom
+      | "stroke" add "->" add ["~" "[" expr_list "]"]
+      | "[" expr_list "]"             -- sketch list
+      | transform_prefix
 ```
 
-## Transformations
+### Transforms
 
-| Transform | Syntax | Effect |
-|-----------|--------|--------|
-| `rotate` | `rotate <sketch> by <degrees>` | Rotate CCW around sketch center |
+Pipe form (left side is the sketch being transformed):
+
+```
+expr |> translate atom
+expr |> scale atom
+expr |> rotate atom
+expr |> mirror atom
+expr |> at atom
+```
+
+Prefix form (sketch is the first argument):
+
+```
+translate atom atom
+scale atom atom
+rotate atom atom
+mirror atom atom
+at atom atom
+```
+
+| Transform   | Arg type | Effect                                    |
+|-------------|----------|-------------------------------------------|
+| `translate` | vec      | Shift by delta                            |
+| `scale`     | number   | Scale around sketch center                |
+| `rotate`    | number   | Rotate CCW (degrees) around sketch center |
+| `mirror`    | vec      | Reflect across axis through sketch center |
+| `at`        | vec      | Move sketch center to point               |
 
 ## Render Commands
 
-| Command | Effect |
-|---------|--------|
-| `trace` | Exact rendering, no noise |
-| `draw` | Slight wobble, hand-drawn feel |
-| `scribble` | Heavy noise, sketchy style |
+| Command    | Effect                           |
+|------------|----------------------------------|
+| `trace`    | Exact, no noise                  |
+| `draw`     | Slight wobble, hand-drawn feel   |
+| `scribble` | Heavy noise, sketchy style       |
 
 ## Flow Field
 
-`dash` orientation is determined by nearby `stroke` directions. Strokes contribute to a flow field weighted by inverse-square distance. Default direction is horizontal if no strokes exist.
+`dash` orientation is determined by all strokes drawn before it.
+Strokes contribute to a flow field weighted by inverse-square
+distance. Default direction is horizontal if no strokes exist.
+
+## Rules
+
+=== RULE 1 ===
+Transform arguments parse as atoms. Atoms never consume
+past themselves. No parens needed unless you're doing
+inline math.
+
+=== RULE 2 ===
+Transforms operate relative to sketch center. After "mirror"
+use "translate" or "at" to align, otherwise sketches will overlap.
 
 ## Examples
 
-### Simple line
 ```
-trace stroke from (0, 0) to (100, 100)
-```
-
-### Variable Arithmetic and Sketch Composition
-```
-
-let base : vec = (50, 50)
-let offset : vec = (10, 0)
-let p1 : vec = (20, 0) - offset * 2
-let p2 : vec = (90, 100) + offset
-
-let line : sketch = stroke from p1 to p2
-let some_dashes : sketch = [
-  dash offset * 3,
-  dash offset * 4,
-  dash offset * 5
-]
-draw some_dashes
+# Symmetric shapes are not difficult, just remember how they should meet!
+let wing = stroke (0, 0) -> (15, 10) ~ [(5, 12)]
+let bird = [wing, wing |> mirror y_axis |> translate (15, 0)] # RULE 2
+draw bird |> at (100, 200)
 ```
 
-### Curves with control points
 ```
-let curve : sketch = stroke (0, 50) to (100, 50) via [(50, 0)]
-trace curve
-```
-
-### Rotation
-```
-let arrow : sketch = [
-  stroke (0, 0) to (20, 0),
-  stroke (20, 0) to (15, 5),
-  stroke (20, 0) to (15, -5)
-]
-draw arrow
-# Rotate 45 degrees counter-clockwise around its center
-trace rotate arrow by 45
+let s = stroke (0, 0) -> (10, 0)
+draw s |> translate (5 + 3, 10)
+draw s |> scale (2 * 3) |> scale 2 |> rotate 45 |> translate (10, 10) # RULE 1
 ```
 
-### Using Center in a minimal Poem
-```
-# Build outward from a shape's own centroid
-let triangle : sketch = [
-  stroke (50, 10) to (10, 90),
-  stroke (10, 90) to (90, 90),
-  stroke (90, 90) to (50, 10)
-]
-let heart : vec = center of triangle
-let spokes : sketch = [
-  stroke heart to (50, 10),
-  stroke heart to (10, 90),
-  stroke heart to (90, 90)
-]
-trace [triangle, spokes]
+## Notes
 
-# A little Haiku
-scribble stroke origin to center of stroke heart to (20, 26)
-```
-
-
-## Important Notes
-
-- dot notation and vairable re-assignment are NOT SUPPORTED
-- Comments start with `#` can help label but should be minimal
+- No dot notation. `v.x` is not valid.
+- No variable reassignment. Each name is bound once.
+- Comments start with `#`
 - Coordinates are in mm
-- Newlines separate statements
-- Make an effor not to make duplicate lines and strokes
-- `via` points create smooth Catmull-Rom splines
+- `~` points create smooth Catmull-Rom splines
 - Noise magnitude: scribble > draw > trace (none)
-- Rotation is counter-clockwise (CCW), in degrees, around the sketch's centroid
+- Avoid duplicate strokes over the same path
