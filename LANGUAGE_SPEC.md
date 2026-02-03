@@ -120,6 +120,10 @@ inline math.
 Transforms operate relative to sketch center. After "mirror"
 use "translate" or "at" to align, otherwise sketches will overlap.
 
+=== RULE 3 ===
+When geometry must rotate or mirror around a shared point,
+define it centered at origin. Use `at` to place it last.
+
 ## Examples
 
 ### Basics

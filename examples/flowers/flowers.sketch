@@ -1,0 +1,304 @@
+# ==========================================
+#  Garden in Bloom
+#  Canvas: 420 x 297mm (A3 landscape)
+# ==========================================
+
+
+# ------------------------------------------
+#  Flowers
+# ------------------------------------------
+
+# Petal — S-curve with bulge
+let petal = stroke ~> [(0, 0), (-3, 4), (3, 4), (0, 8)]
+
+# Eight-petal bloom defined at origin (RULE 3)
+let bloom = [
+  petal,
+  petal |> rotate 45,
+  petal |> rotate 90,
+  petal |> rotate 135,
+  petal |> rotate 180,
+  petal |> rotate 225,
+  petal |> rotate 270,
+  petal |> rotate 315
+]
+
+# Pistil — tiny ring at center
+let pistil = stroke ~> [
+  (1.5, 0), (0, 1.5), (-1.5, 0), (0, -1.5), (1.5, 0)
+]
+
+# Stem — gentle curve
+let stem = stroke ~> [(0, 0), (2, -10), (0, -20)]
+
+# Leaves — one each side
+let leaf_r = stroke ~> [(0, -12), (4, -14), (6, -10), (3, -8)]
+let leaf_l = stroke ~> [(0, -12), (-4, -14), (-6, -10), (-3, -8)]
+
+# Leaf veins
+let vein_r = stroke ~> [(0, -12), (3, -11)]
+let vein_l = stroke ~> [(0, -12), (-3, -11)]
+
+let flower = [bloom, pistil, stem, leaf_r, leaf_l, vein_r, vein_l]
+
+# Size variations
+let sm = flower |> scale 0.5
+let md = flower |> scale 0.7
+let lg = flower |> scale 0.85
+
+# ------------------------------------------
+#  Bunches — clusters of flowers
+# ------------------------------------------
+
+let bunch_a = [
+  flower |> at (210, 170),
+  md |> rotate 10 |> at (228, 165),
+  sm |> rotate (-15) |> at (218, 160),
+  lg |> rotate 5 |> at (240, 168)
+]
+
+let bunch_b = [
+  flower |> at (170, 165),
+  md |> rotate (-8) |> at (155, 162),
+  sm |> rotate 12 |> at (163, 158),
+  lg |> rotate (-5) |> at (145, 167)
+]
+
+let bunch_c = [
+  md |> at (265, 160),
+  sm |> rotate 20 |> at (275, 155),
+  sm |> rotate (-10) |> at (258, 153)
+]
+
+let bunch_d = [
+  sm |> at (130, 158),
+  sm |> rotate 18 |> at (120, 153),
+  md |> rotate (-7) |> at (290, 162)
+]
+
+# Trace main blooms, draw details
+trace [bunch_a, bunch_b]
+draw [bunch_c, bunch_d]
+
+
+# ------------------------------------------
+#  Seed heads — dandelion puffs
+# ------------------------------------------
+
+let seed_spoke = stroke -> [(0, 0), (0, 5)]
+let seed_tip = dot (0, 5.5)
+
+let seed_head = [
+  seed_spoke,
+  seed_spoke |> rotate 30,
+  seed_spoke |> rotate 60,
+  seed_spoke |> rotate 90,
+  seed_spoke |> rotate 120,
+  seed_spoke |> rotate 150,
+  seed_spoke |> rotate 180,
+  seed_spoke |> rotate 210,
+  seed_spoke |> rotate 240,
+  seed_spoke |> rotate 270,
+  seed_spoke |> rotate 300,
+  seed_spoke |> rotate 330,
+  seed_tip,
+  seed_tip |> rotate 30,
+  seed_tip |> rotate 60,
+  seed_tip |> rotate 90,
+  seed_tip |> rotate 120,
+  seed_tip |> rotate 150,
+  seed_tip |> rotate 180,
+  seed_tip |> rotate 210,
+  seed_tip |> rotate 240,
+  seed_tip |> rotate 270,
+  seed_tip |> rotate 300,
+  seed_tip |> rotate 330
+]
+
+let seed_stem = stroke ~> [(0, 0), (1, -12), (-1, -22)]
+
+let dandelion = [seed_head, seed_stem]
+
+scribble [
+  dandelion |> scale 0.6 |> at (195, 163),
+  dandelion |> scale 0.5 |> at (305, 155),
+  dandelion |> scale 0.4 |> at (110, 150)
+]
+
+# Floating seeds drifting away
+let drift_seed = [
+  stroke -> [(0, 0), (0, 3)],
+  dot (0, 3.5)
+]
+
+scribble [
+  drift_seed |> scale 0.3 |> rotate 20 |> at (200, 180),
+  drift_seed |> scale 0.3 |> rotate (-30) |> at (310, 175),
+  drift_seed |> scale 0.25 |> rotate 45 |> at (205, 195),
+  drift_seed |> scale 0.25 |> rotate (-15) |> at (315, 185),
+  drift_seed |> scale 0.2 |> rotate 10 |> at (195, 210),
+  drift_seed |> scale 0.2 |> rotate (-50) |> at (320, 195)
+]
+
+
+# ------------------------------------------
+#  Grass — varied clumps
+# ------------------------------------------
+
+let blade_a = stroke ~> [(0, 0), (1, 4), (2, 7)]
+let blade_b = stroke ~> [(0, 0), (-1, 5), (0, 8)]
+let blade_c = stroke ~> [(0, 0), (0.5, 3), (-0.5, 6)]
+let blade_d = stroke ~> [(0, 0), (2, 5), (3, 9)]
+
+let clump_a = [
+  blade_a,
+  blade_b |> translate (3, 0),
+  blade_c |> translate (6, 0),
+  blade_d |> translate (1.5, 0)
+]
+
+let clump_b = [
+  blade_d |> mirror y_axis,
+  blade_a |> translate (3, 0),
+  blade_b |> translate (5, 0),
+  blade_c |> translate (8, 0)
+]
+
+let clump_c = [
+  blade_c,
+  blade_d |> translate (2, 0),
+  blade_a |> translate (5, 0)
+]
+
+# Ground line
+let ground = stroke ~> [
+  (60, 135), (120, 137), (180, 134), (250, 136),
+  (320, 133), (380, 135)
+]
+
+draw ground
+
+# Scatter grass along ground
+scribble [
+  clump_a |> at (70, 135),
+  clump_b |> scale 0.9 |> at (90, 136),
+  clump_c |> at (105, 137),
+  clump_a |> scale 0.8 |> at (135, 136),
+  clump_b |> at (155, 135),
+  clump_c |> scale 0.9 |> at (175, 134),
+  clump_a |> at (200, 135),
+  clump_b |> scale 0.7 |> at (225, 136),
+  clump_c |> at (245, 135),
+  clump_a |> scale 0.9 |> at (270, 134),
+  clump_b |> at (295, 133),
+  clump_c |> scale 0.8 |> at (315, 134),
+  clump_a |> at (335, 134),
+  clump_b |> scale 0.9 |> at (355, 135),
+  clump_c |> at (375, 135)
+]
+
+
+# ------------------------------------------
+#  Butterfly
+# ------------------------------------------
+
+let wing_upper_r = stroke ~> [(0, 0), (5, 6), (8, 10), (6, 3)]
+let wing_lower_r = stroke ~> [(0, 0), (4, -3), (7, -5), (5, -1)]
+let wing_upper_l = stroke ~> [(0, 0), (-5, 6), (-8, 10), (-6, 3)]
+let wing_lower_l = stroke ~> [(0, 0), (-4, -3), (-7, -5), (-5, -1)]
+let body = stroke ~> [(0, -6), (0, -2), (0, 3), (0, 7)]
+let antenna_r = stroke ~> [(0, 7), (2, 11), (3, 12)]
+let antenna_l = stroke ~> [(0, 7), (-2, 11), (-3, 12)]
+
+let butterfly = [
+  wing_upper_r, wing_lower_r,
+  wing_upper_l, wing_lower_l,
+  body, antenna_r, antenna_l,
+  shade wing_upper_r,
+  shade wing_upper_l
+]
+
+draw [
+  butterfly |> scale 0.7 |> at (250, 195),
+  butterfly |> scale 0.5 |> rotate 15 |> at (185, 200),
+  butterfly |> scale 0.4 |> rotate (-20) |> at (300, 210)
+]
+
+
+# ------------------------------------------
+#  Bee
+# ------------------------------------------
+
+let bee_body = stroke ~> [(0, 0), (2, 1), (4, 0.5), (6, 0)]
+let bee_stripe_1 = stroke -> [(1.5, -0.5), (1.5, 1.5)]
+let bee_stripe_2 = stroke -> [(3, -0.3), (3, 1.3)]
+let bee_stripe_3 = stroke -> [(4.5, -0.2), (4.5, 1)]
+let bee_wing = stroke ~> [(2, 1), (1, 4), (3, 3.5)]
+
+let bee = [
+  bee_body, bee_stripe_1, bee_stripe_2, bee_stripe_3,
+  bee_wing,
+  bee_wing |> mirror y_axis |> translate (4, 0)
+]
+
+scribble [
+  bee |> scale 0.8 |> at (230, 185),
+  bee |> scale 0.6 |> rotate 30 |> at (160, 178),
+  bee |> scale 0.5 |> rotate (-15) |> at (280, 180)
+]
+
+# Bee flight paths — dotted trails
+scribble dash [
+  (232, 188), (235, 192), (237, 196), (234, 200),
+  (162, 182), (165, 186), (163, 190),
+  (282, 183), (285, 187)
+]
+
+
+# ------------------------------------------
+#  Background — distant hills
+# ------------------------------------------
+
+draw stroke ~> [
+  (0, 250), (60, 258), (130, 262), (210, 265),
+  (290, 260), (350, 256), (420, 252)
+]
+
+draw stroke ~> [
+  (0, 240), (80, 248), (160, 255), (240, 252),
+  (320, 247), (400, 243), (420, 242)
+]
+
+# Hill shading
+scribble dash [
+  (30, 245), (70, 250), (110, 254), (150, 257),
+  (190, 258), (230, 256), (270, 253), (310, 249),
+  (350, 246), (390, 244),
+  (50, 238), (100, 244), (150, 249), (200, 250),
+  (250, 248), (300, 244), (350, 240), (400, 238)
+]
+
+
+# ------------------------------------------
+#  Sun
+# ------------------------------------------
+
+let sun_disc = stroke ~> [
+  (55, 280), (50, 286), (48, 292), (50, 298),
+  (55, 300), (61, 298), (63, 292), (61, 286), (55, 280)
+]
+
+let ray = stroke -> [(0, 0), (0, 7)]
+
+trace sun_disc
+
+draw [
+  ray |> at (55, 303),
+  ray |> rotate 45 |> at (65, 300),
+  ray |> rotate 90 |> at (67, 292),
+  ray |> rotate 135 |> at (65, 283),
+  ray |> rotate 180 |> at (55, 277),
+  ray |> rotate 225 |> at (45, 283),
+  ray |> rotate 270 |> at (43, 292),
+  ray |> rotate 315 |> at (45, 300)
+]
