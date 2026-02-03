@@ -1,33 +1,40 @@
-# an eye built from parts
+# A cat sitting
 
-let eye_outline = stroke (0,0) -> (0,0) ~ [(0,1), (1,1), (1,0)]
+# Head — smooth curve
+let head = stroke ~> [(20,80), (10,90), (15,100), (25,105), (35,100), (40,90), (30,80)]
 
-let eye_dash = stroke (0.3, 0.5) -> (0.7, 0.7)
+# Ears — straight segments
+let left_ear = stroke -> [(15, 100), (10, 112), (20, 105)]
+let right_ear = stroke -> [(30, 105), (40, 112), (35, 100)]
 
-let eye_cornia = [
-  eye_dash,
-  eye_dash |> rotate 45,
-  eye_dash |> rotate 135,
-  eye_dash |> rotate 90
+# Eyes and nose
+let eyes = dot [(18, 93), (32, 93)]
+let nose = dot (25, 88)
+
+# Whiskers
+let whiskers = [
+  stroke -> [(18, 88), (5, 90)],
+  stroke -> [(18, 86), (4, 84)],
+  stroke -> [(32, 88), (45, 90)],
+  stroke -> [(32, 86), (46, 84)]
 ]
 
-let symmetricize sk v = sk |> rotate  |> translate v
+# Body — smooth curve
+let body = stroke ~> [(20, 80), (15, 60), (18, 40), (32, 40), (35, 60), (30, 80)]
 
-let eye_center = centerof eye_outline
+# Tail — smooth swoosh
+let tail = stroke ~> [(32, 42), (40, 35), (50, 38), (48, 48)]
 
-let eye = [
-  eye_outline |> scale 2,
-  eye_cornia |> at eye_center |> scale 0.8
+# Paws
+let paws = dash [(20, 40), (30, 40)]
+
+# Stripes on body
+let stripes = [
+  stroke -> [(20, 70), (30, 70)],
+  stroke -> [(19, 60), (31, 60)],
+  stroke -> [(19, 50), (31, 50)]
 ]
 
-# a face using the eye
-let face_outline = stroke (-10,0) -> (10,0) ~ [(-12,8), (0,14), (12,8)]
-
-let face = [
-  face_outline,
-  eye |> translate (-4, 5),
-  eye |> mirror y_axis |> translate (4, 5),
-  dot (0, 2)
-]
-
-scribble face
+trace [head, left_ear, right_ear, body, tail]
+draw [eyes, nose, whiskers, paws]
+scribble stripes

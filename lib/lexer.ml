@@ -14,6 +14,7 @@ type token =
   | DASH
   | STROKE
   | ARROW
+  | TILDE_ARROW
   | TILDE
   | CENTEROF
   | AT
@@ -67,6 +68,7 @@ let token_to_string = function
   | DASH -> "dash"
   | STROKE -> "stroke"
   | ARROW -> "->"
+  | TILDE_ARROW -> "~>"
   | TILDE -> "~"
   | CENTEROF -> "centerof"
   | AT -> "at"
@@ -84,7 +86,8 @@ let token_to_string = function
   | X_MAX -> "x_max"
   | Y_MAX -> "y_max"
   | ORIGIN -> "origin"
-  | COLON -> ":" (* maybe remove this, but it could be helpful with suggestions *)
+  | COLON ->
+      ":" (* maybe remove this, but it could be helpful with suggestions *)
   | EQUALS -> "="
   | LPAREN -> "("
   | RPAREN -> ")"
@@ -221,7 +224,6 @@ let next_token l =
       | '+' -> (advance l, PLUS)
       | '*' -> (advance l, STAR)
       | '/' -> (advance l, SLASH)
-      | '~' -> (advance l, TILDE)
       | '|' ->
           if peek_n l 1 = Some '>' then (advance (advance l), PIPE)
           else begin
@@ -230,6 +232,9 @@ let next_token l =
             let err = LexerError { message; position } in
             raise err
           end
+      | '~' ->
+          if peek_n l 1 = Some '>' then (advance (advance l), TILDE_ARROW)
+          else (advance l, TILDE)
       | '-' ->
           let nextch = peek_n l 1 in
           if nextch = Some '>' then (advance (advance l), ARROW)

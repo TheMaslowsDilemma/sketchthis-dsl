@@ -579,3 +579,27 @@ with the "mirror" transformation.
 Transforms operate relative to sketch center. After "mirror"
 use "translate" or "at" to align, otherwise sketches will overlap.
 
+
+--- FURTHER LANG ADJUSTMENTS ---
+it would be nice to have a succinct way to express dash or dot at
+a list of points. it would be nice to express a stroke of straight
+lines. i think there is a way to express these nicely. by
+introducing "vec list" as an expression, we can use that to
+express "dash <vec list>" or "dot <vec list>". we can modify the
+stroke expression to distinguish between straight segments and
+catmull-rom interpolated strokes.
+"stroke -> <vec list>" would be for straight line segments
+"stroke ~ <vec list>" would be for catmull-rom splines.
+its very clean and it brings continuity to all the sketch
+constructors we have.
+another front of advancement can be made with the "regionof"
+keyword. "regionof <sketch>" would return the convex hull,
+represetned by a vector list with first and last element equal
+to represent a closed form.
+this regionof can be paired nicely with a "shade" expression
+this would form a sketch as well, comprised soley of random dashes
+filling the region overwhich it was shaded. the syntax would
+be "shade <vec list>" if the list does not form a closed region,
+interpret it as shading along the spline that is formed by the
+provided vec list. 
+

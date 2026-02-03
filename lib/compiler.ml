@@ -188,28 +188,29 @@ let rec eval env noise acc (e : expr) =
       let p0 = jitter_vec noise (vec (p.x -. dir.x) (p.y -. dir.y)) in
       let p1 = jitter_vec noise (vec (p.x +. dir.x) (p.y +. dir.y)) in
       VSketch [ { start = p0; segments = [ { p0; p1 } ] } ]
-  | Stroke (v0, via, v1) ->
-      let p0 =
-        jitter_vec noise (as_vec v0.loc.start_loc (eval env noise acc v0))
+  | Segments pts ->
+      if List.length pts < 2 then
+        error pos "segments require more than one point";
+      let vecmaker (e : expr) =
+        jitter_vec noise (as_vec e.loc.start_loc (eval env noise acc e))
       in
-      let p1 =
-        jitter_vec noise (as_vec v1.loc.start_loc (eval env noise acc v1))
+      let vecs = List.map vecmaker pts in
+      VSketch [ { start = List.hd vecs; segments = points_to_segments vecs } ]
+  | Splines pts ->
+      if List.length pts < 2 then
+        error pos "splines require more than one point";
+      let vecmaker (e : expr) =
+        jitter_vec noise (as_vec e.loc.start_loc (eval env noise acc e))
       in
-      let via_pts =
-        List.map
-          (fun (v : expr) ->
-            jitter_vec noise (as_vec v.loc.start_loc (eval env noise acc v)))
-          via
-      in
-      let pts = (p0 :: via_pts) @ [ p1 ] in
+      let vecs = List.map vecmaker pts in
       let samples =
         match noise with
         | NoiseTrace -> 12
         | NoiseDraw -> 10
         | NoiseScribble -> 8
       in
-      let segs = spline_to_segments ~samples_per_span:samples noise pts in
-      let start = match segs with [] -> p0 | s :: _ -> s.p0 in
+      let segs = spline_to_segments ~samples_per_span:samples noise vecs in
+      let start = match segs with [] -> List.hd vecs | s :: _ -> s.p0 in
       VSketch [ { start; segments = segs } ]
   | SketchList items ->
       let _, ir =

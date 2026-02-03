@@ -190,21 +190,32 @@ and parse_atom p =
       loc start e.loc.end_loc (CenterOf e)
   | DOT ->
       advance p;
-      let v = parse_atom p in
-      loc start v.loc.end_loc (Dot v)
+      (match peek p with
+        | LBRACKET ->
+          let pts = parse_bracket_list p in
+          let dotmaker (v : expr) = loc v.loc.start_loc v.loc.end_loc (Dot v) in
+          loc_to p start (SketchList (List.map dotmaker pts))
+        | _ -> let v = parse_atom p in loc start v.loc.end_loc (Dot v))
   | DASH ->
       advance p;
-      let v = parse_atom p in
-      loc start v.loc.end_loc (Dash v)
+      (match peek p with
+        | LBRACKET ->
+          let pts = parse_bracket_list p in
+          let dashmaker (v : expr) = loc v.loc.start_loc v.loc.end_loc (Dash v) in
+          loc_to p start (SketchList (List.map dashmaker pts))
+        | _ -> let v = parse_atom p in loc start v.loc.end_loc (Dash v))
   | STROKE ->
       advance p;
-      let p0 = parse_add p in
-      expect p ARROW;
-      let p1 = parse_add p in
-      if match_tok p TILDE then
-        let via = parse_bracket_list p in
-        loc_to p start (Stroke (p0, via, p1))
-      else loc start p1.loc.end_loc (Stroke (p0, [], p1))
+      (match peek p with
+        | ARROW ->
+          advance p;
+          let pts = parse_bracket_list p in
+          loc_to p start (Segments pts)
+        | TILDE_ARROW ->
+          advance p;
+          let pts = parse_bracket_list p in
+          loc_to p start (Splines pts)
+        | _ -> expected (current p) "'~>' or '->'")
   | LBRACKET ->
       advance p;
       skip_nl p;

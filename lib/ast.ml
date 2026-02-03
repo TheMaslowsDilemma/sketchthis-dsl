@@ -19,7 +19,8 @@ and expr_desc =
   | CenterOf of expr
   | Dot of expr
   | Dash of expr
-  | Stroke of expr * expr list * expr
+  | Segments of expr list
+  | Splines of expr list
   | SketchList of expr list
   | Mirror of expr * expr
   | Rotate of expr * expr

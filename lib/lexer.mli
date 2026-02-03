@@ -15,6 +15,7 @@ type token =
   | DASH
   | STROKE
   | ARROW
+  | TILDE_ARROW
   | TILDE
   | CENTEROF (* center of <sketch> -> <vec> *)
   | AT (* sketch |> at vec *)
