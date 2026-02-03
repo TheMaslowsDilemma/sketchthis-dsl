@@ -35,3 +35,14 @@ sketchlang drawing.sketch -pos 10,10 -size 100,100  # position and constrain
 ```
 
 Run `sketchlang --help` for all options.
+
+
+## Examples
+
+### Regatta
+
+![Regatta](examples/regatta/regatta.svg)
+
+### Notre-Dame
+
+![Notre-Dame](examples/notre-dame/notre-dame.svg)
