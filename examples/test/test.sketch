@@ -1,2 +1,33 @@
-let curve_cube = stroke (0,0) to (0,0) via [(10,0), (10,10), (0, 10)]
-scribble curve_cube
+# an eye built from parts
+
+let eye_outline = stroke (0,0) -> (0,0) ~ [(0,1), (1,1), (1,0)]
+
+let eye_dash = stroke (0.3, 0.5) -> (0.7, 0.7)
+
+let eye_cornia = [
+  eye_dash,
+  eye_dash |> rotate 45,
+  eye_dash |> rotate 135,
+  eye_dash |> rotate 90
+]
+
+let symmetricize sk v = sk |> rotate  |> translate v
+
+let eye_center = centerof eye_outline
+
+let eye = [
+  eye_outline |> scale 2,
+  eye_cornia |> at eye_center |> scale 0.8
+]
+
+# a face using the eye
+let face_outline = stroke (-10,0) -> (10,0) ~ [(-12,8), (0,14), (12,8)]
+
+let face = [
+  face_outline,
+  eye |> translate (-4, 5),
+  eye |> mirror y_axis |> translate (4, 5),
+  dot (0, 2)
+]
+
+scribble face

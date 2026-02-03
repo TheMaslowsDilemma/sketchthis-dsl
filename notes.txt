@@ -513,3 +513,69 @@ can be applied to different sketches?
 I will remove the prepositions from the current transformations
 I will fix the compiler to properly calculate the flows based
 on the currently built IR at that point.
+
+
+-----------------------------------------------------------
+Feb. 2 2026
+-----------------------------------------------------------
+
+--- DESIGN DECISIONS ---
+I want to add support for piping sketch transformations
+and remove the verbose prepositions used in existing ones.
+when investigating this it becomes clear we will need a
+more exact way to describe what these pipes are and what
+they are not.
+we can end up with strange looking snippets when combining
+existing syntax with pipes. for example, the "center of"
+expression looks ugly, gross even.
+
+```
+let eye_outline = stroke (0,0) -> (0,0) ~ [(0, 1), (1, 1), (1, 0)]
+dash (eye_outline |> center of)
+```
+
+consider instead we require all pipes must take a sketch
+and return a sketch. the "center of" expression must
+then remain just an expression. ok so consider:
+
+```
+somesketch |> translate centerof eye_outline |> translate (0,10)
+```
+
+this is fine. the only case we could come up with where
+there is ambiguity is with arithmatic expressions. So a
+new rule there is a nice rule we can add to the sketchlang
+specification. i think ill start collecting these rules
+to build a rule book where each rule has a genuine purpose.
+
+=== RULE 1 ===
+Transform arguments parse as atoms. Atoms never consume
+past themselves. No parens needed unless you're doing
+inline math.
+
+--- TYPE INFERENCE ---
+i decided to remove the strict type system and allow types
+to be resolved during compilation. this removed a lot of
+unnecessary tokens.
+
+-----------------------------------------------------------
+Feb. 3 2026
+-----------------------------------------------------------
+
+--- WHAT HAS CHANGED ---
+yesterday I updated the langauge significantly. these changes
+include type inference, no prepositions, "at <vec>" transform,
+piping chains of transforms, and "->" instead of "to" and
+"~" instead of via. i like tilde because its a squiggle and
+when you use it the stroke turns into a squiggle.
+
+--- TESTING AND RULE MAKING ---
+we shouldn't go out looking for rules to make but while testing
+there will be patterns that pop up, of bad practices that
+the model might use. for example, even Claude Opus struggles
+with the "mirror" transformation.
+
+=== RULE 2 ===
+Transforms operate relative to sketch center. After "mirror"
+use "translate" or "at" to align, otherwise sketches will overlap.
+

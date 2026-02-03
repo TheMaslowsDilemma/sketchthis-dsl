@@ -13,21 +13,19 @@ type token =
   | SKETCH_TYPE
   | DOT
   | DASH
-  | AT
   | STROKE
-  | TO
-  | VIA
-  | CENTER
-  | OF
+  | ARROW
+  | TILDE
+  | CENTEROF (* center of <sketch> -> <vec> *)
+  | AT (* sketch |> at vec *)
   | ROTATE
   | MIRROR
-  | ABOUT
   | TRANSLATE
   | SCALE
-  | BY
   | SCRIBBLE
   | DRAW
   | TRACE
+  | PIPE
   | LET
   | X_AXIS
   | Y_AXIS
@@ -59,4 +57,4 @@ val tokenize_simple : string -> token list
 val token_to_string : token -> string
 val tokens_to_string : token list -> string
 val located_tokens_to_string : located_token list -> string
-val format_error : lexer_error -> string 
+val format_error : lexer_error -> string

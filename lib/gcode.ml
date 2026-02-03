@@ -3,7 +3,7 @@
 *)
 
 open Vector
-open Splines
+open Ir
 open Compiler
 
 type gcode_config = {

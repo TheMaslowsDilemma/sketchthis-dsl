@@ -7,6 +7,7 @@ deduplication, and SVG preview generation.
 ***)
 
 open Compiler
+open Ir
 
 type gcode_config = {
   travel_speed : float;

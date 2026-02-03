@@ -12,21 +12,19 @@ type token =
   | SKETCH_TYPE
   | DOT
   | DASH
-  | AT
   | STROKE
-  | TO
-  | VIA
-  | CENTER
-  | OF
+  | ARROW
+  | TILDE
+  | CENTEROF
+  | AT
   | ROTATE
   | MIRROR
-  | ABOUT
   | TRANSLATE
   | SCALE
-  | BY
   | SCRIBBLE
   | DRAW
   | TRACE
+  | PIPE
   | LET
   | X_AXIS
   | Y_AXIS
@@ -67,28 +65,26 @@ let token_to_string = function
   | SKETCH_TYPE -> "sketch"
   | DOT -> "dot"
   | DASH -> "dash"
-  | AT -> "at"
   | STROKE -> "stroke"
-  | TO -> "to"
-  | VIA -> "via"
-  | CENTER -> "center"
-  | OF -> "of"
+  | ARROW -> "->"
+  | TILDE -> "~"
+  | CENTEROF -> "centerof"
+  | AT -> "at"
   | ROTATE -> "rotate"
   | MIRROR -> "mirror"
-  | ABOUT -> "about"
   | TRANSLATE -> "translate"
   | SCALE -> "scale"
-  | BY -> "by"
   | SCRIBBLE -> "scribble"
   | DRAW -> "draw"
   | TRACE -> "trace"
+  | PIPE -> "|>"
   | LET -> "let"
   | X_AXIS -> "x_axis"
   | Y_AXIS -> "y_axis"
   | X_MAX -> "x_max"
   | Y_MAX -> "y_max"
   | ORIGIN -> "origin"
-  | COLON -> ";"
+  | COLON -> ":" (* maybe remove this, but it could be helpful with suggestions *)
   | EQUALS -> "="
   | LPAREN -> "("
   | RPAREN -> ")"
@@ -109,18 +105,13 @@ let keywords =
     ("sketch", SKETCH_TYPE);
     ("dot", DOT);
     ("dash", DASH);
-    ("at", AT);
     ("stroke", STROKE);
-    ("to", TO);
-    ("via", VIA);
-    ("center", CENTER);
-    ("of", OF);
+    ("centerof", CENTEROF);
+    ("at", AT);
     ("rotate", ROTATE);
     ("mirror", MIRROR);
-    ("about", ABOUT);
     ("translate", TRANSLATE);
     ("scale", SCALE);
-    ("by", BY);
     ("scribble", SCRIBBLE);
     ("draw", DRAW);
     ("trace", TRACE);
@@ -230,17 +221,26 @@ let next_token l =
       | '+' -> (advance l, PLUS)
       | '*' -> (advance l, STAR)
       | '/' -> (advance l, SLASH)
-      | '-' when Option.map is_digit (peek_n l 1) = Some true -> read_number l
-      | '-' -> (advance l, MINUS)
+      | '~' -> (advance l, TILDE)
+      | '|' ->
+          if peek_n l 1 = Some '>' then (advance (advance l), PIPE)
+          else begin
+            let message = Printf.sprintf "Expected '>' after '|'" in
+            let position = start in
+            let err = LexerError { message; position } in
+            raise err
+          end
+      | '-' ->
+          let nextch = peek_n l 1 in
+          if nextch = Some '>' then (advance (advance l), ARROW)
+          else (advance l, MINUS)
       | '0' .. '9' -> read_number l
       | c when is_ident_start c -> read_identifier l
       | c ->
-          raise
-            (LexerError
-               {
-                 message = Printf.sprintf "Unexpected character: '%c'" c;
-                 position = start;
-               })
+          let message = Printf.sprintf "Unexpected character: '%c'" c in
+          let position = start in
+          let err = LexerError { message; position } in
+          raise err
     in
     (l, { token = tok; start_pos = start; end_pos = l.pos })
 
@@ -260,6 +260,6 @@ let tokens_to_string toks =
 let located_tokens_to_string toks =
   toks
   |> List.map (fun lt ->
-      Printf.sprintf "%s @ %d:%d" (token_to_string lt.token) lt.start_pos.line
+      Printf.sprintf "%s at %d:%d" (token_to_string lt.token) lt.start_pos.line
         lt.start_pos.column)
   |> String.concat "\n"

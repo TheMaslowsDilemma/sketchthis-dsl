@@ -5,8 +5,8 @@ splines.ml
 *)
 
 open Vector
+open Ir
 
-type segment = { p0 : vec; p1 : vec }
 type noise_level = NoiseTrace | NoiseDraw | NoiseScribble
 
 (* Catmull-Rom Evaluation *)

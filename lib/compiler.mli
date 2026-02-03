@@ -1,16 +1,14 @@
 (*
------------------------------------------------------------ 
+-----------------------------------------------------------
 compiler.mli
------------------------------------------------------------ 
+-----------------------------------------------------------
 sketch dsl compiler. evaluates programs to intermediate
-representation (paths with line/arc segments).
+representation (paths with line segments).
 *)
 
+open Ir
 open Vector
-open Splines
 
-type path = { start : vec; segments : segment list }
-type ir = path list
 type bounds = { min_x : float; max_x : float; min_y : float; max_y : float }
 type compile_error
 
