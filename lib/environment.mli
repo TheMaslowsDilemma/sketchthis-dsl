@@ -7,7 +7,12 @@ variable bindings during compilation.
 
 open Vector
 
-type value = VNum of float | VVec of vec | VRegion of vec list | VSketch of Ir.ir
+type value =
+  | VNum of float
+  | VVec of vec
+  | VRegion of vec list
+  | VSketch of Ir.ir
+
 type env
 
 exception UndefinedVariable of string

@@ -42,12 +42,7 @@ let as_ir pos = function
 type flow_source = { origin : vec; target : vec; dir : vec }
 
 let make_flow_source p0 p1 =
-  let d = vec_sub p1 p0 in
-  let len = vec_length d in
-  let dir =
-    if len < Globals.epsilon then vec 1.0 0.0 else vec_scale (1.0 /. len) d
-  in
-  { origin = p0; target = p1; dir }
+  { origin = p0; target = p1; dir = vec_normalize (vec_sub p1 p0) }
 
 let flow_sources_of_ir ir =
   List.concat_map
@@ -102,7 +97,9 @@ let compute_center ir =
   if ir = [] then vec 0.0 0.0
   else
     let b = compute_bounds ir in
-    vec ((b.min_x +. b.max_x) /. 2.0) ((b.min_y +. b.max_y) /. 2.0)
+    vec
+      ((b.min_x +. b.max_x) /. 2.0)
+      ((b.min_y +. b.max_y) /. 2.0)
 
 (* IR transformations *)
 
@@ -205,8 +202,8 @@ let rec eval env noise acc (e : expr) =
         jitter_vec noise (as_vec v.loc.start_loc (eval env noise acc v))
       in
       let dir = sample_flow_field (flow_sources_of_ir acc) p in
-      let p0 = jitter_vec noise (vec (p.x -. dir.x) (p.y -. dir.y)) in
-      let p1 = jitter_vec noise (vec (p.x +. dir.x) (p.y +. dir.y)) in
+      let p0 = jitter_vec noise (vec_sub p dir) in
+      let p1 = jitter_vec noise (vec_add p dir) in
       VSketch [ { start = p0; segments = [ { p0; p1 } ] } ]
   | Segments pts ->
       if List.length pts < 2 then
@@ -269,14 +266,42 @@ let rec eval env noise acc (e : expr) =
   | Shade e1 ->
       let pos1 = e1.loc.start_loc in
       let v = eval env noise acc e1 in
+      let shade poly =
+        (* Sample flow field at a few points to orient hatch lines *)
+        let flow_sources = flow_sources_of_ir acc in
+        let hatch_dir =
+          match flow_sources with
+          | [] -> vec_normalize (vec 1.0 0.3)
+          | _ ->
+              let mnx, mny, mxx, mxy = Regions.bbox poly in
+              let cx = (mnx +. mxx) /. 2.0 in
+              let cy = (mny +. mxy) /. 2.0 in
+              let dx = (mxx -. mnx) *. 0.25 in
+              let dy = (mxy -. mny) *. 0.25 in
+              let samples =
+                [ vec cx cy;
+                  vec (cx -. dx) (cy -. dy);
+                  vec (cx +. dx) (cy +. dy) ]
+              in
+              let sx, sy =
+                List.fold_left
+                  (fun (ax, ay) p ->
+                    let d = sample_flow_field flow_sources p in
+                    (ax +. d.x, ay +. d.y))
+                  (0.0, 0.0) samples
+              in
+              vec_normalize (vec sx sy)
+        in
+        VSketch (Regions.shade_region ~hatch_dir poly noise)
+      in
       (match v with
-       | VRegion poly -> VSketch (Regions.shade_region poly noise)
+       | VRegion poly -> shade poly
        | VSketch sk_ir ->
-           VSketch
-             (Regions.shade_region (Regions.convex_hull (ir_points sk_ir)) noise)
+           shade (Regions.convex_hull (ir_points sk_ir))
        | _ ->
            error pos1
-             (Printf.sprintf "expected region or sketch, got %s" (type_name v)))
+             (Printf.sprintf "expected region or sketch, got %s"
+                (type_name v)))
 
 (* Statement evaluation *)
 

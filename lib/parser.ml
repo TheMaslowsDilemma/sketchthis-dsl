@@ -104,6 +104,9 @@ and parse_pipe_transform p (left : expr) =
       advance p;
       let a = parse_atom p in
       loc start a.loc.end_loc (At (left, a))
+  | NEWLINE ->
+      advance p;
+      parse_pipe_transform p left
   | _ -> expected (current p) "transform (translate, scale, rotate, mirror, at)"
 
 and parse_add p =
@@ -148,6 +151,7 @@ and parse_unary p =
 and parse_atom p =
   let start = start_pos p in
   match peek p with
+  | MINUS -> parse_unary p
   | NUMBER f ->
       advance p;
       loc_to p start (Lit f)
@@ -189,13 +193,13 @@ and parse_atom p =
       let e = parse_atom p in
       loc start e.loc.end_loc (CenterOf e)
   | REGIONOF ->
-    advance p;
-    let e = parse_atom p in
-    loc start e.loc.end_loc (RegionOf e)
+      advance p;
+      let e = parse_atom p in
+      loc start e.loc.end_loc (RegionOf e)
   | SHADE ->
-    advance p;
-    let e = parse_atom p in
-    loc start e.loc.end_loc (Shade e)
+      advance p;
+      let e = parse_atom p in
+      loc start e.loc.end_loc (Shade e)
   | DOT -> (
       advance p;
       match peek p with
@@ -262,6 +266,9 @@ and parse_atom p =
       let sk = parse_atom p in
       let v = parse_atom p in
       loc start v.loc.end_loc (At (sk, v))
+  | NEWLINE ->
+      advance p;
+      parse_atom p
   | _ -> expected (current p) "expression"
 
 and parse_bracket_list p =

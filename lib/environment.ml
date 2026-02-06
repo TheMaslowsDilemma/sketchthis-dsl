@@ -6,7 +6,12 @@ environment.ml
 
 open Vector
 
-type value = VNum of float | VVec of vec | VRegion of vec list | VSketch of Ir.ir
+type value =
+  | VNum of float
+  | VVec of vec
+  | VRegion of vec list
+  | VSketch of Ir.ir
+
 type env = (string * value) list
 
 exception UndefinedVariable of string

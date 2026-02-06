@@ -1,0 +1,229 @@
+# "The Hours Between" — a willow, still water, and a lantern adrift
+
+# === SKY / WATER LINE ===
+let horizon = stroke -> [(0,62), (160,62)]
+
+# === CRESCENT MOON ===
+let mouter = stroke ~> [(118,10), (122,6), (128,5), (134,6), (138,10), (137,16), (134,20), (128,22)]
+let minner = stroke ~> [(128,22), (130,18), (131,14), (130,10), (126,8), (122,10), (118,10)]
+let msh = shade minner
+let msh2 = shade minner
+
+# Moon glow — faint halo
+let glow = stroke ~> [(114,12), (118,4), (126,1), (136,3), (142,10), (142,18), (138,24), (130,26), (122,24), (114,18), (114,12)]
+
+# === STARS — one spark, scattered ===
+let spark = stroke -> [(-1,0), (1,0)]
+let sparkv = stroke -> [(0,-1), (0,1)]
+let star = [spark, sparkv]
+
+let stars = [
+  star |> scale 0.5 |> at (12,8),
+  star |> scale 0.6 |> at (28,18),
+  star |> scale 0.4 |> at (42,6),
+  star |> scale 0.5 |> at (55,14),
+  star |> scale 0.7 |> at (68,4),
+  star |> scale 0.4 |> at (78,20),
+  star |> scale 0.5 |> at (92,9),
+  star |> scale 0.6 |> at (100,22),
+  star |> scale 0.4 |> at (148,8),
+  star |> scale 0.5 |> at (152,18),
+  star |> scale 0.3 |> at (35,28),
+  star |> scale 0.4 |> at (62,26),
+  star |> scale 0.3 |> at (108,28),
+  star |> scale 0.5 |> at (18,38),
+  star |> scale 0.4 |> at (85,12)
+]
+
+# Far dim stars — just dots
+let farstars = dot [(8,22), (47,16), (74,10), (96,3), (140,14), (22,4), (58,30), (112,4), (145,24)]
+
+# === WILLOW TRUNK ===
+let trunk_l = stroke ~> [(28,62), (27,52), (28,42), (30,34), (31,28)]
+let trunk_r = stroke ~> [(34,62), (33,52), (33,42), (34,35), (33,28)]
+let trunk_top = stroke ~> [(31,28), (32,26), (33,28)]
+
+# Bark texture
+let bk = stroke -> [(0,0), (0,3)]
+let bark = [
+  bk |> at (29,42),
+  bk |> at (31,48),
+  bk |> at (33,38),
+  bk |> at (30,55),
+  bk |> at (32,33)
+]
+
+# Trunk shading
+let trsh = stroke ~> [(29,60), (28,48), (29,36), (31,29), (33,29), (33,36), (33,48), (33,60), (29,60)]
+let trfill = shade trsh
+
+# === WILLOW FRONDS — one drooping curve, fanned and varied ===
+let frond = stroke ~> [(0,0), (-2,6), (-5,14), (-9,22), (-14,28), (-18,32)]
+let frond_s = stroke ~> [(0,0), (-1,5), (-3,11), (-6,18), (-10,23)]
+let frond_l = stroke ~> [(0,0), (-3,8), (-7,18), (-12,28), (-18,36), (-22,40)]
+
+# Crown of the willow — left-draping fronds
+let crown_l = [
+  frond_l |> rotate -15 |> at (30,28),
+  frond |> rotate -5 |> at (29,29),
+  frond_s |> rotate 0 |> at (28,30),
+  frond_l |> rotate -25 |> at (31,27),
+  frond |> rotate -35 |> at (32,27),
+  frond_s |> rotate -40 |> at (31,28),
+  frond |> rotate -50 |> at (32,26),
+  frond_l |> rotate -10 |> at (29,28)
+]
+
+# Right-draping fronds
+let crown_r = [
+  frond |> mirror y_axis |> rotate 5 |> at (34,29),
+  frond_s |> mirror y_axis |> rotate 10 |> at (33,30),
+  frond_l |> mirror y_axis |> rotate 15 |> at (34,28),
+  frond |> mirror y_axis |> rotate 25 |> at (33,27),
+  frond_s |> mirror y_axis |> rotate 35 |> at (34,27),
+  frond_l |> mirror y_axis |> rotate 20 |> at (33,28)
+]
+
+# Fronds that drape past the horizon into water
+let deep1 = stroke ~> [(14,52), (11,58), (8,64), (7,68)]
+let deep2 = stroke ~> [(18,55), (14,62), (12,68), (11,72)]
+let deep3 = stroke ~> [(44,54), (48,60), (50,66), (51,70)]
+let deep4 = stroke ~> [(40,50), (44,58), (47,64)]
+
+# === REFLECTIONS IN WATER ===
+
+# Willow reflection — broken, shimmering
+let refl_frond = stroke ~> [(0,0), (-1,4), (-3,9), (-5,13)]
+
+let wrefl = [
+  refl_frond |> at (26,64),
+  refl_frond |> rotate 10 |> at (28,65),
+  refl_frond |> mirror y_axis |> at (35,64),
+  refl_frond |> mirror y_axis |> rotate -8 |> at (33,65),
+  refl_frond |> rotate 5 |> at (24,66),
+  refl_frond |> mirror y_axis |> rotate -5 |> at (37,66)
+]
+
+# Trunk reflection
+let trefl_l = stroke ~> [(28,62), (27,66), (28,72), (29,76)]
+let trefl_r = stroke ~> [(34,62), (33,66), (33,72), (34,76)]
+
+# Moon reflection — broken column on water
+let mrefl = [
+  stroke ~> [(126,63), (128,66), (127,70)],
+  stroke ~> [(129,73), (128,77), (130,80)],
+  stroke ~> [(127,83), (129,86), (128,89)]
+]
+
+# === RIPPLES — concentric arcs, one template scaled ===
+let ripple = stroke ~> [(-4,0), (-2,-1), (0,-1.5), (2,-1), (4,0)]
+
+# Ripples near willow drape touching water
+let wrip = [
+  ripple |> scale 0.6 |> at (8,69),
+  ripple |> scale 0.8 |> at (8,71),
+  ripple |> scale 0.5 |> at (11,73),
+  ripple |> scale 0.7 |> at (51,71),
+  ripple |> scale 0.5 |> at (51,73)
+]
+
+# Ripples near boat
+let brip = [
+  ripple |> scale 0.8 |> at (108,72),
+  ripple |> scale 1.0 |> at (108,74),
+  ripple |> scale 1.3 |> at (108,77),
+  ripple |> scale 1.6 |> at (108,80)
+]
+
+# Distant water texture
+let wdash = dot [(60,68), (75,72), (90,66), (45,78), (70,82), (100,84), (55,86), (80,90), (140,70), (150,76), (20,82), (38,88)]
+
+# === SMALL BOAT ===
+let hull_t = stroke ~> [(98,66), (104,64), (112,64), (118,66)]
+let hull_b = stroke ~> [(98,66), (102,69), (108,70), (114,69), (118,66)]
+let hull_sh = shade hull_b
+let seat = stroke -> [(104,66), (112,66)]
+let oar = stroke -> [(100,60), (106,67), (115,74)]
+let oar_blade = stroke ~> [(115,74), (116,76), (114,77), (113,75), (115,74)]
+
+# === LANTERN in boat ===
+let post = stroke -> [(108,64), (108,58)]
+let lamp_l = stroke ~> [(106,58), (106,55), (108,53), (110,55), (110,58)]
+let lamp_b = stroke -> [(106,58), (110,58)]
+let lamp_sh = shade lamp_l
+let lamp_sh2 = shade lamp_l
+
+# Lantern glow — faint nimbus
+let lglow = stroke ~> [(104,60), (105,54), (108,51), (111,54), (112,60)]
+
+# Light on water — soft dashes beneath boat
+let lwater = [
+  stroke ~> [(106,71), (107,75), (106,79)],
+  stroke ~> [(108,72), (109,76), (108,80)],
+  stroke ~> [(110,71), (110,75), (109,78)]
+]
+
+# === REEDS — left bank ===
+let reed = stroke ~> [(0,0), (0.5,-8), (0,-16), (-0.5,-22)]
+let reed_head = stroke ~> [(0,0), (0.5,-2), (0,-4)]
+
+let reedy = [reed, reed_head |> at (0,-22)]
+
+let reeds_l = [
+  reedy |> rotate 3 |> at (2,62),
+  reedy |> scale 0.8 |> rotate -2 |> at (5,62),
+  reedy |> scale 0.9 |> rotate 5 |> at (8,62),
+  reedy |> scale 0.7 |> rotate -4 |> at (11,63)
+]
+
+# === REEDS — right bank ===
+let reeds_r = [
+  reedy |> scale 0.85 |> rotate -3 |> at (148,62),
+  reedy |> scale 0.95 |> rotate 2 |> at (152,62),
+  reedy |> scale 0.75 |> rotate -5 |> at (155,63),
+  reedy |> scale 0.6 |> rotate 4 |> at (158,63)
+]
+
+# === DISTANT SHORE — faint treeline ===
+let shore = stroke ~> [(0,60), (10,56), (18,58), (26,54), (34,57), (42,55), (50,58), (58,56), (65,59), (70,60)]
+let shore_placed = shore |> at (60,0)
+
+# Water shading — very light
+let wsh = stroke ~> [(0,68), (40,72), (80,70), (120,74), (160,68), (160,90), (120,88), (80,92), (40,86), (0,90), (0,68)]
+let waterfill = shade wsh
+
+# === RENDER — draw for gentle wobble ===
+draw [
+  # Sky
+  glow,
+  mouter, minner, msh, msh2,
+  stars, farstars,
+
+  # Horizon
+  horizon,
+
+  # Willow
+  trunk_l, trunk_r, trunk_top,
+  bark, trfill,
+  crown_l, crown_r,
+  deep1, deep2, deep3, deep4,
+
+  # Water
+  waterfill,
+  wrefl, trefl_l, trefl_r,
+  mrefl,
+  wrip, brip, wdash,
+  lwater,
+
+  # Boat
+  hull_t, hull_b, hull_sh,
+  seat, oar, oar_blade,
+  post, lamp_l, lamp_b, lamp_sh, lamp_sh2,
+  lglow,
+
+  # Reeds
+  reeds_l, reeds_r,
+
+  # Distant shore
+  shore_placed
+]
