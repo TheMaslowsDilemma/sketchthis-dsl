@@ -1,11 +1,27 @@
 %YAML 1.2
 ---
 
-####
+########
 # Place this file in
 # mac:  ~/Library/Application Support/Sublime Text/Packages/SketchLang/
 # linux: ~/.config/sublime-text/Packages/SketchLang/
-####
+########
+# Place in Customize Color Scheme "rules" section
+# 
+#  "rules":
+#  [
+#    {
+#            "scope": "keyword.operator.arrow.straight.sketchlang",
+#            "foreground": "#E06C75",
+#            "font_style": "bold"
+#        },
+#        {
+#            "scope": "keyword.operator.arrow.smooth.sketchlang",
+#            "foreground": "#C678DD",
+#            "font_style": ""
+#        }
+#    
+#  ]
 
 name: SketchLang
 file_extensions:
@@ -31,39 +47,49 @@ contexts:
     - match: '\b(stroke|dot|dash)\b'
       scope: support.function.sketchlang
 
+    # Keywords - region/shading functions
+    - match: '\b(regionof|centerof|shade)\b'
+      scope: support.function.sketchlang
+
     # Keywords - transformations
-    - match: '\b(mirror|translate|scale|rotate)\b'
+    - match: '\b(mirror|translate|scale|rotate|at)\b'
       scope: support.function.transform.sketchlang
 
-    # Keywords - connectors
-    - match: '\b(to|via|by|about|of)\b'
-      scope: keyword.operator.word.sketchlang
-
     # Types
-    - match: '\b(number|vec|sketch)\b'
+    - match: '\b(number|vec|sketch|region)\b'
       scope: storage.type.sketchlang
 
     # Built-in constants
-    - match: '\b(origin|x_axis|y_axis|center)\b'
+    - match: '\b(origin|x_axis|y_axis)\b'
       scope: constant.language.sketchlang
 
     # Numbers (int and float)
     - match: '-?\b\d+(\.\d+)?\b'
       scope: constant.numeric.sketchlang
 
-    # Operators
-    - match: '[\+\-\*\/]'
+    # Pipe operator
+    - match: '\|>'
+      scope: keyword.operator.pipe.sketchlang
+
+    # Arrow operators (stroke connectors)
+    - match: '~>'
+      scope: keyword.operator.arrow.smooth.sketchlang
+    - match: '->'
+      scope: keyword.operator.arrow.straight.sketchlang
+
+    # Arithmetic operators
+    - match: '[\+\*\/]'
       scope: keyword.operator.arithmetic.sketchlang
 
-    # Type annotation colon
-    - match: ':'
-      scope: punctuation.separator.type.sketchlang
+    # Minus (separate so it doesn't clobber arrows)
+    - match: '(?<!-)-(?>![>])'
+      scope: keyword.operator.arithmetic.sketchlang
 
     # Assignment
     - match: '='
       scope: keyword.operator.assignment.sketchlang
 
-    # Parentheses (vectors)
+    # Parentheses (vectors / grouping)
     - match: '\('
       scope: punctuation.section.parens.begin.sketchlang
     - match: '\)'
