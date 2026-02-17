@@ -603,3 +603,20 @@ be "shade <vec list>" if the list does not form a closed region,
 interpret it as shading along the spline that is formed by the
 provided vec list. 
 
+-----------------------------------------------------------
+Feb. 17 2026
+-----------------------------------------------------------
+
+--- SECTIONS AND WARNINGS ---
+when a LLM uses the language it must track different sections
+of sketch in its context. so either the entire sketch must
+be in context, or the llm can draw over other sections without
+knowing.
+the language models already have an implicit notion of
+sections, they just mark them off with comments. one improvement
+could be the explicit marking of sections, so during compilation
+we can enforce sections have no intersecting sketches, and if
+there are we can provide context on which sections, and sketches
+within those sections, have overlap. this can be propagated
+back to the artists in charge of their own sections and
+negotiated with using a negotiator.
