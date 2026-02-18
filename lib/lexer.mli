@@ -1,9 +1,6 @@
-(***
------------------------------------------------------------ 
-lexer.mli
------------------------------------------------------------ 
-tokenizer for the sketch dsl language.
-***)
+(*------------------------------------------------------- 
+lexer.mli - tokenizer for the sketch dsl language.
+-------------------------------------------------------*)
 
 type token =
   | NUMBER of float
@@ -20,7 +17,8 @@ type token =
   | TILDE
   | CENTEROF (* center of <sketch> -> <vec> *)
   | REGIONOF (* regionof <sketch> -> <vec list *)
-  | AT (* sketch |> at vec *)
+  | AT       (* sketch |> at vec *)
+  | AT_SYM
   | ROTATE
   | MIRROR
   | TRANSLATE

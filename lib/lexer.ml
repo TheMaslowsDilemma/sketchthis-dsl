@@ -20,6 +20,7 @@ type token =
   | CENTEROF
   | REGIONOF
   | AT
+  | AT_SYM
   | ROTATE
   | MIRROR
   | TRANSLATE
@@ -76,6 +77,7 @@ let token_to_string = function
   | CENTEROF -> "centerof"
   | REGIONOF -> "regionof"
   | AT -> "at"
+  | AT_SYM -> "@"
   | ROTATE -> "rotate"
   | MIRROR -> "mirror"
   | TRANSLATE -> "translate"
@@ -229,6 +231,7 @@ let next_token l =
       | '+' -> (advance l, PLUS)
       | '*' -> (advance l, STAR)
       | '/' -> (advance l, SLASH)
+      | '@' -> (advance l, AT_SYM)
       | '|' ->
           if peek_n l 1 = Some '>' then (advance (advance l), PIPE)
           else begin
