@@ -1,14 +1,13 @@
-(*
------------------------------------------------------------
+(*---------------------------------------------------------
 compiler.ml
------------------------------------------------------------
-*)
+---------------------------------------------------------*)
 
 open Ast
 open Ir
 open Vector
 open Splines
 open Environment
+open Sections
 
 type bounds = { min_x : float; max_x : float; min_y : float; max_y : float }
 type compile_error = { message : string; position : Lexer.position }
@@ -57,9 +56,7 @@ let sample_flow_field sources p =
       let sx, sy, sw =
         List.fold_left
           (fun (ax, ay, aw) src ->
-            let closest, _ =
-              point_to_segment_closest p src.origin src.target
-            in
+            let closest, _ = point_to_segment_closest p src.origin src.target in
             let d = vec_distance p closest in
             let w = 1.0 /. (Globals.precision +. (d *. d)) in
             (ax +. (src.dir.x *. w), ay +. (src.dir.y *. w), aw +. w))
@@ -97,9 +94,7 @@ let compute_center ir =
   if ir = [] then vec 0.0 0.0
   else
     let b = compute_bounds ir in
-    vec
-      ((b.min_x +. b.max_x) /. 2.0)
-      ((b.min_y +. b.max_y) /. 2.0)
+    vec ((b.min_x +. b.max_x) /. 2.0) ((b.min_y +. b.max_y) /. 2.0)
 
 (* IR transformations *)
 
@@ -113,19 +108,14 @@ let translate_ir d ir = transform_ir (vec_add d) ir
 
 let transform_centered_ir f ir =
   let c = compute_center ir in
-  ir
-  |> translate_ir (vec_scale (-1.0) c)
-  |> transform_ir f
-  |> translate_ir c
+  ir |> translate_ir (vec_scale (-1.0) c) |> transform_ir f |> translate_ir c
 
 let rotate_ir deg ir =
   let a = deg *. Float.pi /. 180.0 in
   let cos_a = Float.cos a and sin_a = Float.sin a in
   transform_centered_ir
     (fun v ->
-      vec
-        ((v.x *. cos_a) -. (v.y *. sin_a))
-        ((v.x *. sin_a) +. (v.y *. cos_a)))
+      vec ((v.x *. cos_a) -. (v.y *. sin_a)) ((v.x *. sin_a) +. (v.y *. cos_a)))
     ir
 
 (* Collect all points from IR *)
@@ -134,57 +124,56 @@ let ir_points ir =
   List.concat_map
     (fun (p : path) ->
       p.start
-      :: List.concat_map
-           (fun (s : segment) -> [ s.p0; s.p1 ])
-           p.segments)
+      :: List.concat_map (fun (s : segment) -> [ s.p0; s.p1 ]) p.segments)
     ir
 
 (* Evaluation *)
 
-let rec eval env noise acc (e : expr) =
+let rec eval env sname noise acc (e : expr) =
   let pos = e.loc.start_loc in
   match e.txt with
   | Lit f -> VNum f
   | Var name -> (
-      try lookup name env
-      with UndefinedVariable n ->
-        error pos (Printf.sprintf "undefined: %s" n))
+      try lookup env sname name
+      with
+      | UndefinedVariable n -> error pos (Printf.sprintf "undefined: %s" n)
+      | UndefinedScope s -> error pos (Printf.sprintf "undefined section: %s" s))
   | Vec (a, b) ->
       VVec
         (vec
-           (as_num a.loc.start_loc (eval env noise acc a))
-           (as_num b.loc.start_loc (eval env noise acc b)))
+           (as_num a.loc.start_loc (eval env sname noise acc a))
+           (as_num b.loc.start_loc (eval env sname noise acc b)))
   | Neg e1 -> (
-      match eval env noise acc e1 with
+      match eval env sname noise acc e1 with
       | VNum f -> VNum (-.f)
       | VVec v -> VVec (vec_scale (-1.0) v)
       | _ -> error pos "cannot negate a sketch")
   | Add (a, b) -> (
-      match (eval env noise acc a, eval env noise acc b) with
+      match (eval env sname noise acc a, eval env sname noise acc b) with
       | VNum x, VNum y -> VNum (x +. y)
       | VVec u, VVec v -> VVec (vec_add u v)
       | _ -> error pos "type mismatch in +")
   | Sub (a, b) -> (
-      match (eval env noise acc a, eval env noise acc b) with
+      match (eval env sname noise acc a, eval env sname noise acc b) with
       | VNum x, VNum y -> VNum (x -. y)
       | VVec u, VVec v -> VVec (vec_sub u v)
       | _ -> error pos "type mismatch in -")
   | Mul (a, b) -> (
-      match (eval env noise acc a, eval env noise acc b) with
+      match (eval env sname noise acc a, eval env sname noise acc b) with
       | VNum x, VNum y -> VNum (x *. y)
       | VVec v, VNum s | VNum s, VVec v -> VVec (vec_scale s v)
       | _ -> error pos "type mismatch in *")
   | Div (a, b) ->
-      let x = as_num a.loc.start_loc (eval env noise acc a) in
-      let y = as_num b.loc.start_loc (eval env noise acc b) in
+      let x = as_num a.loc.start_loc (eval env sname noise acc a) in
+      let y = as_num b.loc.start_loc (eval env sname noise acc b) in
       if Float.abs y < Globals.epsilon then
         error b.loc.start_loc "division by zero"
       else VNum (x /. y)
   | CenterOf e1 ->
-      VVec (compute_center (as_ir e1.loc.start_loc (eval env noise acc e1)))
+      VVec (compute_center (as_ir e1.loc.start_loc (eval env sname noise acc e1)))
   | Dot v ->
       let p =
-        jitter_vec noise (as_vec v.loc.start_loc (eval env noise acc v))
+        jitter_vec noise (as_vec v.loc.start_loc (eval env sname noise acc v))
       in
       let r = 0.5 in
       let pts =
@@ -199,7 +188,7 @@ let rec eval env noise acc (e : expr) =
       VSketch [ { start = List.hd pts; segments = points_to_segments pts } ]
   | Dash v ->
       let p =
-        jitter_vec noise (as_vec v.loc.start_loc (eval env noise acc v))
+        jitter_vec noise (as_vec v.loc.start_loc (eval env sname noise acc v))
       in
       let dir = sample_flow_field (flow_sources_of_ir acc) p in
       let p0 = jitter_vec noise (vec_sub p dir) in
@@ -209,7 +198,7 @@ let rec eval env noise acc (e : expr) =
       if List.length pts < 2 then
         error pos "segments require more than one point";
       let vecmaker (e : expr) =
-        jitter_vec noise (as_vec e.loc.start_loc (eval env noise acc e))
+        jitter_vec noise (as_vec e.loc.start_loc (eval env sname noise acc e))
       in
       let vecs = List.map vecmaker pts in
       VSketch [ { start = List.hd vecs; segments = points_to_segments vecs } ]
@@ -217,7 +206,7 @@ let rec eval env noise acc (e : expr) =
       if List.length pts < 2 then
         error pos "splines require more than one point";
       let vecmaker (e : expr) =
-        jitter_vec noise (as_vec e.loc.start_loc (eval env noise acc e))
+        jitter_vec noise (as_vec e.loc.start_loc (eval env sname noise acc e))
       in
       let vecs = List.map vecmaker pts in
       let samples =
@@ -234,40 +223,39 @@ let rec eval env noise acc (e : expr) =
         List.fold_left
           (fun (cur_acc, result) (item : expr) ->
             let item_ir =
-              as_ir item.loc.start_loc (eval env noise cur_acc item)
+              as_ir item.loc.start_loc (eval env sname noise cur_acc item)
             in
             (cur_acc @ item_ir, result @ item_ir))
           (acc, []) items
       in
       VSketch ir
   | Mirror (sk, axis) ->
-      let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
-      let axis_vec = as_vec axis.loc.start_loc (eval env noise acc axis) in
+      let sk_ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
+      let axis_vec = as_vec axis.loc.start_loc (eval env sname noise acc axis) in
       VSketch (transform_centered_ir (vec_mirror axis_vec) sk_ir)
   | Rotate (sk, angle) ->
-      let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
-      let deg = as_num angle.loc.start_loc (eval env noise acc angle) in
+      let sk_ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
+      let deg = as_num angle.loc.start_loc (eval env sname noise acc angle) in
       VSketch (rotate_ir deg sk_ir)
   | Translate (sk, v) ->
-      let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
-      let d = as_vec v.loc.start_loc (eval env noise acc v) in
+      let sk_ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
+      let d = as_vec v.loc.start_loc (eval env sname noise acc v) in
       VSketch (translate_ir d sk_ir)
   | Scale (sk, n) ->
-      let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
-      let s = as_num n.loc.start_loc (eval env noise acc n) in
+      let sk_ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
+      let s = as_num n.loc.start_loc (eval env sname noise acc n) in
       VSketch (transform_centered_ir (vec_scale s) sk_ir)
   | At (sk, target) ->
-      let sk_ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
-      let t = as_vec target.loc.start_loc (eval env noise acc target) in
+      let sk_ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
+      let t = as_vec target.loc.start_loc (eval env sname noise acc target) in
       VSketch (translate_ir (vec_sub t (compute_center sk_ir)) sk_ir)
   | RegionOf sk ->
-      let ir = as_ir sk.loc.start_loc (eval env noise acc sk) in
+      let ir = as_ir sk.loc.start_loc (eval env sname noise acc sk) in
       VRegion (Regions.convex_hull (ir_points ir))
-  | Shade e1 ->
+  | Shade e1 -> (
       let pos1 = e1.loc.start_loc in
-      let v = eval env noise acc e1 in
+      let v = eval env sname noise acc e1 in
       let shade poly =
-        (* Sample flow field at a few points to orient hatch lines *)
         let flow_sources = flow_sources_of_ir acc in
         let hatch_dir =
           match flow_sources with
@@ -279,9 +267,9 @@ let rec eval env noise acc (e : expr) =
               let dx = (mxx -. mnx) *. 0.25 in
               let dy = (mxy -. mny) *. 0.25 in
               let samples =
-                [ vec cx cy;
-                  vec (cx -. dx) (cy -. dy);
-                  vec (cx +. dx) (cy +. dy) ]
+                [
+                  vec cx cy; vec (cx -. dx) (cy -. dy); vec (cx +. dx) (cy +. dy);
+                ]
               in
               let sx, sy =
                 List.fold_left
@@ -294,38 +282,73 @@ let rec eval env noise acc (e : expr) =
         in
         VSketch (Regions.shade_region ~hatch_dir poly noise)
       in
-      (match v with
-       | VRegion poly -> shade poly
-       | VSketch sk_ir ->
-           shade (Regions.convex_hull (ir_points sk_ir))
-       | _ ->
-           error pos1
-             (Printf.sprintf "expected region or sketch, got %s"
-                (type_name v)))
+      match v with
+      | VRegion poly -> shade poly
+      | VSketch sk_ir -> shade (Regions.convex_hull (ir_points sk_ir))
+      | _ ->
+          error pos1
+            (Printf.sprintf "expected region or sketch, got %s" (type_name v)))
 
-(* Statement evaluation *)
+(* Statement evaluation - returns (env, section_data, ir option) *)
 
-let eval_stmt env acc (s : statement) =
+let eval_stmt env sname sec acc (s : statement) =
   let pos = s.loc.start_loc in
+  let make_info method_ = { section = sname; method_; line = pos.line; column = pos.column } in
   match s.txt with
-  | Let (name, e) -> (bind name (eval env NoiseTrace acc e) env, None)
-  | Draw e -> (env, Some (as_ir pos (eval env NoiseDraw acc e)))
-  | Scribble e -> (env, Some (as_ir pos (eval env NoiseScribble acc e)))
-  | Trace e -> (env, Some (as_ir pos (eval env NoiseTrace acc e)))
+  | Let (name, e) ->
+      (bind env sname name (eval env sname NoiseTrace acc e), sec, None)
+  | Draw e ->
+      let ir = as_ir pos (eval env sname NoiseDraw acc e) in
+      (env, add_sketch sec (make_info "draw") ir, Some ir)
+  | Scribble e ->
+      let ir = as_ir pos (eval env sname NoiseScribble acc e) in
+      (env, add_sketch sec (make_info "scribble") ir, Some ir)
+  | Trace e ->
+      let ir = as_ir pos (eval env sname NoiseTrace acc e) in
+      (env, add_sketch sec (make_info "trace") ir, Some ir)
 
-(* Compilation *)
+(* Section compilation - returns (env, section_data, ir) *)
+
+let compile_section env acc (sec : section) =
+  let sname = sec.txt.name in
+  let sec_data = empty_section sname in
+  let env = init_scope env sname in
+  let rec go env sec_data acc = function
+    | [] -> (env, sec_data, acc)
+    | stmt :: rest ->
+        let env', sec_data', ir = eval_stmt env sname sec_data acc stmt in
+        let acc' = match ir with Some i -> acc @ i | None -> acc in
+        go env' sec_data' acc' rest
+  in
+  go env sec_data acc sec.txt.body
+
+(* Compilation - returns (ir, warning option) *)
 
 let compile program =
-  let rec go env acc = function
-    | [] -> acc
-    | stmt :: rest ->
-        let env', ir = eval_stmt env acc stmt in
-        go env' (match ir with Some i -> acc @ i | None -> acc) rest
-  in
-  go empty_env [] program
+  match program with
+  | [] -> ([], None)
+  | default_sec :: rest ->
+      (* Compile default section first *)
+      let default_env, default_sec_data, acc = 
+        compile_section empty_env [] default_sec 
+      in
+      (* Compile remaining sections, each sees only default scope *)
+      let all_sections, final_ir =
+        List.fold_left
+          (fun (sections, acc) sec ->
+            let _, sec_data, acc' = compile_section default_env acc sec in
+            (sec_data :: sections, acc'))
+          ([default_sec_data], acc) rest
+      in
+      (* Check for overlaps *)
+      let warning = check_overlaps all_sections in
+      (final_ir, warning)
 
 let compile_safe program =
-  try Ok (compile program) with CompileError e -> Error e
+  try 
+    let ir, warning = compile program in
+    Ok (ir, warning)
+  with CompileError e -> Error e
 
 let format_error e =
   Printf.sprintf "{ \"msg\": \"%s\", \"line\": %d, \"col\": %d }" e.message
@@ -343,12 +366,9 @@ let path_str p =
 let ir_to_string ir = String.concat "\n" (List.map path_str ir)
 
 let bounds_to_string b =
-  Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y
-    b.max_y
+  Printf.sprintf "x=[%.2f,%.2f] y=[%.2f,%.2f]" b.min_x b.max_x b.min_y b.max_y
 
 let ir_stats ir =
-  let n =
-    List.fold_left (fun a p -> a + List.length p.segments) 0 ir
-  in
+  let n = List.fold_left (fun a p -> a + List.length p.segments) 0 ir in
   Printf.sprintf "Paths: %d, Segments: %d, %s" (List.length ir) n
     (bounds_to_string (compute_bounds ir))
