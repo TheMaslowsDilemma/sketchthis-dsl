@@ -327,37 +327,36 @@ let parse_stmt p =
   | _ -> expected (current p) "statement (let, draw, scribble, or trace)"
 
 let parse_section p nm =
+  let start = start_pos p in
+  let name =
+    if nm = "" then begin
+      expect p AT_SYM;
+      parse_ident p
+    end else nm
+  in
   let rec parse_body acc =
     skip_nl p;
     if end_of_section p then List.rev acc
     else
       let s = parse_stmt p in
-      skip_nl p;
-      go (s :: acc)
-  in
-  let start = start_pos p in
-  let name =
-    if nm == "" then begin
-      expect p AT_SYM; advance p;
-      parse_ident p
-    end else nm
+      parse_body (s :: acc)
   in
   let body = parse_body [] in
-  let psection = { name; body } in
-  loc_to p start psection
+  loc_to p start { name; body }
 
 let parse_program p =
+  skip_nl p;
+  (* Parse default section (statements before any @section tag) *)
+  let default_sec = parse_section p "default" in
   let rec go acc =
     skip_nl p;
     if end_of_program p then List.rev acc
     else
-      let start = 
       let s = parse_section p "" in
       go (s :: acc)
   in
-  let dflts = parse_section "default" in
-  go [ dflts ]
-
+  go [ default_sec ]
+  
 (* Public API *)
 
 let parse input = parse_program (create (Lexer.tokenize input))
