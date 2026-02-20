@@ -111,13 +111,18 @@ let write_file filename content =
 
 let compile_input input ~scale ~position ~size ~no_fit ~emit_gcode ~emit_svg ~output_base ~show_stats =
   let ast = Parser.parse input in
-  let ir = Compiler.compile ast in
-  
+  let ir, warning = Compiler.compile ast in
+
+  (* Print section overlap warning if present *)
+  (match warning with
+   | Some w -> Printf.eprintf "%s\n%!" (Sections.format_warning w)
+   | None -> ());
+
   let ir =
     if Float.abs (scale -. 1.0) < Globals.precision then ir
     else Compiler.transform_ir (fun v -> Vector.vec (v.Vector.x *. scale) (v.Vector.y *. scale)) ir
   in
-  
+
   let placement =
     match position, size with
     | Some (x, y), Some (w, h) ->
@@ -129,7 +134,7 @@ let compile_input input ~scale ~position ~size ~no_fit ~emit_gcode ~emit_svg ~ou
         Some Gcode.{ pos_x = 0.0; pos_y = 0.0; width = w; height = h }
     | None, None -> None
   in
-  
+
   if emit_gcode then begin
     let gcode_file = output_base ^ ".txt" in
     if show_stats then begin
@@ -141,7 +146,7 @@ let compile_input input ~scale ~position ~size ~no_fit ~emit_gcode ~emit_svg ~ou
       write_file gcode_file gcode
     end
   end;
-  
+
   if emit_svg then begin
     let svg_file = output_base ^ ".svg" in
     let ir_for_svg = if no_fit then ir else Gcode.fit_to_machine_with_placement ?placement ir in
