@@ -145,7 +145,8 @@ let shade_region ?(hatch_dir = vec_normalize (vec 1.0 0.3)) poly noise =
       (fun (mn, mx) v ->
         let d = vec_dot v perp in
         (Float.min mn d, Float.max mx d))
-      (Float.infinity, Float.neg_infinity) poly
+      (Float.infinity, Float.neg_infinity)
+      poly
   in
   let paths = ref [] in
   let offset = ref (proj_min +. (spacing *. 0.5)) in
@@ -153,26 +154,25 @@ let shade_region ?(hatch_dir = vec_normalize (vec 1.0 0.3)) poly noise =
     let line_origin = vec_scale !offset perp in
     let ts = line_poly_intersections line_origin hatch_dir poly in
     (match ts with
-     | t0 :: t1 :: _ ->
-         let p0 = vec_add line_origin (vec_scale t0 hatch_dir) in
-         let p1 = vec_add line_origin (vec_scale t1 hatch_dir) in
-         if subdivisions <= 1 then
-           (* Clean straight segment *)
-           let p0j = jitter_vec noise p0 in
-           let p1j = jitter_vec noise p1 in
-           paths :=
-             { start = p0j; segments = [ { p0 = p0j; p1 = p1j } ] } :: !paths
-         else
-           (* Subdivide and jitter for hand-drawn wobble *)
-           let pts =
-             List.init (subdivisions + 1) (fun i ->
-               let t = float_of_int i /. float_of_int subdivisions in
-               jitter_vec noise (vec_lerp p0 p1 t))
-           in
-           paths :=
-             { start = List.hd pts; segments = points_to_segments pts }
-             :: !paths
-     | _ -> ());
-    offset := !offset +. spacing +. (Random.float jitter_amt)
+    | t0 :: t1 :: _ ->
+        let p0 = vec_add line_origin (vec_scale t0 hatch_dir) in
+        let p1 = vec_add line_origin (vec_scale t1 hatch_dir) in
+        if subdivisions <= 1 then
+          (* Clean straight segment *)
+          let p0j = jitter_vec noise p0 in
+          let p1j = jitter_vec noise p1 in
+          paths :=
+            { start = p0j; segments = [ { p0 = p0j; p1 = p1j } ] } :: !paths
+        else
+          (* Subdivide and jitter for hand-drawn wobble *)
+          let pts =
+            List.init (subdivisions + 1) (fun i ->
+                let t = float_of_int i /. float_of_int subdivisions in
+                jitter_vec noise (vec_lerp p0 p1 t))
+          in
+          paths :=
+            { start = List.hd pts; segments = points_to_segments pts } :: !paths
+    | _ -> ());
+    offset := !offset +. spacing +. Random.float jitter_amt
   done;
   List.rev !paths
