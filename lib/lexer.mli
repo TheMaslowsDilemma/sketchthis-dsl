@@ -17,7 +17,7 @@ type token =
   | TILDE
   | CENTEROF (* center of <sketch> -> <vec> *)
   | REGIONOF (* regionof <sketch> -> <vec list *)
-  | AT       (* sketch |> at vec *)
+  | AT (* sketch |> at vec *)
   | AT_SYM
   | ROTATE
   | MIRROR
