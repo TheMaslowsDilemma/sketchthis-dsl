@@ -1,9 +1,6 @@
-(*
------------------------------------------------------------
-ast.ml
------------------------------------------------------------
-abstract syntax tree — unified expression type
-*)
+(*---------------------------------------------------------
+ast.ml - abstract syntax tree — unified expression type
+---------------------------------------------------------*)
 
 type expr = expr_desc Location.loc
 
@@ -38,4 +35,7 @@ and statement_desc =
   | Draw of expr
   | Trace of expr
 
-type program = statement list
+type section = section_desc Location.loc
+and section_desc = { name : string; body : statment list }
+
+type program = section list

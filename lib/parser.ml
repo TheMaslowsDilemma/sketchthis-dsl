@@ -33,8 +33,10 @@ let current p =
   else p.tokens.(p.pos)
 
 let peek p = (current p).token
-let at_end p = peek p = EOF
-let advance p = if not (at_end p) then p.pos <- p.pos + 1
+let end_of_program p = peek p = EOF
+let end_of_section p = (peek p = AT_SYM || end_of_program p)
+
+let advance p = if not (end_of_program p) then p.pos <- p.pos + 1
 let check p t = peek p = t
 
 let match_tok p t =
@@ -324,16 +326,37 @@ let parse_stmt p =
       loc start e.loc.end_loc (Trace e)
   | _ -> expected (current p) "statement (let, draw, scribble, or trace)"
 
-let parse_program p =
-  let rec go acc =
+let parse_section p nm =
+  let rec parse_body acc =
     skip_nl p;
-    if at_end p then List.rev acc
+    if end_of_section p then List.rev acc
     else
       let s = parse_stmt p in
       skip_nl p;
       go (s :: acc)
   in
-  go []
+  let start = start_pos p in
+  let name =
+    if nm == "" then begin
+      expect p AT_SYM; advance p;
+      parse_ident p
+    end else nm
+  in
+  let body = parse_body [] in
+  let psection = { name; body } in
+  loc_to p start psection
+
+let parse_program p =
+  let rec go acc =
+    skip_nl p;
+    if end_of_program p then List.rev acc
+    else
+      let start = 
+      let s = parse_section p "" in
+      go (s :: acc)
+  in
+  let dflts = parse_section "default" in
+  go [ dflts ]
 
 (* Public API *)
 
