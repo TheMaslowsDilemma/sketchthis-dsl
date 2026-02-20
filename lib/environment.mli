@@ -1,9 +1,7 @@
-(*
------------------------------------------------------------
-environment.mli
------------------------------------------------------------
-variable bindings during compilation.
-*)
+(*---------------------------------------------------------
+environment.mli - variable organization and lookup logic
+note: there is no mutability.
+---------------------------------------------------------*)
 
 open Vector
 
@@ -13,10 +11,19 @@ type value =
   | VRegion of vec list
   | VSketch of Ir.ir
 
+type scope
 type env
 
 exception UndefinedVariable of string
+exception UndefinedScope of string
 
 val empty_env : env
-val bind : string -> value -> env -> env
-val lookup : string -> env -> value
+(* an empty hash table of scope name to scope *)
+
+val bind : env -> string -> string -> value -> env
+(* add new value to a variable ~ no mutability ~
+environment, section name, variable name, new value *)
+
+val lookup : env -> string -> string -> value
+(* returns the value from the given params
+environment, section name, variable name*)
