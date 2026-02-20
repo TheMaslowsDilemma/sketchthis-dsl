@@ -36,6 +36,6 @@ and statement_desc =
   | Trace of expr
 
 type section = section_desc Location.loc
-and section_desc = { name : string; body : statment list }
+and section_desc = { name : string; body : statement list }
 
 type program = section list
