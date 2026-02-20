@@ -17,6 +17,9 @@ type env
 exception UndefinedVariable of string
 exception UndefinedScope of string
 
+val init_scope : env -> string -> env
+(* adds an empty scope to the environment *)
+
 val empty_env : env
 (* an empty hash table of scope name to scope *)
 

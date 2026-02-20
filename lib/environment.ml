@@ -21,15 +21,10 @@ exception UndefinedScope of string
 let empty_env : env = StringMap.empty
 let find_scope_opt e sname = StringMap.find_opt sname e
 
-let find_scope e sname =
-  match StringMap.find_opt sname e with
-  | None -> raise (UndefinedScope sname)
-  | Some s -> s
-
-let find_var s vname =
-  match StringMap.find_opt vname s with
-  | None -> raise (UndefinedVariable vname)
-  | Some v -> v
+let init_scope env sname =
+  match find_scope_opt env sname with
+  | Some _ -> env  (* already exists *)
+  | None -> StringMap.add sname StringMap.empty env
 
 let bind env sname vname value =
   let s =
@@ -38,6 +33,12 @@ let bind env sname vname value =
   let snew = StringMap.add vname value s in
   StringMap.add sname snew env
 
-let lookup sname vname env =
-  let s = find_scope env sname in
-  find_var s vname
+let rec lookup env sname vname =
+  match find_scope_opt env sname with
+  | None -> raise (UndefinedScope sname)
+  | Some s -> (
+      match StringMap.find_opt vname s with
+      | Some v -> v
+      | None ->
+          if sname = "default" then raise (UndefinedVariable vname)
+          else lookup env "default" vname)
